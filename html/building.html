@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Building and Installing</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>Building and Installing</h1>
+
+<p>Building this module requires that the user have installed the <a href="http://www.gnu.org/software/glpk/">GLPK</a> 4.18 or later, and <a href="http://gmplib.org/">GMP</a> libraries.  The module builds and appears to work on my simple test files in Python 2.4 and 2.5.  Earlier versions of Python may not work.  I have developed this on both OS X and Linux.  I do not know if it will work on Windows.</p>
+
+<p>Here are the brief instructions for installing.</p>
+<ul>
+<li>Build the module using <code>make</code> . (Pay attention to warnings!)</li>
+<li>Run <code>make test</code> to execute the test suite.  You want the last line of output to be <code>Tests succeeded!</code>
+<li>Build the module using <code>make install</code> to install the module in your Python build's <code>site-packages</code> directory.  On a typical system, you will need to run this as the superuser (probably <code>sudo make install</code>).</li>
+</ul>
+
+<p>In the ideal case (that is, you have GLPK and GMP libraries, headers, executables and the like installed in default search paths), this will just work.</p>
+
+<h2>Troubleshooting</h2>
+
+<p>A few details just in case things don't go that easily:</p>
+
+<p>How PyGLPK builds depends on which version of GLPK is installed.  GLPK is an evolving library, and some functionality has been added only since older versions.</p>
+
+<ul>
+<li>Perhaps you don't have GLPK or GMP installed, or not the development versions with the headers.
+<li>Perhaps your <code>INCLUDE_PATH</code>, <code>LIBRARY_PATH</code>, or <code>LD_LIBRARY_PATH</code> paths are not set correctly.
+<li>Perhaps you have multiple versions of GLPK on your system in different locations, and it is confusing the system during building.  E.g., it may build with one version, and then try to run the program with another.
+<li>Perhaps the GLPK library was installed incorrectly.  For example, on my Ubunto box, I cannot build <em>anything</em> with the GLPK installed by my Debian package manager, not even a simple <code class="c">main { LPX*lp=lpx_create_prob(); lpx_delete_prog(lp); }</code>, owing to a faulty compile of the libraries.</li>
+</ul>
+
+<h3>If You're Having Trouble Building</h3>
+
+<p>Below are some suggestions to try or avenues to pursue if you're having trouble building.  This is not an exhaustive list, just "the most likely suspects."
+<ul>
+<li>The build process assumes that the default Python (i.e., the Python you would get if you tried executing <code>python</code> within <code>sh</code>) is the one for which you want to build <code>glpk</code>.  If this is untrue, modify the <code>Makefile</code> file to change the assignment <code>PYTHON:=python</code> to something like <code>PYTHON:=/path/to/other/python</code>.
+<li>As described earlier, perhaps your environment variable paths are not set correctly.  Relevant paths are <code>INCLUDE_PATH</code>, <code>LIBRARY_PATH</code>, <code>LD_LIBRARY_PATH</code> (yeah, I know).
+<li>Perhaps you do not actually have a <code>glpk.h</code> file in the include directories.  This may be because you have a binary non-developer installation of GLPK.</li>
+<li>Perhaps the <code>setup.py</code> script, in its attempt to do something reasonably clever, drew the wrong conclusions about where appropriate libraries and headers may be located, or the version of GLPK.  (This may happen in certain situations where there are multiple builds of GLPK floating around with different versions, or your binaries are stored in strange locations.)  Within <code>setup.py</code> is a small section beginning with <code>USERS DO CUSTOM INSTRUCTIONS HERE</code> where you can override its "cleverness" by manually defining the library name, location of appropriate library and include search directories, and other traits.</li>
+<li>Multiple versions of GLPK as described earlier.  This may be addressed through editing the <code>setup.py</code></li>
+<li>Faulty installation of GLPK.</li>
+</ul>
+</p>
+
+<h3>If You're Having Trouble Testing</h3>
+
+<p>Once you have built the module successfully and there is a <code>glpk.so</code> symbolic link defined to the shared library, you should run the principle test suite through <code>make test</code>.
+
+<p>If you're running the test suite through <code>make test</code> and it throws some sort of exception, what the problem is depends on what type of error you see.</p>
+<dl>
+<dt><code>ImportError: No module named glpk</code></dt>
+<dd>Ensure that the module actually built.</dd>
+<dt><code>ImportError: <font color="#999999">(stuff)</font> Symbol not found</code></dt>
+<dd>Most likely, it cannot find a required library.  Run <code>ldd glpk.so</code> (on Linux) or <code>otool -L glpk.so</code> (on OS X) to see which libraries it cannot find.  Use this information to ensure that you environment variable <code>LD_LIBRARY_PATH</code> points to directories containing appropriate libraries.  (Note that merely finding all libraries is not necessarily sufficient in the case where there are multiple GLPK libraries floating around.  Ensure you're not building with one, but running with the other.)</dd>
+<dt><code>AssertionError</code> (or other error)</dt>
+<dd>The good news is that the module appears to load and run and it's throwing normal Python exceptions.  The bad news is one of my tests failed.  This should not happen, but if it does, send me a bug report.</dd>
+</dl>
+</p>
+
+<h3>If You're Having Trouble Installing</h3>
+
+<p>If it says permission denied when running <code>make install</code>, perhaps you need to run the command as the superuser, e.g., <code>sudo make install</code> .</p>
+
+<h3>Uninstalling</h3>
+
+Like many Python modules, PyGLPK builds itself with the aid of Python's included <code>distutils</code> module.  As of the time of this writing, <code>distutils</code> does not support uninstallation.  I am not comfortable with writing my own solution.  Given that this is a potentially destructive option, there may be unintended, unfortunate consequences on some person's configuration I did not anticipate.  However, one may still uninstall PyGLPK by importing the <code>glpk</code> module, and checking the <code>glpk.__file__</code> attribute.  This will tell you where the module file is stored.  Then, you can go to that directory and remove the module file, and the associated <code>egg-info</code> file, and rid yourself of PyGLPK.
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

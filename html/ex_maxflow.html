@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Max-Flow Example</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>Max Flow Example</h1>
+
+<p>In this section we show a simple example of how to use PyGLPK to solve <a href="http://en.wikipedia.org/wiki/Maximum_flow_problem">max flow problems</a>.</p>
+
+<h2>How to Solve</h2>
+
+<p>Suppose we have a directed graph with a source and sink node, and a mapping from edges to maximal flow capacity for that edge.  Our goal is to find a maximal <a href="http://en.wikipedia.org/wiki/Network_flow">feasible flow</a>.  This is the maximum flow problem.</p>
+
+<p>This is our strategy of how to solve this with a linear program:</p>
+<ul>
+<li>For each edge, we define a structural variable (a column).  The primal value of this structural variable is the flow assigned to the corresponding edge.  We constrain this so it cannot exceed the edge's capacity.</li>
+<li>We define our objective function as the net flow of the source, a quantity we wish to maximize.</li>
+<li>For each non-source and non-sink node, we must have 0 net flow.  So, for each non-source/sink node, we define an auxiliary variable (a row) equal to the sum of flows in minus the sum of flows out, which we constrain to be 0.
+<li>We run the solver, and return the assignment of edges to flows.
+</ul>
+
+<img src="ex_maxflow_fig.png" alt="Flow Graph Example" width="211" height="149" align="right" />
+
+<p>For the purpose of our function, we encode our capacity graph as a list of three element tuples.  Each tuple consists of a from node, a to node, and a capacity of the conduit from the from to the to node.  Nodes can be anything Python can hash.</p>
+
+<p>The function accepts such a capacity graph, and returns the a similar list of three element tuples.  The list is identical as the input list, except the capacities are replaced with the assigned flow.</p>
+
+<p>In the example graph seen at right (with given assigned/capacity weights given for the nodes), we have a source and sink <code>'s'</code> and <code>'t'</code>, and other nodes <code>'a'</code> and <code>'b'</code>.  We would represent this capacity graph as <code>[('s','a',4), ('s','b',1), ('a','b',2.5), ('a','t',1), ('b','t',4)]</code>
+
+<h2>The Implementation</h2>
+
+<p>Here is the implementation of that function:</p>
+
+<pre class="py">
+import glpk
+
+def maxflow(capgraph, s, t):
+    node2rnum = {}                      <font class="comment"># Map non-source/sink nodes to row num.</font>
+    for nfrom, nto, cap in capgraph:
+        if nfrom!=s and nfrom!=t:
+            node2rnum.setdefault(nfrom, len(node2rnum))
+        if nto!=s and nto!=t:
+            node2rnum.setdefault(nto, len(node2rnum))
+
+    lp = glpk.LPX()                     <font class="comment"># Empty LP instance.</font>
+    glpk.env.term_on = False            <font class="comment"># Stop annoying messages.</font>
+    lp.cols.add(len(capgraph))          <font class="comment"># As many columns cap-graph edges.</font>
+    lp.rows.add(len(node2rnum))         <font class="comment"># As many rows as non-source/sink nodes</font>
+
+    for row in lp.rows: row.bounds = 0  <font class="comment"># Net flow for non-source/sink is 0.</font>
+
+    mat = []                            <font class="comment"># Will hold constraint matrix entries.</font>
+
+    for colnum, (nfrom, nto, cap) in enumerate(capgraph):
+        lp.cols[colnum].bounds = 0, cap <font class="comment"># Flow along edge bounded by capacity.</font>
+
+        if nfrom == s:
+            lp.obj[colnum] =  1.0       <font class="comment"># Flow from source increases flow value</font>
+        elif nto == s:
+            lp.obj[colnum] = -1.0       <font class="comment"># Flow to source decreases flow value</font>
+
+        if nfrom in node2rnum:          <font class="comment"># Flow from node decreases its net flow</font>
+            mat.append((node2rnum[nfrom], colnum, -1.0))
+        if nto in node2rnum:            <font class="comment"># Flow to node increases its net flow</font>
+            mat.append((node2rnum[nto], colnum, 1.0))
+        
+    lp.obj.maximize = True              <font class="comment"># Want source s max flow maximized.</font>
+    lp.matrix = mat                     <font class="comment"># Assign 0 net-flow constraint matrix.</font>
+
+    lp.simplex()                        <font class="comment"># This should work unless capgraph bad.</font>
+
+    return [(nfrom, nto, col.value)     <font class="comment"># Return edges with assigned flow.</font>
+            for col, (nfrom, nto, cap) in zip(lp.cols, capgraph)]
+</pre>
+
+<h2>The Explanation</h2>
+
+<p>We shall now go over this function section by section!</p>
+
+<pre class="py">
+node2rnum = {}                      <font class="comment"># Map non-source/sink nodes to row num.</font>
+for nfrom, nto, cap in capgraph:
+    if nfrom!=s and nfrom!=t:
+        node2rnum.setdefault(nfrom, len(node2rnum))
+    if nto!=s and nto!=t:
+        node2rnum.setdefault(nto, len(node2rnum))
+</pre>
+
+<p>This is pure non-PyGLPK code, but it is doing something important for the linear program.  Recall that we wanted a row for every non-source/sink node.  In order to facilitate this, we first go through the capacity graph and map each node identifier (except the source and sink) to a unique integer, counting from 0 onwards.</p>
+
+<pre class="py">
+lp = glpk.LPX()                     <font class="comment"># Empty LP instance.</font>
+</pre>
+
+<p>We create an empty LPX instance.</p>
+
+<pre class="py">
+lp.params.msglev = 0                <font class="comment"># Stop annoying messages.</font>
+</pre>
+
+<p>Linear program objects contain several objects through which one can access and set some of the data associated with a linear program.  One of these is the <code>params</code> object, which holds attributes that help control the behavior of the linear program object when running a solver, writing data, and other routines.  In this case, we are setting the <code>msglev</code> (message level) attribute to 0, to quiet the linear program.</p>
+
+<pre class="py">
+lp.cols.add(len(capgraph))          <font class="comment"># As many columns cap-graph edges.</font>
+lp.rows.add(len(node2rnum))         <font class="comment"># As many rows as non-source/sink nodes</font>
+</pre>
+
+<p>In addition, the linear program object has two (largely identical) objects for accessing and setting traits of columns and rows, <code>cols</code> and <code>rows</code>, respectively.  In this case, we are calling the <code>add</code> method of both objects.</p>
+
+<p>Recall that we want as many structural variables (columns) as there are edges, to represent the assigned flow to edge edge.  Correspondingly, we add as many columns as there are edges in the capacity graph.  Also, we want as many auxiliary variables (rows) as there are non-source/sink nodes, in order to enforce the zero-net-flow constraint.</p>
+
+<pre class="py">
+for row in lp.rows: row.bounds = 0  <font class="comment"># Net flow for non-source/sink is 0.</font>
+</pre>
+
+<p>In addition to being used to add rows and columns, the <code>rows</code> and <code>cols</code> objects serve as sequences, used to access row and column objects.  In this case, we are iterating over all rows.</p>
+
+<p>Once we have a row, we set its <code>bounds</code> attribute to 0 to force the row's auxiliary variable (and consequently the net flow for the corresponding node) to be zero.  The <code>bounds</code> attribute can be assigned one or two values, depending on whether we want to assign an equality or range constraint.  In this case, we want an equality constraint, and so assign the single value 0.</p>
+
+<pre class="py">
+mat = []                            <font class="comment"># Will hold constraint matrix entries.</font>
+</pre>
+
+<p>What's so special about an empty list?  Nothing yet.  However, what we are going to do is to give it elements of the linear program constraint matrix, and then set this as the linear program's constraint matrix.</p>
+
+<p>The reason for this list is practical: We can set entries of the LP matrix either all at one, a whole row at a time, or a whole column at a time.  None is really convenient given the structure of this problem, so we just save all the entries we want to be non-zero, and set them all at once when we have collected all of them.</p>
+
+<p>Entries of the constraint matrix are given in the form of three element tuples describing the row index, column index, and the value at this location.</p>
+
+<pre class="py">
+for colnum, (nfrom, nto, cap) in enumerate(capgraph):
+    lp.cols[colnum].bounds = 0, cap <font class="comment"># Flow along edge bounded by capacity.</font>
+
+    if nfrom == s:
+        lp.obj[colnum] =  1.0       <font class="comment"># Flow from source increases flow value</font>
+    elif nto == s:
+        lp.obj[colnum] = -1.0       <font class="comment"># Flow to source decreases flow value</font>
+
+    if nfrom in node2rnum:          <font class="comment"># Flow from node decreases its net flow</font>
+        mat.append((node2rnum[nfrom], colnum, -1.0))
+    if nto in node2rnum:            <font class="comment"># Flow to node increases its net flow</font>
+        mat.append((node2rnum[nto], colnum, 1.0))
+</pre>
+
+<p>We are iterating over all the edges in the capacity graph.  A lot is happening inside the loop, so we shall take it a piece at a time.</p>
+
+<pre class="py">
+for colnum, (nfrom, nto, cap) in enumerate(capgraph):
+</pre>
+
+<p>Since columns correspond to edges in the capacity graph, it is convenient to just suppose that edge <code>capgraph[i]</code> corresponds to column <code>lp.cols[i]</code>.</p>
+
+<pre class="py">
+lp.cols[colnum].bounds = 0, cap <font class="comment"># Flow along edge bounded by capacity.</font>
+</pre>
+
+<p>Each structural variable will get the value of the flow along its corresponding edge.  Naturally, we want to constrain the flow assignments to be between 0 and the edge capacity.  So, we assign to the <code>bounds</code> attribute of the column at index <code>colnum</code>.  Note that this is an instance of a range bound (with lower bound <code>0</code> and upper bound <code>cap</code>), unlike our previous equality bound.</p>
+
+<pre class="py">
+if nfrom == s:
+    lp.obj[colnum] =  1.0       <font class="comment"># Flow from source increases flow value</font>
+elif nto == s:
+    lp.obj[colnum] = -1.0       <font class="comment"># Flow to source decreases flow value</font>
+</pre>
+
+<p>Recall we are trying to find the maximum flow across the graph, which equals the net flow <em>from</em> the source.  The net flow increases whenever there is flow along an edge from the source, so if the edge is from the source, we set the corresponding structural variable's objective function coefficient to 1.0 (with the effect that the assigned flow is added to the objective).  Conversely, the net flow decreases whenever there is flow along an edge to the source, so if the edge is to the source, we set the corrresponding coefficient to -1.0 (with the effect that the assigned flow is subtracted from the objective).</p>
+
+<p>Similar to the <code>rows</code> and <code>cols</code> attributes of linear program objects, the <code>obj</code> attribute also acts like a sequence.  We can assign objective function coefficients through simple assignments like this.  There are as many objective coefficients as there are structural variables (columns).
+
+<pre class="py">
+if nfrom in node2rnum:          <font class="comment"># Flow from node decreases its net flow</font>
+    mat.append((node2rnum[nfrom], colnum, -1.0))
+if nto in node2rnum:            <font class="comment"># Flow to node increases its net flow</font>
+    mat.append((node2rnum[nto], colnum, 1.0))
+</pre>
+
+<p>The intent of this is very similar to our coefficients set in the objective function.  We wish the net flow into a node to be zero.  Correspondingly, for each edge, we add (at most) two entries to the matrix of constraint coefficients.  For the "from" node of an edge, we add a -1.0 coefficient to the "from" node's corresponding row, effectively subtracting off the value of the edge's structural variable from the "from" node's auxiliary variable.  For the "to" node of an edge, we add a 1.0 coefficient to the "to" node's corresponding row, effectively adding the value of the edge's structural variable to the "to" node's auxiliary variable.</p>
+
+<p>The <code>if</code> statements are present because we only want to add this structural variables for nodes that correspond to rows, i.e., non-source/sink nodes.</p>
+
+<p>This marks the end of that loop.</p>
+
+<pre class="py">
+lp.obj.maximize = True              <font class="comment"># Want source s max flow maximized.</font>
+</pre>
+
+<p>The <code>obj</code> object has an attribute <code>maximize</code> that controls whether we are trying to maximize or minimize the objective function.  In this case, we want a maximizing assignment of flow to edges.</p>
+
+<pre class="py">
+lp.matrix = mat                     <font class="comment"># Assign 0 net-flow constraint matrix.</font>
+</pre>
+
+<p>We set the constraint matrix to the entries that we have collected.</p>
+
+<pre class="py">
+lp.simplex()                        <font class="comment"># This should work unless capgraph bad.</font>
+</pre>
+
+<p>Next we run the simplex algorithm to optimize this linear program.  The simplex algorithm has strong theoretical ties to the max augmenting path algorith (think about the operations that are taking place in the simplex tableau), so if we have defined a valid capacity graph this should converge with no problems.</p>
+
+<pre class="py">
+return [(nfrom, nto, col.value)     <font class="comment"># Return edges with assigned flow.</font>
+        for col, (nfrom, nto, cap) in zip(lp.cols, capgraph)]
+</pre>
+
+<p>More or less straightforward Python code to construct the return value.  For all the columns and the corresponding edges, we return the triples of "from," "to," and the variable value, which is the assigned flow.  Note the use of <code>col.value</code> attribute to extract the primal variable value for this column.</p>
+
+<h2>Example Run</h2>
+
+<img src="ex_maxflow_fig.png" alt="Flow Graph Example" width="211" height="149" align="left" />
+
+<p>Imagine that we run this call to find the max-flow for the given graph.</p>
+
+<pre class="py">
+capgraph = [('s','a',4), ('s','b',1),
+   ('a','b',2.5), ('a','t',1), ('b','t',4)]
+print maxflow(capgraph, 's', 't')
+</pre>
+
+<p>This will produce the output
+<pre class="out">
+[('s', 'a', 3.5), ('s', 'b', 1.0), ('a', 'b', 2.5),
+ ('a', 't', 1.0), ('b', 't', 3.5)]</pre>
+corresponding to the flow shown in the graph.</p>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

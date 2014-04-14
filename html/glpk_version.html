@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>GLPK Version Specific Notes</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>GLPK Version Specific Notes</h1>
+
+<p>When building PyGLPK, certain functions will be disabled depending on what version of GLPK the build process believes it is using.  Below is a list of GLPK versions, and descriptions of what functionality will not work in earlier versions.  (Or, in some cases, later versions.)</p>
+
+<p>The examples may use a hypothetical <code>glpk.LPX</code> instance named <code>lp</code> for illustrative purposes.</p>
+
+<h3>GLPK 4.39</h3>
+<ul>The interior point solver often does not detect infeasibility on infeasible problems.</li>
+</ul>
+
+<h3>GLPK 4.38</h3>
+<ul>The interior point solver often crashes on infeasible problems.</li>
+</ul>
+
+<h3>GLPK 4.37 and higher</h3>
+<ul>
+<li>On OS X, the build of the shared library is broken for all versions after and including GLPK 4.37.</li>
+</ul>
+
+<h3>GLPK 4.33</h3>
+<ul>
+<li>This release had a bug in the integer-solver routines that make parameters cause GLPK to crash.  This was fixed in subsequent versions</li>
+</ul>
+
+<h3>GLPK 4.31</h3>
+<ul>
+<li>Addition of a <code>LPX.DUAL</code> constant for the <code>meth</code> keyword parameter of the <code>LPX.simplex</code> solver method.</li>
+<li>Addition of the <code>LPX.SF_GM</code>, <code>LPX.SF_EQ</code>, <code>LPX.SF_2N</code>, <code>LPX.SF_SKIP</code>, and <code>LPX.SF_AUTO</code> constants, for the <code>LPX.scale</code> method's argument.</li>
+</ul>
+
+<h3>GLPK 4.23</h3>
+<ul>
+<li>Addition of the <code>gmi_cuts</code> keyword parameter for the <code>LPX.integer</code> solver.
+</ul>
+
+<h3>GLPK 4.23</h3>
+<ul>
+<li>Addition of the <code>mir_cuts</code> keyword parameter for the <code>LPX.integer</code> solver.
+</ul>
+
+<h3>GLPK 4.21</h3>
+<ul>
+<li>The ability of the <code>LPX.integer</code> callback to have <code>select</code>, <code>prepro</code>, and <code>branch</code> methods called by the callback procedure.  For the same reasons, the <code>Tree</code> methods <code>select</code>, <code>can_branch</code>, and <code>branch_upon</code> do not appear until this version.</li>
+<li>Addition of the <code>pp_tech</code> keyword parameter for the <code>LPX.integer</code> solver, and associated constants.
+</ul>
+
+<h3>GLPK 4.20</h3>
+<ul>
+<li>The keyword parameters of the <code>LPX.integer</code> MIP solver method including callbacks, and associated constants for the many keyword parameters, as well as all types associated therein, most notably <code>Tree</code> and <code>TreeNode</code>.</li>
+</ul>
+
+<h3>GLPK 4.19</h3>
+<ul>
+<li>The <code>Environment.mem_limit</code> attribute for setting the maximum number of megabytes the GLPK will allocate.</li>
+</ul>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

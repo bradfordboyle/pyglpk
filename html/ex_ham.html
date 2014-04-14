@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Hamiltonian Path Example</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>Hamiltonian Path Example</h1>
+
+<p>In this section we show a simple example of how to use PyGLPK to solve the <a href="http://en.wikipedia.org/wiki/Hamiltonian_path_problem">Hamiltonian path problem</a>.  This particular example is intended to be much more high level for those frustrated by lengthly explanations with excessive hand holding.</p>
+
+<h2>How to Solve</h2>
+
+<p>Suppose we have an undirected graph.  We want to find a path from any node to any other node such that we visit each node exactly one.  This is the Hamiltonian path problem!</p>
+
+<p>This is our strategy of how to solve this with a mixed integer program:</p>
+<ul>
+<li>For each edge in the graph we define a structural variable (a column).  This will be a binary variable with 1 indicating that this edge is part of the path.</li>
+<li>All nodes must have either 1 or 2 incident edges selected as part of the path, no more, no fewer.  Therefore we introduce a row for each node to encode this constraint.</li>
+<li>Exactly as many edges should be selected as the number of nodes minus one.  This constraint requires another node.</li>
+</ul>
+
+<p>For the purpose of our function, we encode graphs as a list of two element tuples.  Each tuple represents an edge between two vertices.  Vertices can be anything Python can hash.  We assume we can infer the vertex set from this edge set, i.e., there are no isolated vertices.  (If there are, then the problem is trivial anyway.)  For example, <code>[(1,2), (2,3), (3,4), (4,2), (3,5)]</code> would represent a graph over five nodes, containing a <var>K</var><sub>3</sub> subgraph (among vertices 2,3,4) with additional vertices 1 attached to 2 and 5 attached to 3.</p>
+
+<p>The function accepts such a list of edges, and return the sublist comprising the path, or <code>None</code> if it could not find a path.</p>
+
+<h2>The Implementation</h2>
+
+<p>Here is the implementation of that function:</p>
+
+<pre class="py">
+def hamiltonian(edges):
+    node2colnums = {} <font class="comment"># Maps node to col indices of incident edges.</font>
+    for colnum, edge in enumerate(edges):
+        n1, n2 = edge
+        node2colnums.setdefault(n1, []).append(colnum)
+        node2colnums.setdefault(n2, []).append(colnum)
+
+    lp = glpk.LPX()                     <font class="comment"># A new empty linear program</font>
+    glpk.env.term_on = False            <font class="comment"># Stop annoying messages.</font>
+    lp.cols.add(len(edges))             <font class="comment"># A struct var for each edge</font>
+    lp.rows.add(len(node2colnums)+1)    <font class="comment"># Constraint for each node</font>
+
+    for col in lp.cols:                 <font class="comment"># Go over all struct variables</font>
+        col.kind = bool                 <font class="comment"># Make binary, not continuous</font>
+
+    <font class="comment"># For each node, select at least 1 and at most 2 incident edges.</font>
+    for row, edge_column_nums in zip(lp.rows, node2colnums.values()):
+        row.matrix = [(cn, 1.0) for cn in edge_column_nums]
+        row.bounds = 1, 2
+
+    <font class="comment"># We should select exactly (number of nodes - 1) edges total</font>
+    lp.rows[-1].matrix = [1.0]*len(lp.cols)
+    lp.rows[-1].bounds = len(node2colnums)-1
+
+    assert lp.simplex() == None         <font class="comment"># Should not fail this way.</font>
+    if lp.status != 'opt': return None  <font class="comment"># If no relaxed sol., no exact sol.</font>
+
+    assert lp.integer() == None         <font class="comment"># Should not fail this way.</font>
+    if lp.status != 'opt': return None  <font class="comment"># Count not find integer solution!</font>
+
+    <font class="comment"># Return the edges whose associated struct var has value 1.</font>
+    return [edge for edge, col in zip(edges, lp.cols) if col.value > 0.99]
+</pre>
+
+<h2>The Explanation</h2>
+
+<p>We shall now go over this function section by section, but not quite in such exhaustive detail as before.</p>
+
+<pre class="py">
+node2colnums = {} <font class="comment"># Maps node to col indices of incident edges.</font>
+for colnum, edge in enumerate(edges):
+    n1, n2 = edge
+    node2colnums.setdefault(n1, []).append(colnum)
+    node2colnums.setdefault(n2, []).append(colnum)
+</pre>
+
+<p>This is pure Python non-PyGLPK code.  It is simply computing a mapping of nodes to a list of column numbers corresponding to each node's incident edges.  Note that each edge will have the same index in both the column collection, as well as the input <code>edges</code> list.</p>
+
+<pre class="py">
+lp = glpk.LPX()                     <font class="comment"># A new empty linear program</font>
+glpk.env.term_on = False            <font class="comment"># Stop annoying messages.</font>
+lp.cols.add(len(edges))             <font class="comment"># A struct var for each edge</font>
+lp.rows.add(len(node2colnums)+1)    <font class="comment"># Constraint for each node</font>
+</pre>
+
+<p>In this section, we create a new empty linear program, make it quiet, and add as many columns as there are edges, and as many rows as there are vertices, plus one additional row to encode the constraint that exactly as many edges should be selected as there are vertices minus one.</p>
+
+<pre class="py">
+for col in lp.cols:                 <font class="comment"># Go over all struct variables</font>
+    col.kind = bool                 <font class="comment"># Make binary, not continuous</font>
+</pre>
+
+<p>Here, we set our LP as a MIP, and going over the columns set the associated structural variable to be binary (i.e., have 0 to 1 bounds and be an integer variables).</p>
+
+<pre class="py">
+<font class="comment"># For each node, select at least 1 and at most 2 incident edges.</font>
+for row, edge_column_nums in zip(lp.rows, node2colnums.values()):
+    row.matrix = [(cn, 1.0) for cn in edge_column_nums]
+    row.bounds = 1, 2
+</pre>
+
+<p>These are the constraints that say for each node, either one or two edges should be selected.  For each node, we set a row to have a constraint which sums over all of the structural variables representing edges incident to that node, and forces this sum to be between 1 and 2.</p>
+
+<pre class="py">
+<font class="comment"># We should select exactly (number of nodes - 1) edges total</font>
+lp.rows[-1].matrix = [1.0]*len(lp.cols)
+lp.rows[-1].bounds = len(node2colnums)-1
+</pre>
+
+<p>Similarly, have the last row in the constraint matrix encode the constraint that the sum of all the structural variables (i.e., the number of edges selected) should be the number of vertices minux one.</p>
+
+<p>Note how in this case we do not specify the column indices in our matrix assignment: we just assign a long list of 1.0 values, and use how matrix assignments will implicitly assue that each single value will be placed in the entry directly after the last assigned value.</p>
+
+<pre class="py">
+assert lp.simplex() == None         <font class="comment"># Should not fail this way.</font>
+if lp.status != 'opt': return None  <font class="comment"># If no relaxed sol., no exact sol.</font>
+
+assert lp.integer() == None         <font class="comment"># Should not fail this way.</font>
+if lp.status != 'opt': return None  <font class="comment"># Count not find integer solution!</font>
+</pre>
+
+<p>As in the SAT example, we run the simplex solver to come up with an initial continuous relaxed basic solution to this problem.  We fail, we miss the assertion, and if the optimal solution was not found, we return that there is no solution.  We then run the integer optimizer.</p>
+
+<pre class="py">
+<font class="comment"># Return the edges whose associated struct var has value 1.</font>
+return [edge for edge, col in zip(edges, lp.cols) if col.value > 0.99]
+</pre>
+
+<p>Finally, in this case, we select out those columns which have a value close to 1 (indicating this edge was selected) and return the associated edge using our <code>colnum2edge</code> map we constructed at the start of the function.</p>
+
+<h2>Example Run</h2>
+
+<p>Suppose we have, after this function definition, these calls.</p>
+
+<pre class="py">
+<font class="comment">#  1----2----3----5
+#        \  /
+#         \/  Has one H path!
+#         4</font>
+
+g1 = [(1,2), (2,3), (3,4), (4,2), (3,5)]
+print hamiltonian(g1)
+
+<font class="comment">#  4    5    6
+#  |    |    |
+#  |    |    | Has no H path!
+#  1----2----3</font>
+
+g2 = [(1,2), (2,3), (1,4), (2,5), (3,6)]
+print hamiltonian(g2)
+
+<font class="comment">#  4    5----6
+#  |    |    |
+#  |    |    | Has two H paths!
+#  1----2----3</font>
+
+g3 = g2 + [(5,6)]
+print hamiltonian(g3)
+</pre>
+
+This will produce this output.
+
+<pre class="out">
+[(1, 2), (3, 4), (4, 2), (3, 5)]
+None
+[(1, 2), (1, 4), (2, 5), (3, 6), (5, 6)]
+</pre>
+
+<h2>Fun TSP Variant</h2>
+
+<p>Note that we did not define an objective function value.  If we wanted, we could solve the <a href="http://en.wikipedia.org/wiki/Traveling_salesman_problem">traveling salesman problem</a> (with symmetric weights) by making the following modifications:</p>
+<ul>
+<li>Providing each edge with a cost of taking this edge.  (Perhaps as a three element tuple instead of a two element tuple.)  We could then set the associated edge's objective function value to this edge, and set this to a minimization problem.</li>
+<li>Given that the TSP computes cycles and not paths, change the 1 or 2 bounds to equality on 2 (each node has exactly 2 incident selected edges), and further refine the last constraint that as many edges as nodes must be selected.</li>
+</ul>
+
+<p>Here is the resulting function.  Sections with important changes have been bolded.</p>
+
+<pre class="py">
+def tsp(edges):
+    node2colnums = {} <font class="comment"># Maps node to col indices of incident edges.</font>
+    for colnum, edge in enumerate(edges):
+        n1, n2, <strong>cost</strong> = edge
+        node2colnums.setdefault(n1, []).append(colnum)
+        node2colnums.setdefault(n2, []).append(colnum)
+
+    lp = glpk.LPX()                     <font class="comment"># A new empty linear program</font>
+    glpk.env.term_on = False            <font class="comment"># Stop annoying messages.</font>
+    lp.cols.add(len(edges))             <font class="comment"># A struct var for each edge</font>
+    lp.rows.add(len(node2colnums)+1)    <font class="comment"># Constraint for each node</font>
+
+    <strong>lp.obj[:] = [e[-1] for e in edges]  <font class="comment"># Try to minimize the total costs.</font>
+    lp.obj.maximize = False</strong>
+
+    for col in lp.cols:                 <font class="comment"># Go over all struct variables</font>
+        col.kind = bool                 <font class="comment"># Make binary, not continuous</font>
+
+    <font class="comment"># For each node, <strong>select two edges, i.e.., an arrival and a departure</strong>.</font>
+    for row, edge_column_nums in zip(lp.rows, node2colnums.values()):
+        row.matrix = [(cn, 1.0) for cn in edge_column_nums]
+        <strong>row.bounds = 2</strong>
+
+    <font class="comment"># We should select exactly (number of nodes) edges total</font>
+    lp.rows[-1].matrix = [1.0]*len(lp.cols)
+    <strong>lp.rows[-1].bounds = len(node2colnums)</strong>
+
+    assert lp.simplex() == None         <font class="comment"># Should not fail this way.</font>
+    if lp.status != 'opt': return None  <font class="comment"># If no relaxed sol., no exact sol.</font>
+
+    assert lp.integer() == None         <font class="comment"># Should not fail this way.</font>
+    if lp.status != 'opt': return None  <font class="comment"># Count not find integer solution!</font>
+
+    <font class="comment"># Return the edges whose associated struct var has value 1.</font>
+    return [edge for edge, col in zip(edges, lp.cols) if col.value > 0.99]
+</pre>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

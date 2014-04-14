@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Introduction to PyGLPK</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>PyGLPK Release Notes</h1>
+
+<p>Copyright &copy; 2007, 2008, Thomas W. Finley</p>
+
+<h2>PyGLPK 0.3</h2>
+<span class="date">September 22 2008</span>
+
+<ul>
+<li>The PyGLPK has been updated to build against GLPK 4.31, and has been updated to take advantage of many of the features of the new version.  Nearly all feature changes in this version are to reflect changes in the PyGLPK.  This version of PyGLPK will not build against anything prior to GLPK 4.18.</li>
+<li>It is no longer necessary to set the <code>kind</code> of a linear program explicitly to <code>int</code> to make it a MIP.</li>
+<li>The <code>Environment</code> class has been added, with a single instance <code>env</code> at the root level of the <code>glpk</code> module.  With this class one may monitor and control memory usage and terminal output.</li>
+<li>The <code>simplex</code> and <code>integer</code> solvers now accept many keyword parameters to control their functionality.</li>
+<li>Support for callbacks to control the mixed integer programming solution search have been addeed.  See the <code>Tree</code> and <code>TreeNode</code> types.</li>
+<li>The <code>Params</code> class has been removed.  Much of its functionality has been obviated as parameters are passed directly to the solvers, and the functionality of the <code>Environment</code> class.  (If you wish to build a version of PyGLPK with the <code>Params</code> type as it was in previous versions, you may edit <code>useparams = False</code> to be <code>useparams = True</code>.)</li>
+<li>It is now possible to manually change the scaling of rows and columns.</li>
+</ul>
+
+<h2>PyGLPK 0.2</h2>
+<span class="date">July 9 2007</span>
+
+<ul>
+<li>Added weak reference support to all the PyGLPK objects.
+<li>Testing code is now more exhaustive, and with more testing of smaller components rather than exclusively testing PyGLPK's ability to solve full problems.</li>
+<li>Fixed freeing some Python objects too early:  When assigning values to the constraint matrix, matrix value reference counts were not incremented correctly when using implicit indexing (i.e., when the index of an entry was inferred from the previous entry) in matrix assignments to both the entire matrix and individual rows/columns.</li>
+<li>The integer parameter <code>outfrq</code> was erroneously identified as being a float parameter in code.</li>
+</ul>
+
+<h2>PyGLPK 0.1</h2>
+<span class="date">March 28 2007</span>
+
+<ul>
+<li>First release.</li>
+</ul>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>
