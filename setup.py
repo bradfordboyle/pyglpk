@@ -71,7 +71,7 @@ if useparams: macros.append(('USEPARAMS', None))
 module1 = Extension(
     'glpk',
     sources = [os.path.join('src',r+'.c') for r in source_roots],
-    define_macros = macros, extra_compile_args=['-m32'], extra_link_args=['-m32'],
+    define_macros = macros,
     library_dirs = libdirs, include_dirs = incdirs,
     libraries = libs, extra_objects = extraobs)
 
