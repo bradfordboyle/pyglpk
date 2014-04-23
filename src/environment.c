@@ -71,32 +71,17 @@ static PyObject* Environment_getblocks_peak(EnvironmentObject *self,
   return PyInt_FromLong(cpeak);
 }
 
-#if GLPK_VERSION(4,28)
-#define GLP_LONG glp_long
-#else
-#define GLP_LONG glp_ulong
-#endif
-
-static PyObject* long2py(GLP_LONG l) {
-  if ((l.hi==0 && l.lo>=0) || (l.hi==-1 && l.lo<0))
-    return PyInt_FromLong(l.lo);
-  PY_LONG_LONG ll = l.hi;
-  ll <<= 32;
-  ll |= (unsigned int)l.lo;
-  return PyLong_FromLongLong(ll);
-}
-
 static PyObject* Environment_getbytes(EnvironmentObject *self,void *closure) {
-  GLP_LONG b;
-  glp_mem_usage(NULL, NULL, &b, NULL);
-  return long2py(b);
+  size_t total;
+  glp_mem_usage(NULL, NULL, &total, NULL);
+  return PyLong_FromSize_t(total);
 }
 
 static PyObject* Environment_getbytes_peak(EnvironmentObject *self,
 					   void *closure) {
-  GLP_LONG b;
-  glp_mem_usage(NULL, NULL, NULL, &b);
-  return long2py(b);
+  size_t tpeak;
+  glp_mem_usage(NULL, NULL, NULL, &tpeak);
+  return PyInt_FromSize_t(tpeak);
 }
 
 static PyObject* Environment_getmemlimit(EnvironmentObject *self,

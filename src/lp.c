@@ -24,6 +24,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "kkt.h"
 #include "util.h"
 #include "tree.h"
+#include "lpx.h"
 
 #ifdef USEPARAMS
 #include "params.h"

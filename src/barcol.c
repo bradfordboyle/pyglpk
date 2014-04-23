@@ -21,6 +21,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "bar.h"
 #include "util.h"
 #include "structmember.h"
+#include "lpx.h"
 
 #define LP (self->py_lp->lp)
 

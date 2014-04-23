@@ -22,6 +22,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "lp.h"
 #include <string.h>
 #include <stdio.h>
+#include "lpx.h"
 
 int util_extract_if(PyObject *ob, PyObject *barcol,
 		    int *len, int **ind, double **val) {

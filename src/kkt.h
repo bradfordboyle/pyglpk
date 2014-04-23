@@ -21,7 +21,8 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #define _KKT_H
 
 #include <Python.h>
-#include "lp.h"
+/*#include "lp.h"*/
+#include "lpx.h"
 
 #define KKT_Check(op) PyObject_TypeCheck(op, &KKTType)
 
