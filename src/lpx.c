@@ -73,55 +73,6 @@ int lpx_read_bas(LPX *lp, const char *fname)
 #endif
 }
 
-int lpx_write_bas(LPX *lp, const char *fname)
-{     /* write LP basis in fixed MPS format */
-#if 0 /* 13/IV-2009 */
-      return write_bas(lp, fname);
-#else
-      xassert(lp == lp);
-      xassert(fname == fname);
-      xerror("lpx_write_bas: operation not supported\n");
-      return 0;
-#endif
-}
-
-int lpx_write_freemps(LPX *lp, const char *fname)
-{     /* write problem data in free MPS format */
-      return glp_write_mps(lp, GLP_MPS_FILE, NULL, fname);
-}
-
-int lpx_write_cpxlp(LPX *lp, const char *fname)
-{     /* write problem data in CPLEX LP format */
-      return glp_write_lp(lp, NULL, fname);
-}
-
-int lpx_print_prob(LPX *lp, const char *fname)
-{     /* write problem data in plain text format */
-      return glp_write_lp(lp, NULL, fname);
-}
-
-int lpx_print_sol(LPX *lp, const char *fname)
-{     /* write LP problem solution in printable format */
-      return glp_print_sol(lp, fname);
-}
-
-int lpx_print_sens_bnds(LPX *lp, const char *fname)
-{     /* write bounds sensitivity information */
-      if (glp_get_status(lp) == GLP_OPT && !glp_bf_exists(lp))
-         glp_factorize(lp);
-      return glp_print_ranges(lp, 0, NULL, 0, fname);
-}
-
-int lpx_print_ips(LPX *lp, const char *fname)
-{     /* write interior point solution in printable format */
-      return glp_print_ipt(lp, fname);
-}
-
-int lpx_print_mip(LPX *lp, const char *fname)
-{     /* write MIP problem solution in printable format */
-      return glp_print_mip(lp, fname);
-}
-
 /* easy-to-use driver to the exact simplex method */
 /* glpk-4.45/glplpx01.c:539--556 */
 int lpx_exact(LPX *lp)

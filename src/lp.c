@@ -165,7 +165,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds) {
 	// Possibly module arguments.
 	int i,size = PyTuple_Size(model_obj);
 	if (size < -1) { return -1; }
-	if (size >  3) { 
+	if (size >  3) {
 	  PyErr_SetString(PyExc_ValueError, "model tuple must have length<=3");
 	  return -1; }
 	for (i=0; i<size; ++i) {
@@ -212,11 +212,11 @@ PyObject *LPX_GetMatrix(LPXObject *self) {
 
   numrows = glp_get_num_rows(LP);
   nnz = glp_get_num_nz(LP);
-  
+
   retval = PyList_New(nnz);
   if (nnz==0 || retval==NULL) return retval;
 
-  // We don't really need this much memory, but, eh... 
+  // We don't really need this much memory, but, eh...
   int *ind = (int*)calloc(nnz,sizeof(int));
   double *val = (double*)calloc(nnz,sizeof(double));
 
@@ -328,7 +328,7 @@ static PyObject* LPX_basis_cpx(LPXObject *self) {
 #else
   lpx_cpx_basis(LP);
 #endif
-  Py_RETURN_NONE; 
+  Py_RETURN_NONE;
 }
 
 static PyObject* LPX_basis_read(LPXObject *self, PyObject *args) {
@@ -436,7 +436,7 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
   case GLP_PT_STD: case GLP_PT_PSE: break;
   default:
     PyErr_SetString
-      (PyExc_ValueError, 
+      (PyExc_ValueError,
        "invalid value for pricing (LPX.PT_STD, LPX.PT_PSE valid values)");
     return NULL;
   }
@@ -444,7 +444,7 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
   case GLP_RT_STD: case GLP_RT_HAR: break;
   default:
     PyErr_SetString
-      (PyExc_ValueError, 
+      (PyExc_ValueError,
        "invalid value for ratio test (LPX.RT_STD, LPX.RT_HAR valid values)");
     return NULL;
   }
@@ -518,7 +518,7 @@ static void mip_callback(glp_tree *tree, void *info) {
   case GLP_IPREPRO: method_name=PyString_FromString("prepro"); break;
   case GLP_IBRANCH: method_name=PyString_FromString("branch"); break;
 #endif
-  case GLP_IROWGEN: method_name=PyString_FromString("rowgen"); break; 
+  case GLP_IROWGEN: method_name=PyString_FromString("rowgen"); break;
   case GLP_IHEUR:   method_name=PyString_FromString("heur");   break;
   case GLP_ICUTGEN: method_name=PyString_FromString("cutgen"); break;
   case GLP_IBINGO:  method_name=PyString_FromString("bingo");  break;
@@ -578,7 +578,7 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
   glp_init_iocp(&cp);
   cp.msg_lev = GLP_MSG_OFF;
   // Map the keyword arguments to the appropriate entries.
-  static char *kwlist[] = 
+  static char *kwlist[] =
     {"msg_lev", "br_tech", "bt_tech",
 #if GLPK_VERSION(4, 21)
      "pp_tech",
@@ -589,7 +589,7 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 #if GLPK_VERSION(4, 23)
      "mir_cuts",
 #endif // GLPK_VERSION(4, 23)
-     "tol_int", "tol_obj", "tm_lim", "out_frq", "out_dly", 
+     "tol_int", "tol_obj", "tm_lim", "out_frq", "out_dly",
      "callback", //"cb_info", "cb_size",
      NULL};
   if (!PyArg_ParseTupleAndKeywords
@@ -739,37 +739,86 @@ static KKTObject* LPX_kktint(LPXObject *self) {
   return kkt;
 }
 
-static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds) {
-  static char* kwlist[] = {"mps", "bas", "freemps", "cpxlp", "prob",
-			   "sol", "sens_bnds", "ips", "mip", NULL};
-  static int(*writers[])(LPX*,const char*) = {
-    lpx_write_mps, lpx_write_bas, 
-    lpx_write_freemps, 
-    lpx_write_cpxlp,
-    lpx_print_prob, lpx_print_sol, lpx_print_sens_bnds, lpx_print_ips,
-    lpx_print_mip};
-  char* fnames[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-  int i;
-  if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "|sssssssss", kwlist, fnames,fnames+1,fnames+2,fnames+3,
-       fnames+4,fnames+5,fnames+6,fnames+7,fnames+8)) {
-    return NULL;
-  }
-  for (i=0; i<10; ++i) {
-    if (fnames[i]==NULL) continue;
-    if (writers[i]==NULL) {
-      PyErr_Format(PyExc_NotImplementedError,
-		   "writer for '%s' format absent in this version of GLPK",
-		   kwlist[i]);
-      return NULL;
-    }
-    int retval = (writers[i])(LP, fnames[i]);
-    if (retval==0) continue;
-    PyErr_Format(PyExc_RuntimeError, "writer for '%s' failed to write to '%s'",
-		 kwlist[i], fnames[i]);
-    return NULL;
-  }
-  Py_RETURN_NONE;
+static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
+{
+	static char* kwlist[] = {"mps", "freemps", "prob", "sol", "sens_bnds",
+		"ips", "mip", NULL};
+	char* fnames[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+	char* fname;
+	const char* err_msg = "writer for '%s' failed to write to '%s'";
+	int rv;
+
+	rv = PyArg_ParseTupleAndKeywords(args, keywds, "|sssssss", kwlist,
+	fnames,fnames+1,fnames+2,fnames+3, fnames+4,fnames+5,fnames+6);
+
+	if (!rv)
+		return NULL;
+
+	fname = fnames[0];
+	if (fname != NULL) {
+		rv = glp_write_mps(LP, GLP_MPS_DECK, NULL, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[0], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[1];
+	if (fname != NULL) {
+		rv = glp_write_mps(LP, GLP_MPS_FILE, NULL, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[1], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[2];
+	if (fname != NULL) {
+		rv = glp_write_lp(LP, NULL, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[2], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[3];
+	if (fname != NULL) {
+		rv = glp_print_sol(LP, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[3], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[4];
+	if (fname != NULL) {
+		if (glp_get_status(LP) == GLP_OPT && !glp_bf_exists(LP))
+			glp_factorize(LP);
+		rv = glp_print_ranges(LP, 0, NULL, 0, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[4], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[5];
+	if (fname != NULL) {
+		rv = glp_print_ipt(LP, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[5], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[6];
+	if (fname != NULL) {
+		glp_print_mip(LP, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[6], fname);
+			return NULL;
+		}
+	}
+	Py_RETURN_NONE;
 }
 
 /****************** GET-SET-ERS ***************/
@@ -830,7 +879,7 @@ static PyObject* LPX_getstatus(LPXObject *self, void *closure) {
   case 0: status=glp_get_status(LP); break;
   case 1: status=glp_ipt_status(LP); break;
   case 2: status=glp_mip_status(LP); break;
-  default: 
+  default:
     PyErr_SetString(PyExc_RuntimeError,
 		    "bad internal state for last solver identifier");
     return NULL;
@@ -885,16 +934,16 @@ int LPX_InitType(PyObject *module) {
   SETCONST(MSG_ERR);
   SETCONST(MSG_ON);
   SETCONST(MSG_ALL);
-  
+
   SETCONST(PRIMAL);
 #if GLPK_VERSION(4, 31)
   SETCONST(DUAL);
 #endif
   SETCONST(DUALP);
-  
+
   SETCONST(PT_STD);
   SETCONST(PT_PSE);
-  
+
   SETCONST(RT_STD);
   SETCONST(RT_HAR);
 
@@ -943,7 +992,7 @@ static PyMemberDef LPX_members[] = {
 static PyGetSetDef LPX_getset[] = {
   {"name", (getter)LPX_getname, (setter)LPX_setname,
    "Problem name, or None if unset.", NULL},
-  {"obj", (getter)LPX_getobj, (setter)NULL, 
+  {"obj", (getter)LPX_getobj, (setter)NULL,
    "Objective function object.", NULL},
   {"nnz", (getter)LPX_getnumnonzero, (setter)NULL,
    "Number of non-zero constraint coefficients.", NULL},
@@ -1250,7 +1299,7 @@ static PyMethodDef LPX_methods[] = {
    "sens_bnds -- Bounds sensitivity information.\n"
    "ips       -- Interior-point solution in printable format.\n"
    "mip       -- MIP solution in printable format."},
-  
+
   {NULL}
 };
 
