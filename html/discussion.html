@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Introduction to PyGLPK</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>Discussion About PyGLPK</h1>
+
+<h2>Existing Work</h2>
+
+<p>A Python binding to GLPK <a href="http://www.ncc.up.pt/~jpp/code/python-glpk/">already exists</a> in the form of Python-GLPK, but as it is automatically created through <a href="http://www.swig.org/">SWIG</a> it is not very <a href="http://faassen.n--tree.net/blog/view/weblog/2005/08/06/0">Pythonic</a>.</p>
+
+<h2>Building and Installing</h2>
+
+<p>Building this module requires that the user have installed the <a href="http://www.gnu.org/software/glpk/">GLPK</a> and <a href="http://gmplib.org/">GMP</a> libraries.  The module builds and appears to work on my simple test files in Python 2.3, 2.4, and 2.5.  Earlier versions of Python will not work.</p>
+
+<p>In the ideal case (e.g., you have GLPK and GMP libraries and headers installed in default search paths), one would install this through <code>make</code> and <code>make install</code>, and be done.</p>
+
+<p>The section on <a href="building.html">Building and Installing</a> has more information.</p>
+
+<h2>High Level Comparison of C and PyGLPK</h2>
+
+<p>To use the C API, one would first <code>#include "glpk.h"</code>, create an LPX structure through <code>lpx_create_prob()</code>, and thence manipulate this structure with <code>lpx_*</code> functions to set the data, run the optimization, and retrieve the desired values.</p>
+
+<p>To use this Python module, one would import the <code>glpk</code> module, create an LPX Python object through <code>glpk.LPX()</code>, and thence manipulate this object and the objects it contains to set the data, run the optimization, and retrieve the desired values.  The Python module calls the C API to support these operations.</p>
+
+<h2>Design Philosophy</h2>
+
+<p>PyGLPK has objects floating around everywhere, and very few actual methods.  Wherever possible and sensible, one gets and sets traits of the problem by accessing a method and directly assigning those traits.  An example of this showing how PyGPLK works and how it does not work might be interesting.</p>
+
+<table width="100%">
+<thead><th width="50%">PyGLPK is Like This</th><th width="50%">It Isn't Like This</th></thead>
+<tr><td>
+<pre class="py">
+lp.maximize = True
+lp.cols.add(10)
+for col in lp.cols:
+	col.name = 'x%d' % col.index
+	col.bounds = 0.0, None
+	lp.obj[col.index] = 1.0
+del lp.cols[2,4,5]
+</pre>
+</td><td>
+<pre class="py">
+lp.set_maximize()
+lp.add_cols(10)
+for cnum in xrange(lp.num_cols()):
+	lp.set_col_name(cnum, 'x%d' % cnum)
+	lp.set_col_bounds(cnum, 0.0, None)
+	lp.set_obj_coef(cnum, 1.0)
+lp.del_cols([2,4,5])
+</pre>
+</td></tr>
+</table>
+
+<p>Both design strategies would accomplish the same thing, but there are advantages in the first way.  For example, if I tell you only that columns of an LP are stored in a sequence <code>cols</code>, for free you already know a lot (assuming you're familiar with Python):</p>
+<ul>
+<li>You know how to get the number of columns in the LP.</li>
+<li>You know how to get a particular column or a range of columns.</li>
+<li>You know they're indexed from 0.</li>
+<li>You know how to delete them.</li>
+</ul>
+
+<h2>Differences Between C GLPK API and PyGLPK</h2>
+
+<h3>Indexing</h3>
+
+<p>Unlike the C API, everything is indexed from 0, not 1: the user does not pass in arrays (or lists!) where the first element is ignored.  Further, one indexes (for example) the first row by asking for row 0, not 1.</p>
+
+<p>In the comparative examples of parallel C and Python code, wherever possible and appropriate I sprinkle <code>+1</code> in the C code.  Of course, only a lunatic would really write code that way, but I do this to highlight this difference, and second, make it more obvious which portions of C and Python correspond to each other: it's far easier to see the relation between <code>[7, 3, 1, 8, 6]</code> and <code>[7+1, 3+1, 1+1, 8+1, 6+1]</code>, versus <code>[8, 4, 2, 9, 7]</code>.</p>
+
+<p>PyGLPK also honors Python's quirk of "negative indexing" used to count from the end of a sequence, e.g., where index -1 refers to the last item, -2 second to last item, and so forth.  This can be convenient.  For example, after adding a row, you can refer to this row by <code>lp.rows[-1]</code> rather than having to be aware of its absolute index.</p>
+
+<h3>Error Handling</h3>
+
+<p>The GLPK's approach to errors in arguments is deeply peculiar.  It writes an error message and terminate the process, in contrast with many APIs that instead set or return an error code which can be checked.  The PyGLPK takes the more Pythonic approach of throwing catchable exceptions for illegal arguments.  Unfortunately, to avoid the process being terminated, this requires that absolutely every argument be vetted, requiring that PyGLPK have the additional overhead of doing sometimes rather detailed checks of arguments (which are, of course, checked yet again when the GLPK has access to them).  It seems unlikely that GLPK's design will be improved in this area.</p>
+
+<h1>Simple Example</h1>
+
+<p>To ground you, we show an example of the module's workings.  (This example is covered in more detail in the examples section.)  Taking the introductory example from the GLPK C API reference manual, we start with the following example linear program:</p>
+
+<table align="center">
+<tr align="right"><td>maximize</td> <td><var>Z</var></td><td>=</td>
+<td>10 <var>x</var><sub>0</sub></td><td>+</td><td>6 <var>x</var><sub>1</sub></td><td>+</td><td>4 <var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td>subject to</td> <td><var>p</var></td><td>=</td>
+<td> <var>x</var><sub>0</sub></td><td>+</td><td> <var>x</var><sub>1</sub></td><td>+</td><td> <var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td></td> <td><var>q</var></td><td>=</td>
+<td> 10<var>x</var><sub>0</sub></td><td>+</td><td> 4<var>x</var><sub>1</sub></td><td>+</td><td> 5<var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td></td> <td><var>r</var></td><td>=</td>
+<td> 2<var>x</var><sub>0</sub></td><td>+</td><td> 2<var>x</var><sub>1</sub></td><td>+</td><td> 6<var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td valign="top">and bounds of variables</td><td colspan="10">
+<table>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>p</var>&nbsp;&le;&nbsp;100</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>0</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>q</var>&nbsp;&le;&nbsp;600</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>1</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>r</var>&nbsp;&le;&nbsp;300</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>2</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+</table>
+</td></tr>
+</table>
+
+<p>In the following, we show Python code to define and solve this problem, and subsequently print out the objective function value as well as the primal values of the structural variables.</p>
+
+<pre class="py">
+import glpk            <font class="comment"># Import the GLPK module</font>
+
+lp = glpk.LPX()        <font class="comment"># Create empty problem instance</font>
+lp.name = 'sample'     <font class="comment"># Assign symbolic name to problem</font>
+lp.obj.maximize = True <font class="comment"># Set this as a maximization problem</font>
+lp.rows.add(3)         <font class="comment"># Append three rows to this instance</font>
+for r in lp.rows:      <font class="comment"># Iterate over all rows</font>
+	r.name = chr(ord('p')+r.index) <font class="comment"># Name them p, q, and r</font>
+lp.rows[0].bounds = None, 100.0  <font class="comment"># Set bound -inf &lt; p &lt;= 100</font>
+lp.rows[1].bounds = None, 600.0  <font class="comment"># Set bound -inf &lt; q &lt;= 600</font>
+lp.rows[2].bounds = None, 300.0  <font class="comment"># Set bound -inf &lt; r &lt;= 300</font>
+lp.cols.add(3)         <font class="comment"># Append three columns to this instance</font>
+for c in lp.cols:      <font class="comment"># Iterate over all columns</font>
+	c.name = 'x%d' % c.index <font class="comment"># Name them x0, x1, and x2</font>
+	c.bounds = 0.0, None     <font class="comment"># Set bound 0 &lt;= xi &lt; inf</font>
+lp.obj[:] = [ 10.0, 6.0, 4.0 ]   <font class="comment"># Set objective coefficients</font>
+lp.matrix = [ 1.0, 1.0, 1.0,     <font class="comment"># Set nonzero entries of the</font>
+             10.0, 4.0, 5.0,     <font class="comment">#   constraint matrix.  (In this</font>
+              2.0, 2.0, 6.0 ]    <font class="comment">#   case, all are non-zero.)</font>
+lp.simplex()           <font class="comment"># Solve this LP with the simplex method</font>
+print 'Z = %g;' % lp.obj.value,  <font class="comment"># Retrieve and print obj func value</font>
+print '; '.join('%s = %g' % (c.name, c.primal) for c in lp.cols)
+                       <font class="comment"># Print struct variable names and primal values</font>
+</pre>
+
+<p>This may produce this output.</p>
+
+<pre class="out">
+Z = 733.333; x0 = 33.3333; x1 = 66.6667; x2 = 0
+</pre>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

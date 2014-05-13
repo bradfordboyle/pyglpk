@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>SAT Example</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>SAT Example</h1>
+
+<p>In this section we show a simple example of how to use PyGLPK to build a <a href="http://en.wikipedia.org/wiki/Boolean_satisfiability_problem">SAT solver</a>.</p>
+
+<h2>How to Solve</h2>
+
+<p>Suppose one has a <a href="http://en.wikipedia.org/wiki/Conjunctive_normal_form">CNF expression</a>, that is, a conjunction (and-ing) of several disjunctions (or-ing) of logical literals, e.g.:</p>
+
+<p>(&nbsp;&not;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;&not;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>3</sub>&nbsp;)</p>
+
+<p>Suppose we want to find truth values to all four <var>x<sub>i</sub></var> variables so that the CNF expression is true.  This problem has been viewed from many different ways, but we'll see how to encode and (we hope) solve it within a mixed-linear program.  We will build a function <code class="py">solve_sat</code> to satisfy a given CNF.</p>
+
+<p>First, we need to define how we encode our input CNF expressions that we want to satisfy:
+<ul>
+<li>Each logical literal is represented as either a positive or negative integer, where <code>i</code> and <code>-i</code> correpond to the logical literals <var>x<sub>i</sub></var> and &not;<var>x<sub>i</sub></var>, respectively.</li>
+<li>Each clause in the expression, i.e., disjunction of literals, is represented as a tuple of such encoding of literals, e.g., <code>(-1, 2, -3)</code> represents the disjunction (&nbsp;&not;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>3</sub>&nbsp;).
+<li>The entire conjunctive expression is a list of such tuples, e.g., the expression above would have encoding:<br/><code>[(-1, -3, -4), (2, 3, -4), (1, -2, 4), (1, 3, 4), (-1, 2, -3)]</code></li>
+</ul>
+The function will return either <code>None</code> if it could not find a satisfying assignment, or a list of booleans <code>assignment</code> representing the satisfying assignment, where the truth of each logical variable <var>x<sub>i</sub></var> is held in <code>assignment[i-1]</code>.
+</p>
+
+<p>This is our strategy of how to solve this with a mixed integer program:</p>
+<ul>
+<li>For each logical variable <var>x<sub>i</sub></var>, have a structural variable (column) representing both its positive and negative literals <var>x<sub>i</sub></var> and &not;<var>x<sub>i</sub></var>.  These structural variables should be either 0 or 1 depending on whether the corresponding literal is false or true, respectively.</li>
+<li>Because we want literal consistency, we specify that the sum of all literal pair structural variables must be 1.  This forbids literals for a given logical variable from being set both false or both true.</li>
+<li>For each clause, we define a constraint specifying that the sum of all its literal structural variables must be at least 1.  This forces each clause to be true.</li>
+<li>First we run the simplex solver (imlying a relaxed problem where the structural variables can range from 0 to 1).  Then we run the integer solver (the structural variables can be either 0 or 1).</li>
+<li>If the integer solver finds an optimal solution, excellent.  (If not we return <code>None</code>.)  If a positive literal has a corresponding structural variable with value 1, then we assign its logical variable to true.</li>
+</ul>
+
+<h2>The Implementation</h2>
+
+<p>Here is the implementation of that function:</p>
+
+<pre class="py">
+def solve_sat(expression):
+    if len(expression)==0: return [] <font class="comment"># Trivial case.  Otherwise count vars.</font>
+    numvars = max([max([abs(v) for v in clause]) for clause in expression])
+    lp = glpk.LPX()                  <font class="comment"># Construct an empty linear program.</font>
+    glpk.env.term_on = False         <font class="comment"># Stop the annoying output.</font>
+    lp.cols.add(2*numvars)           <font class="comment"># As many columns as there are literals.</font>
+    for col in lp.cols:              <font class="comment"># Literal must be between false and true.</font>
+        col.bounds = 0.0, 1.0
+    def lit2col(lit):                <font class="comment"># Function to compute column index.</font>
+        return [2*(-lit)-1,2*lit-2][lit&gt;0]
+    for i in xrange(1, numvars+1):   <font class="comment"># Ensure "oppositeness" of literals.</font>
+        lp.rows.add(1)
+        lp.rows[-1].matrix = [(lit2col(i), 1.0), (lit2col(-i), 1.0)]
+        lp.rows[-1].bounds = 1.0     <font class="comment"># Must sum to exactly 1.</font>
+    for clause in expression:        <font class="comment"># Ensure "trueness" of each clause.</font>
+        lp.rows.add(1)
+        lp.rows[-1].matrix = [(lit2col(lit), 1.0) for lit in clause]
+        lp.rows[-1].bounds = 1, None <font class="comment"># At least one literal must be true.</font>
+    retval = lp.simplex()            <font class="comment"># Try to solve the relaxed problem.</font>
+    assert retval == None            <font class="comment"># Should not fail in this fashion.</font>
+    if lp.status!='opt': return None <font class="comment"># If no relaxed solution, no exact sol.</font>
+
+    for col in lp.cols:
+        col.kind = int
+    retval = lp.integer()            <font class="comment"># Try to solve this integer problem.</font>
+    assert retval == None            <font class="comment"># Should not fail in this fashion.</font>
+    if lp.status != 'opt': return None
+    return [col.value &gt; 0.99 for col in lp.cols[::2]]
+</pre>
+
+<h2>The Explanation</h2>
+
+<p>We shall now go over this function section by section!</p>
+
+<pre class="py">
+if len(expression)==0: return [] <font class="comment"># Trivial case.  Otherwise count vars.</font>
+numvars = max([max([abs(v) for v in clause]) for clause in expression])
+</pre>
+
+<p>Pretty straightforward non-PyGLPK Python code.  The first line just takes care of the boundary case where we have an empty expression.  In the second line, from the expression, we find the maximum indexed logical variable we have, and use that as our count of the number of logical variables.</p>
+
+<pre class="py">
+lp = glpk.LPX()                  <font class="comment"># Construct an empty linear program.</font>
+</pre>
+
+<p>Calls the LPX constructor to construct an empty linear program.</p>
+
+<pre class="py">
+glpk.env.term_on = False         <font class="comment"># Stop the annoying output.</font>
+</pre>
+
+<p>Within the <code>glpk</code> module member <code>env</code>, of type <code>Environment</code>.  By assigning to various attributes contained within <code>env</code>, you can affect behavior of the GLPK object.  In this case, we are assigning <code>False</code> to the <code>term_on</code> (terminal output on) parameter, to suppress all output.</p>
+
+<pre class="py">
+lp.cols.add(2*numvars)           <font class="comment"># As many columns as there are literals.</font>
+</pre>
+
+<p>Recall that we want as many structural variables (columns) in the linear program as there are possible literals over all our logical variables.  Each logical variable <var>x<sub>i</sub></var> has two posible literals: itself (<var>x<sub>i</sub></var>), and its negation (&not;<var>x<sub>i</sub></var>).</p>
+
+<p>Initially we have no columns at all.  So, we get the <code>lp.cols</code> object, the LP's column container, and call its <code>add</code> method, telling it to add as many columns as there are twice the number of logical variables.</p>
+
+<pre class="py">
+for col in lp.cols:              <font class="comment"># Literal must be between false and true.</font>
+    col.bounds = 0.0, 1.0
+</pre>
+
+<p>In addition to creating new columns, the <code>lp.cols</code> collection object is used to access individual columns.  In this case, we are iterating over every column.  Once we have each column, we assign its bounds to be between 0 and 1.  This will force the structural variable associated with this column to fall between these values.</p>
+
+<p>These <code>lp.cols</code> objects act like sequences (albeit with restrictions on their content).  In order to access their elements (in this case, columns), we can either iterate over the columns as we do here, or index into them directly as <code>lp.cols[colnum]</code>.</p>
+
+<pre class="py">
+def lit2col(lit):                <font class="comment"># Function to compute column index.</font>
+    return [2*(-lit)-1,2*lit-2][lit&gt;0]
+</pre>
+
+<p>This is just a helper function for our own benefit.  Recall that we have a structural variable for each possible literal.  This function merely maps a literal code to a column index.  This function maps literal code 1 to column index 0, -1 to column index 1, 2 to 2, -2 to 3, 3 to 4, -3 to 5, 4 to 6, and so forth.</p>
+
+<pre class="py">
+for i in xrange(1, numvars+1):   <font class="comment"># Ensure "oppositeness" of literals.</font>
+    lp.rows.add(1)
+    lp.rows[-1].matrix = [(lit2col(i), 1.0), (lit2col(-i), 1.0)]
+    lp.rows[-1].bounds = 1.0     <font class="comment"># Must sum to exactly 1.</font>
+</pre>
+
+<p>These are our consistency constraints to make sure two opposite literals are not both true or not both false.  For each logical variable, we add one new row (what will be a consistency constraint).  Notice that we are now using the <code>lp.rows</code> object!  This is similar to the <code>lp.cols</code> object (in reality they are the same type), except it holds rows instead of columns.</p>
+
+<p>Then we get the last row, which is the one we just added (note the use of the -1 index to address the last row), and assign to its <code>matrix</code> attribute.  The <code>matrix</code> attribute for any row or column corresponds to the entries of the row or column vector in our constraint matrix.  In this case, we are setting the two locations of this constraint matrix row corresponding to the two structural variables for <var>x<sub>i</sub></var> and &not;<var>x<sub>i</sub></var> to 1.0.</p>
+
+<p>Finally, we set the <code>bounds</code> attribute for this row's auxiliary variable to <code>1.0</code>.  Note that this differs from the previous bound definition: here we use only one number.  This indicates we want an equality constraint.  (It would have been equivalent to assign <code>1.0, 1.0</code> .)</p>
+
+<pre class="py">
+for clause in expression:        <font class="comment"># Ensure "trueness" of each clause.</font>
+    lp.rows.add(1)
+    lp.rows[-1].matrix = [(lit2col(lit), 1.0) for lit in clause]
+    lp.rows[-1].bounds = 1, None <font class="comment"># At least one literal must be true.</font>
+</pre>
+
+<p>These are our clause satisfiability constraints, to make sure that at least one literal in each clause is true.  For each clause we, again, add a single row.</p>
+
+<p>We access this last added row, and assign to its <code>matrix</code> attribute.  In this case, we are specifying that the row's constraint coefficients should be 1.0 for each structural variable corresponding to each literal within this clause.</p>
+
+<p>Finally, we set the <code>bounds</code> attribute for this row, establishing the lower bound <code>1</code> and upper bound <code>None</code>.  An assignment of <code>None</code> indicates unboundedness in this direction.</p>
+
+<pre class="py">
+retval = lp.simplex()            <font class="comment"># Try to solve the relaxed problem.</font>
+assert retval == None            <font class="comment"># Should not fail in this fashion.</font>
+</pre>
+
+<p>Now we employ the simplex solver to attempt to solve a relaxed version of the problem.  (Relaxed in the sense that the variables can be non-integers.)  We do this because, at the point it is called, the integer optimization method requires an existing optimal basic solution.</p>
+
+<p>The method returns <code>None</code> unless the method was unable to start the search due to a fault in the problem definition (which returns the string <code>'fault'</code>), or because the simplex search terminated prematurely (due to one of several possible conditions).</p>
+
+<p>In a real application we would probably be interested in seeing what went wrong, and try to fix it.  However, for this toy example, we just noisily fail with an exception.</p>
+
+<pre class="py">
+if lp.status!='opt': return None <font class="comment"># If no relaxed solution, no exact sol.</font>
+</pre>
+
+<p>Note that "not terminating prematurely" does not mean "an optimal solution was found!"  It merely means that the search did not terminate abnormally.  In order to check whether we found an optimal solution (as opposed to, say, having determined that the problem is infeasible), we check the <code>status</code> attribute.  If it does not hold <code>'opt'</code>, then we return <code>None</code> to indicate that we could not find a satisfying assignment.</p>
+
+<p>At this point we hold an optimal basic solution to the relaxed problem.  We now go about turning this into a mixed-integer program.</p>
+
+<pre class="py">
+for col in lp.cols:
+    col.kind = int
+</pre>
+
+<p>We first assign the columns the <code>kind</code> of <code>int</code> to indicate that we want this to be an integer program.  The <code>kind</code> attribute can be either <code>float</code>, <code>int</code>, or <code>bool</code>.  (What a horrible abuse of types!)</p>
+
+<pre class="py">
+retval = lp.integer()            <font class="comment"># Try to solve this integer problem.</font>
+assert retval == None            <font class="comment"># Should not fail in this fashion.</font>
+if lp.status != 'opt': return None
+</pre>
+
+<p>This is very similar to our invocation of the <code>simplex</code> solver, except this time we are using the <code>integer</code> solver.  Again, we fail noisily if we encounter something unexpected, and quietly return <code>None</code> if we could not find a satisfying assignment.</p>
+
+<pre class="py">
+return [col.value &gt; 0.99 for col in lp.cols[::2]]
+</pre>
+
+<p>This function is supposed to return a satisfying truth assignment to all our variables if such an assignment is possible.  Since we have gotten this far without returning <code>None</code>, we know we have one: a variable is true if its positive literal has a corresonding structural variable of 1.</p>
+
+<p>Note that literal <var>x</var><sub>1</sub> corresponds to column 0, <var>x</var><sub>2</sub> to column 2, <var>x</var><sub>3</sub> to column 4, and so forth.  We go over each of the even columns (using the slice <code>::2</code> to indicate every column from beginning to end, counting by 2s), test whether the value of this columns variable is <code>1</code>, and return the resulting list as our satisfying assignment.</p>
+
+We are done!
+
+<h2>Example Run</h2>
+
+<p>So, how does this work?  Recall our CNF formula.</p>
+
+<p>(&nbsp;&not;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;<var>x</var><sub>3</sub>&nbsp;&or;&nbsp;<var>x</var><sub>4</sub>&nbsp;) &and; (&nbsp;&not;<var>x</var><sub>1</sub>&nbsp;&or;&nbsp;<var>x</var><sub>2</sub>&nbsp;&or;&nbsp;&not;<var>x</var><sub>3</sub>&nbsp;)</p>
+
+<p>This has the encoding<br/>
+<code>[(-1, -3, -4), (2, 3, -4), (1, -2, 4), (1, 3, 4), (-1, 2, -3)]</code></p>
+
+<p>Suppose we run this in our Python interpreter.
+
+<pre class="py">
+exp = [(-1, -3, -4), (2, 3, -4), (1, -2, 4), (1, 3, 4), (-1, 2, -3)]
+print solve_sat(exp)
+</pre>
+
+<p>This prints out:</p>
+
+<pre class="out">
+[True, True, False, False]
+</pre>
+
+<p>So, <var>x</var><sub>1</sub>=T, <var>x</var><sub>2</sub>=T, <var>x</var><sub>3</sub>=F, and <var>x</var><sub>4</sub>=F.  Is this a satisfying assignment?  The first and second clauses are true because &not;<var>x</var><sub>4</sub>.  The third and fourth clauses are true because <var>x</var><sub>1</sub>.  The fifth (last) clause is true because <var>x</var><sub>2</sub>.
+
+<p>Now suppose we input the expression <var>x</var><sub>1</sub>&nbsp;&and;&nbsp;&not;<var>x</var><sub>1</sub>, which is plainly unsatisfiable.</p>
+
+<pre class="py">
+exp = [(-1,), (1,)]
+print solve_sat(exp)
+</pre>
+
+<p>This prints out:</p>
+
+<pre class="out">
+None
+</pre>
+
+<p>Success!  Or, at least, what we should expect.</p>
+
+<h2>Fun Variants</h2>
+
+<p>This problem is a little unusual in that we did not specify an objective function, leaving it to its default constant 0 value.  We do not care which assignment we get.  However, what if we wanted as many of our logical variables to be true as possible?</p>
+
+<p>Suppose, right after the <code class="py">lp.cols.add(2*numvars)</code> statement in our function, we added the following snippet.</p>
+
+<pre class="py">
+lp.obj[::2] = 1
+lp.obj.maximize = True
+</pre>
+
+<p>We assign all even indexed objective coefficients (i.e., those corresponding to the positive literal structural variables) to 1, and say we want our LP to maximize this objective function.  In other words, we want to maximize the sum of structural variables corresponding to positive assignments.  If we repeat our run, we get
+<pre class="out">
+[True, True, True, False]
+</pre></p>
+
+<p>Different, but still a satisfying assignment!  Now we have 3 logical variables true instead of 2.  Suppose now we say we want to minimize this function, that is, we edit the snippet so now it reads
+<pre class="py">
+lp.obj[::2] = 1
+lp.obj.maximize = False
+</pre></p>
+
+<p>Repeating our run again, we get
+<pre class="out">
+[False, False, True, False]
+</pre></p>
+
+<p>Now only one logical variable is true!</p>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

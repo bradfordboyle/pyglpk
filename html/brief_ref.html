@@ -1,0 +1,549 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Brief Reference</title>
+<style>
+</style></head>
+<body>
+
+<h1>Brief Reference</h1>
+
+<p>The following table is a brief overview of the functionality of PyGLPK.  The intention was to present functionality in roughly the same order and groupings that they do in the GLPK reference manual, at least where appropriate.  This table contains a brief description of some functionality, some simple Python code illustrating the general principles of usage, the related C API function (for the benefit of those familiar with GLPK; this information can be safely ignored if you are not), and a link to more detailed documentation on this subject with the <b>?</b> links.</p>
+
+<table class="cpycomp" width="100%">
+<thead><th>Python Module</th><th>C API</th><th>?</th></thead>
+
+<tr class="section"><th colspan="3">Problem attributes</th></tr>
+
+<tr class="desc"><td colspan="2">Create or delete problem object</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_create">?</a></td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX()</code></td>
+<td class="capi"><code>glp_create_prob</code></td></tr>
+
+<tr><td class="pymod"><code>del lp</code> or just let garbage collector handle it</td>
+<td class="capi"><code>glp_delete_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Reinitialize problem object</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_create">?</a></td></tr>
+<tr><td class="pymod"><code>lp.erase()</code></td>
+<td class="capi"><code>glp_erase_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get problem name</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_name">?</a></td></tr>
+<tr><td class="pymod"><code>lp.name = "pname"</code> or <code>del lp.name</code></td>
+<td class="capi"><code>glp_set_prob_name</code></td></tr>
+<tr><td class="pymod"><code>lp.name</code> (either a string or <code>None</code>)</td>
+<td class="capi"><code>glp_get_prob_name</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get objective function name</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_name">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj.name = "oname"</code> or <code>del lp.obj.name</code></td>
+<td class="capi"><code>glp_set_obj_name</code></td></tr>
+<tr><td class="pymod"><code>lp.obj.name</code> (either a string or <code>None</code>)</td>
+<td class="capi"><code>glp_get_obj_name</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get optimization direction</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_minmax">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj.maximize = True</code> or <code>= False</code></td>
+<td class="capi"><code>glp_set_obj_dir</code></td></tr>
+<tr><td class="pymod"><code>lp.obj.maximize</code> (either <code>True</code> or <code>False</code>)</td>
+<td class="capi"><code>glp_get_obj_dir</code></td></tr>
+
+<tr class="desc"><td colspan="2">Add new rows or columns to a problem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_add">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows.add(num_to_add)</code></td>
+<td class="capi"><code>glp_add_rows</code></td></tr>
+<tr><td class="pymod"><code>lp.cols.add(num_to_add)</code></td>
+<td class="capi"><code>glp_add_cols</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get row or column name</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_name">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].name = "rname"</code> or <code>del lp.rows[rnum].name</code></td>
+<td class="capi"><code>glp_set_row_name</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].name = "cname"</code> or <code>del lp.cols[cnum].name</code></td>
+<td class="capi"><code>glp_set_col_name</code></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].name</code> (either a string or <code>None</code>)</td>
+<td class="capi"><code>glp_get_row_name</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].name</code> (either a string or <code>None</code>)</td>
+<td class="capi"><code>glp_get_col_name</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get row or column bounds</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#rc_bounds">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].bounds = lower, upper</code> or <code>= equals</code></td>
+<td class="capi"><code>glp_set_row_bnds</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].bounds = lower, upper</code> or <code>= equals</code></td>
+<td class="capi"><code>glp_set_col_bnds</code></td></tr>
+<tr><td class="pymod" rowspan="3"><code>lp.rows[ri].bounds</code> (two values, each either a float or <code>None</code>)</td>
+<td class="capi"><code>glp_get_row_type</code></td></tr>
+<tr><td class="capi"><code>glp_get_row_lb</code></td></tr>
+<tr><td class="capi"><code>glp_get_row_ub</code></td></td></tr>
+<tr><td class="pymod" rowspan="3"><code>lp.cols[ci].bounds</code> (two values, each either a float or <code>None</code>)</td>
+<td class="capi"><code>glp_get_col_type</code></td></tr>
+<tr><td class="capi"><code>glp_get_col_lb</code></td></tr>
+<tr><td class="capi"><code>glp_get_col_ub</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get objective coefficient or shift term</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_coef">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj[ci] = coef</code> (use index <code>None</code> to get shift term)</td>
+<td class="capi"><code>glp_set_obj_coef</code></td></tr>
+<tr><td class="pymod"><code>lp.obj[ci]</code> (a float)</td>
+<td class="capi"><code>glp_get_obj_coef</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get row or column of the constraint matrix</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_matrix">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].matrix = [(ci1,val1), (ci2,val2), ...]</code></td>
+<td class="capi"><code>glp_set_mat_row</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].matrix = [(ri1,val1), (ri2,val2), ...]</code></td>
+<td class="capi"><code>glp_set_mat_col</code></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].matrix</code> (a list of int-col-index, float-value tuples)</td>
+<td class="capi"><code>glp_get_mat_row</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].matrix</code> (a list of int-row-index, float-value tuples)</td>
+<td class="capi"><code>glp_get_mat_col</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get the whole constraint matrix</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_matrix">?</a></td></tr>
+<tr><td class="pymod"><code>lp.matrix = [(ri1,ci1,val1), (ri2,ci2,val2), ...]</code></td>
+<td class="capi"><code>glp_load_matrix</code></td></tr>
+<tr><td class="pymod"><code>lp.matrix</code> (a list of row, column, value tuples)</td>
+<td class="capi">(no analogy)</td></tr>
+
+<tr class="desc"><td colspan="2">Delete rows or columns from problem object</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_delete">?</a></td></tr>
+<tr><td class="pymod"><code>del lp.rows[ri1, ri2, ...]</code> or <code>del lp.rows[r_lo:r_hi+1]<code></td>
+<td class="capi"><code>glp_del_rows</code></td></tr>
+<tr><td class="pymod"><code>del lp.cols[ci1, ci2, ...]</code> or <code>del lp.cols[c_lo:c_hi+1]<code></td>
+<td class="capi"><code>glp_del_cols</code></td></tr>
+
+<tr class="desc"><td colspan="2">Delete problem object</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_create">?</a></td></tr>
+<tr><td class="pymod"><code>del lp</code> or just let garbage collector handle it</td>
+<td class="capi"><code>glp_delete_prob</code></td></tr>
+
+<tr class="section"><th colspan="3">Indexing rows and columns by name</th></tr>
+
+<tr class="desc"><td colspan="2">Index row or column by its name</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.rows['rowname']</code>, or <code>'rowname' in lp.rows</code> to check for membership</td>
+<td class="capi"><code>glp_find_row</code></td></tr>
+<tr><td class="pymod"><code>lp.cols['colname']</code>, or <code>'colname' in lp.cols</code> to check for membership</td>
+<td class="capi"><code>glp_find_col</code></td></tr>
+<tr><td>The index is created when required.</td><td class="capi"><code>glp_create_index</code></td></tr>
+<tr><td></td><td class="capi"><code>glp_delete_index</code></td></tr>
+
+<tr class="section"><th colspan="3">Problem scaling</th></tr>
+
+<tr class="desc"><td colspan="2">Automatically scale or unscale problem data</td>
+<td class="reflink" rowspan="3"><a href="object_doc.html#lp_scale">?</a></td></tr>
+<tr><td class="pymod"><code>lp.scale()</code></td>
+<td class="capi"><code>glp_scale_prob</code></td></tr>
+<tr><td class="pymod"><code>lp.unscale()</code></td>
+<td class="capi"><code>glp_unscale_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get scaling of row and column data</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#rc_scale">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[i].scale = factor</code></td>
+<td class="capi"><code>glp_set_rii</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[i].scale = factor</code></td>
+<td class="capi"><code>glp_set_sjj</code></td></tr>
+<tr><td class="pymod"><code>lp.rows[i].scale</code> (a float)</td>
+<td class="capi"><code>glp_get_rii</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[i].scale</code> (a float)</td>
+<td class="capi"><code>glp_get_sjj</code></td></tr>
+
+<tr class="section"><th colspan="3">Basis operations</th></tr>
+
+<tr class="desc"><td colspan="2">Construct trivial initial LP basis</td>
+<td class="reflink" rowspan="8"><a href="object_doc.html#lp_basis">?</a></td></tr>
+<tr><td class="pymod"><code>lp.std_basis()</code></td>
+<td class="capi"><code>glp_std_basis</code></td></tr>
+
+<tr class="desc"><td colspan="2">Construct advanced initial LP basis</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.adv_basis()</code></td>
+<td class="capi"><code>glp_adv_basis</code></td></tr>
+
+<tr class="desc"><td colspan="2">Construct advanced initial LP basis with Bixby's algorithm</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.cpx_basis()</code></td>
+<td class="capi"><code>glp_cpx_basis</code> <!-- Undocumented! --> </td></tr>
+
+<tr class="desc"><td colspan="2">Read initial LP basis from a file</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html#lp_basis">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.read_basis(filename)</td>
+<td class="capi"><code>lpx_read_bas</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set row or column status</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#rc_basis">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].status = newstatus</code></td>
+<td class="capi"><code>glp_set_row_stat</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].status = newstatus</code></td>
+<td class="capi"><code>glp_set_col_stat</code></td></tr>
+
+<tr class="section"><th colspan="3">Basic simplex solvers</th></tr>
+
+<tr class="desc"><td colspan="2">Solve problem with the simplex method</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#lp_solvers">?</a></td></tr>
+<tr><td class="pymod"><code>lp.simplex()</code></td>
+<td class="capi"><code>glp_simplex</code></td></tr>
+
+<tr class="desc"><td colspan="2">Solve problem with an exact arithmetic using simplex method</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.exact()</code></td>
+<td class="capi"><code>lpx_exact</code> <!-- Undocumented! --> </td></tr>
+
+<tr class="desc"><td colspan="2">Get generic, primal, or dual status of basic solution</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_status">?</a></td></tr>
+<tr><td class="pymod"><code>lp.status</code> (or <code>lp.status_s</code> to force simplex status)</td>
+<td class="capi"><code>glp_get_status</code></td></tr>
+<tr><td class="pymod"><code>lp.status_primal</code> (a string)</td>
+<td class="capi"><code>glp_get_prim_stat</code></td></tr>
+<tr><td class="pymod"><code>lp.status_dual</code> (a string)</td>
+<td class="capi"><code>glp_get_dual_stat</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get objective value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj.value</code> (or <code>lp.obj.value_s</code> to force simplex value)</td>
+<td class="capi"><code>glp_get_obj_val</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get row or column status</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_basis">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].status</code> (a string, one of <code>'bs'</code>, <code>'nl'</code>,<code>'nu'</code>,<code>'nf'</code>,<code>'ns'</code>)</td>
+<td class="capi"><code>glp_get_row_stat</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].status</code> (a string, one of <code>'bs'</code>, <code>'nl'</code>,<code>'nu'</code>,<code>'nf'</code>,<code>'ns'</code>)</td>
+<td class="capi"><code>glp_get_col_stat</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get row or column primal or dual value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].primal</code> (or <code>lp.rows[ri].primal_s</code> to force simplex value)</td>
+<td class="capi"><code>glp_get_row_prim</code></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].dual</code> (or <code>lp.rows[ri].dual_s</code> to force simplex value)</td>
+<td class="capi"><code>glp_get_row_dual</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].primal</code> (or <code>lp.cols[ci].primal_s</code> to force simplex value)</td>
+<td class="capi"><code>glp_get_col_prim</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].dual</code> (or <code>lp.cols[ci].dual_s</code> to force simplex value)</td>
+<td class="capi"><code>glp_get_col_dual</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get non-basic variable causing unboundness</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_ray">?</a></td></tr>
+<tr><td class="pymod"><code>lp.ray</code> (a row or column, or <code>None</code> if none has been identified)</td>
+<td class="capi"><code>lpx_get_ray_info</code></td></tr>
+
+<tr class="desc"><td colspan="2">Check solution's Karush-Kuhn-Tucker conditions</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#kkt">?</a></td></tr>
+<tr><td class="pymod"><code>lp.kkt()</code></td>
+<td class="capi"><code>lpx_check_kkt</code></td></tr>
+
+<tr class="section"><th colspan="3">Manual simplex tableau operations</th></tr>
+
+<tr><td class="pymod" rowspan="7">I may be wrong, but I do not anticipate much desire for people to roll their own simplex solvers within the Python module.  Please write me if my guess is incorrect.  It might be nice to have though in the future, for the sake of completeness.</td>
+<td class="capi"><code>lpx_warm_up</code></td></tr>
+
+<tr><td class="capi"><code>lpx_eval_tab_row</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr><td class="capi"><code>lpx_eval_tab_col</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr><td class="capi"><code>lpx_transform_row</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr><td class="capi"><code>lpx_transform_col</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr><td class="capi"><code>lpx_prim_ratio_test</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr><td class="capi"><code>lpx_dual_ratio_test</code></td>
+<!-- <td class="pymod"></td></tr> -->
+
+<tr class="section"><th colspan="3">Interior-point solver</th></tr>
+
+<tr class="desc"><td colspan="2">Solve problem with the interior-point method</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_solvers">?</a></td></tr>
+<tr><td class="pymod"><code>lp.interior()</code></td>
+<td class="capi"><code>lpx_interior</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get status of interior-point solution</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_status">?</a></td></tr>
+<tr><td class="pymod"><code>lp.status</code> (or <code>lp.status_i</code> to force interior point status)</td>
+<td class="capi"><code>glp_ipt_status</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get objective value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj.value</code> (or <code>lp.obj.value_i</code> to force interior point value)</td>
+<td class="capi"><code>glp_ipt_obj_val</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get row or column primal or dual value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].primal</code> (or <code>lp.rows[ri].primal_i</code> to force interior point value)</td>
+<td class="capi"><code>glp_ipt_row_prim</code></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].dual</code> (or <code>lp.rows[ri].dual_i</code> to force interior point value)</td>
+<td class="capi"><code>glp_ipt_row_dual</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].primal</code> (or <code>lp.cols[ci].primal_i</code> to force interior point value)</td>
+<td class="capi"><code>glp_ipt_col_prim</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].dual</code> (or <code>lp.cols[ci].dual_i</code> to force interior point value)</td>
+<td class="capi"><code>glp_ipt_col_dual</code></td></tr>
+
+<tr class="section"><th colspan="3">Mixed-integer programming solvers</th></tr>
+
+<tr class="desc"><td colspan="2">Set or get problem class</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_mip">?</a></td></tr>
+<tr><td class="pymod"><code>lp.kind</code> (either <code>int</code> or <code>float</code>)</td>
+<td class="capi"><code>lpx_get_class</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get column kind</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_mip">?</a></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].kind = int</code> or <code>= bool</code> or <code>= float</code></td>
+<td class="capi"><code>glp_set_col_kind</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].kind</code> (either <code>int</code>, <code>bool</code>, or <code>float</code>)</td>
+<td class="capi"><code>glp_get_col_kind</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get number of integer columns</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#lp_nintbin">?</a></td></tr>
+<tr><td class="pymod"><code>lp.nint</code> (an integer)</td>
+<td class="capi"><code>glp_get_num_int</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get number of binary columns</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.nbin</code> (an integer)</td>
+<td class="capi"><code>glp_get_num_bin</code></td></tr>
+
+<tr class="desc"><td colspan="2">Solve MIP problem with the B&B method</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#lp_solvers">?</a></td></tr>
+<tr><td class="pymod"><code>lp.integer()</code></td>
+<td class="capi"><code>glp_intopt</code></td></tr>
+
+<tr class="desc"><td colspan="2">Solve MIP problem with the advanced B&B solver</td>
+<!-- <td class="reflink" rowspan="2"><a href="object_doc.html">?</a></td> --></tr>
+<tr><td class="pymod"><code>lp.intopt()</code></td>
+<td class="capi"><code>lpx_intopt</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get status of MIP solution</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#lp_staus">?</a></td></tr>
+<tr><td class="pymod"><code>lp.status</code> (or <code>lp.status_m</code> to force MIP status)</td>
+<td class="capi"><code>glp_mip_status</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get objective value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#obj_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.obj.value</code> (or <code>lp.obj.value_m</code> to force MIP value)</td>
+<td class="capi"><code>glp_mip_obj_val</code></td></tr>
+
+<tr class="desc"><td colspan="2">Get row or column value</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#rc_value">?</a></td></tr>
+<tr><td class="pymod"><code>lp.rows[ri].value</code> (or <code>lp.rows[ri].value_m</code> to force MIP value)</td>
+<td class="capi"><code>glp_mip_row_val</code></td></tr>
+<tr><td class="pymod"><code>lp.cols[ci].value</code> (or <code>lp.cols[ci].value_m</code> to force MIP value)</td>
+<td class="capi"><code>glp_mip_col_val</code></td></tr>
+
+<tr class="desc"><td colspan="2">Check solution's integer feasibility conditions</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#kkt">?</a></td></tr>
+<tr><td class="pymod"><code>lp.kktint()</code></td>
+<td class="capi"><code>lpx_check_int</code></td></tr>
+
+<!-- <tr class="section"><th colspan="3">Parameters and statistics</th></tr>
+
+<tr class="desc"><td colspan="2">Reset default parameter values</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#params_reset">?</a></td></tr>
+<tr><td class="pymod"><code>lp.params.reset()</code></td>
+<td class="capi"><code>lpx_reset_parms</code></td></tr>
+
+<tr class="desc"><td colspan="2">Set or get parameters</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#params_value">?</a></td></tr>
+<tr><td class="pymod" rowspan="2"><code>lp.params.<i>paramname</i> = new_value</code></td>
+<td class="capi"><code>lpx_set_int_parm</code></td></tr>
+<tr><td class="capi"><code>lpx_set_real_parm</code></td></tr>
+<tr><td class="pymod" rowspan="2"><code>lp.params.<i>paramname</i></code></td>
+<td class="capi"><code>lpx_get_int_parm</code></td></tr>
+<tr><td class="capi"><code>lpx_get_real_parm</code></td></tr> -->
+
+<tr class="section"><th colspan="3">MIP Branch-&amp;-Cut Advanced Interface</th></tr>
+
+<tr class="desc"><td colspan="2">Access the problem object</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_lp">?</a></td></tr>
+<tr><td class="pymod"><code>tree.lp</code></td>
+<td class="capi"><code>glp_ios_get_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine the size of the branch and bound tree</td>
+<td class="reflink" rowspan="4"><a href="object_doc.html#tree_size">?</a></td></tr>
+<tr><td class="pymod"><code>tree.num_active</code> (all ints)</td>
+<td class="capi" rowspan="3"><code>glp_ios_tree_size</code></td></tr>
+<tr><td class="pymod"><code>tree.num_all</code></td></tr>
+<tr><td class="pymod"><code>tree.num_total</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine current active subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>tree.curr_node</code></td>
+<td class="capi"><code>glp_ios_curr_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine first active subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>tree.first_node</code></td>
+<td class="capi"><code>glp_ios_next_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine last active subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>tree.last_node</code></td>
+<td class="capi"><code>glp_ios_prev_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine next active subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>node.next</code></td>
+<td class="capi"><code>glp_ios_next_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine previous active subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>node.prev</code></td>
+<td class="capi"><code>glp_ios_prev_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine parent subproblem</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>node.up</code></td>
+<td class="capi"><code>glp_ios_up_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine subproblem level</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>node.level</code> (an int)</td>
+<td class="capi"><code>glp_ios_node_level</code></td></tr>
+
+<tr class="desc"><td colspan="2">Determine subproblem local bound</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_bound">?</a></td></tr>
+<tr><td class="pymod"><code>node.bound</code> (a float)</td>
+<td class="capi"><code>glp_ios_node_bound</code></td></tr>
+
+<tr class="desc"><td colspan="2">Find active subproblem with best local bound</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>tree.best_node</code></td>
+<td class="capi"><code>glp_ios_best_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Compute relative MIP gap</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_traverse">?</a></td></tr>
+<tr><td class="pymod"><code>tree.gap</code> (a float)</td>
+<td class="capi"><code>glp_ios_mip_gap</code></td></tr>
+
+<tr class="desc"><td colspan="2">Select subproblem to continue the search</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_change">?</a></td></tr>
+<tr><td class="pymod"><code>tree.select(node)</code></td>
+<td class="capi"><code>glp_ios_select_node</code></td></tr>
+
+<tr class="desc"><td colspan="2">Provide solution found by heuristic</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_change">?</a></td></tr>
+<tr><td class="pymod"><code>tree.heuristic(values)</code></td>
+<td class="capi"><code>glp_ios_heur_sol</code></td></tr>
+
+<tr class="desc"><td colspan="2">Check if can branch upon specified variable</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_change">?</a></td></tr>
+<tr><td class="pymod"><code>tree.can_branch(colnum)</code></td>
+<td class="capi"><code>glp_ios_can_branch</code></td></tr>
+
+<tr class="desc"><td colspan="2">Choose variable to branch upon</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_change">?</a></td></tr>
+<tr><td class="pymod"><code>tree.branch_upon(colnum, 'D')</code></td>
+<td class="capi"><code>glp_ios_branch_upon</code></td></tr>
+
+<tr class="desc"><td colspan="2">Terminate the solution process</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#tree_change">?</a></td></tr>
+<tr><td class="pymod"><code>tree.terminate()</code></td>
+<td class="capi"><code>glp_ios_terminate</code></td></tr>
+
+<tr class="section"><th colspan="3">Environment</th></tr>
+
+<tr class="desc"><td colspan="2">Get GLPK version</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#env_version">?</a></td></tr>
+<tr><td class="pymod"><code>glpk.env.version</code></td>
+<td class="capi"><code>glp_version</code></td></tr>
+
+<tr class="desc"><td colspan="2">Monitor memory usage</td>
+<td class="reflink" rowspan="5"><a href="object_doc.html#env_memory">?</a></td></tr>
+<tr><td class="pymod"><code>glpk.env.blocks</code> (all integers)</td>
+<td class="capi" rowspan="4"><code>glp_mem_usage</code></td></tr>
+<tr><td class="pymod"><code>glpk.env.blocks_peak</code></td></tr>
+<tr><td class="pymod"><code>glpk.env.bytes</code></td></tr>
+<tr><td class="pymod"><code>glpk.env.bytes_peak</code></td></tr>
+
+<tr class="desc"><td colspan="2">Limit memory usage</td>
+<td class="reflink" rowspan="2"><a href="object_doc.html#env_memory">?</a></td></tr>
+<tr><td class="pymod"><code>glpk.env.mem_limit = max_megabytes</code> (an integer)</td>
+<td class="capi"><code>glp_mem_limit</code></td></tr>
+
+<tr class="desc"><td colspan="2">Control terminal output</td>
+<td class="reflink" rowspan="3"><a href="object_doc.html#env_term">?</a></td></tr>
+<tr><td class="pymod"><code>glpk.env.term_on = True</code> or <code>False</code></td>
+<td class="capi"><code>glp_term_out</code></td></tr>
+<tr><td class="pymod"><code>glpk.env.term_hook = output_func</code></td>
+<td class="capi"><code>glp_term_hook</code></td></tr>
+
+<tr class="section"><th colspan="3">Problem readers</th></tr>
+
+<tr class="desc"><td colspan="2">Read fixed MPS format file</td>
+<td class="reflink" rowspan="10"><a href="object_doc.html#lp_finput">?</a></td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX(mps=filename)</code></td>
+<td class="capi"><code>lpx_read_mps</code></td></tr>
+
+<tr class="desc"><td colspan="2">Read free MPS format file</td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX(freemps=filename)</code></td>
+<td class="capi"><code>lpx_read_freemps</code></td></tr>
+
+<tr class="desc"><td colspan="2">Read GNU LP format file</td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX(glp=filename)</code></td>
+<td class="capi"><code>lpx_read_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Read CPLEX LP format file</td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX(cpxlp=filename)</code></td>
+<td class="capi"><code>lpx_read_cpxlp</code></td></tr>
+
+<tr class="desc"><td colspan="2">Read GNU MathProg model file</td></tr>
+<tr><td class="pymod"><code>lp = glpk.LPX(gmp=filename)</code> or <code>lp = glpk.LPX(gmp=(model_file, data_file, output_file))</code></td>
+<td class="capi"><code>lpx_read_model</code></td></tr>
+
+<tr class="section"><th colspan="3">Problem and data writers</th></tr>
+
+<tr class="desc"><td colspan="2">Write problem to fixed MPS format file</td>
+<td class="reflink" rowspan="20"><a href="object_doc.html#lp_foutput">?</a></td></tr>
+<tr><td class="pymod"><code>lp.write(mps=filename)</code></td>
+<td class="capi"><code>lpx_write_mps</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write problem to free MPS format file</td></tr>
+<tr><td class="pymod"><code>lp.write(freemps=filename)</code></td>
+<td class="capi"><code>lpx_write_freemps</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write problem to GNU LP format file</td></tr>
+<tr><td class="pymod"><code>lp.write(glp=filename)</code></td>
+<td class="capi"><code>lpx_write_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write problem to CPLEX LP format file</td></tr>
+<tr><td class="pymod"><code>lp.write(cpxlp=filename)</code></td>
+<td class="capi"><code>lpx_write_cpxlp</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write LP basis to fixed MPS format file</td></tr>
+<tr><td class="pymod"><code>lp.write(bas=filename)</code></td>
+<td class="capi"><code>lpx_write_bas</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write problem to plain text file</td></tr>
+<tr><td class="pymod"><code>lp.write(prob=filename)</code></td>
+<td class="capi"><code>lpx_print_prob</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write basic solution to plain text file</td></tr>
+<tr><td class="pymod"><code>lp.write(sol=filename)</code></td>
+<td class="capi"><code>lpx_print_sol</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write bounds sensitivity information to plain text file</td></tr>
+<tr><td class="pymod"><code>lp.write(sens_bnds=filename)</code></td>
+<td class="capi"><code>lpx_print_sens_bnds</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write interior point solution to plain text file</td></tr>
+<tr><td class="pymod"><code>lp.write(ips=filename)</code></td>
+<td class="capi"><code>lpx_print_ips</code></td></tr>
+
+<tr class="desc"><td colspan="2">Write MIP solution to plain text file</td></tr>
+<tr><td class="pymod"><code>lp.write(mip=filename)</code></td>
+<td class="capi"><code>lpx_print_mip</code></td></tr>
+
+</table>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

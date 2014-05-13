@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Reference Manual Example</title>
+<style>
+	
+</style></head>
+<body>
+
+<h1>Reference Manual Example</h1>
+
+<p>In this section we solve how to define and solve the example given at the beginning of the GLPK C API reference manual.</p>
+
+<table align="center">
+<tr align="right"><td>maximize</td> <td><var>Z</var></td><td>=</td>
+<td>10 <var>x</var><sub>0</sub></td><td>+</td><td>6 <var>x</var><sub>1</sub></td><td>+</td><td>4 <var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td>subject to</td> <td><var>p</var></td><td>=</td>
+<td> <var>x</var><sub>0</sub></td><td>+</td><td> <var>x</var><sub>1</sub></td><td>+</td><td> <var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td></td> <td><var>q</var></td><td>=</td>
+<td> 10<var>x</var><sub>0</sub></td><td>+</td><td> 4<var>x</var><sub>1</sub></td><td>+</td><td> 5<var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td></td> <td><var>r</var></td><td>=</td>
+<td> 2<var>x</var><sub>0</sub></td><td>+</td><td> 2<var>x</var><sub>1</sub></td><td>+</td><td> 6<var>x</var><sub>2</sub></td></tr>
+<tr align="right"><td valign="top">and bounds of variables</td><td colspan="10">
+<table>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>p</var>&nbsp;&le;&nbsp;100</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>0</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>q</var>&nbsp;&le;&nbsp;600</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>1</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+<tr><td>&minus;&infin;&nbsp;&lt;&nbsp;<var>r</var>&nbsp;&le;&nbsp;300</td>
+<td>&nbsp;&nbsp;0&nbsp;&le;&nbsp;<var>x</var><sub>2</sub>&nbsp;&lt;&nbsp;&infin;</td></tr>
+</table>
+</td></tr>
+</table>
+
+<h2>The Implementation</h2>
+
+<p>Here is the implementation of that linear program within PyGLPK:</p>
+
+<pre class="py">
+import glpk            <font class="comment"># Import the GLPK module</font>
+
+lp = glpk.LPX()        <font class="comment"># Create empty problem instance</font>
+lp.name = 'sample'     <font class="comment"># Assign symbolic name to problem</font>
+lp.obj.maximize = True <font class="comment"># Set this as a maximization problem</font>
+lp.rows.add(3)         <font class="comment"># Append three rows to this instance</font>
+for r in lp.rows:      <font class="comment"># Iterate over all rows</font>
+	r.name = chr(ord('p')+r.index) <font class="comment"># Name them p, q, and r</font>
+lp.rows[0].bounds = None, 100.0  <font class="comment"># Set bound -inf &lt; p &lt;= 100</font>
+lp.rows[1].bounds = None, 600.0  <font class="comment"># Set bound -inf &lt; q &lt;= 600</font>
+lp.rows[2].bounds = None, 300.0  <font class="comment"># Set bound -inf &lt; r &lt;= 300</font>
+lp.cols.add(3)         <font class="comment"># Append three columns to this instance</font>
+for c in lp.cols:      <font class="comment"># Iterate over all columns</font>
+	c.name = 'x%d' % c.index <font class="comment"># Name them x0, x1, and x2</font>
+	c.bounds = 0.0, None     <font class="comment"># Set bound 0 &lt;= xi &lt; inf</font>
+lp.obj[:] = [ 10.0, 6.0, 4.0 ]   <font class="comment"># Set objective coefficients</font>
+lp.matrix = [ 1.0, 1.0, 1.0,     <font class="comment"># Set nonzero entries of the</font>
+             10.0, 4.0, 5.0,     <font class="comment">#   constraint matrix.  (In this</font>
+              2.0, 2.0, 6.0 ]    <font class="comment">#   case, all are non-zero.)</font>
+lp.simplex()           <font class="comment"># Solve this LP with the simplex method</font>
+print 'Z = %g;' % lp.obj.value,  <font class="comment"># Retrieve and print obj func value</font>
+print '; '.join('%s = %g' % (c.name, c.primal) for c in lp.cols)
+                       <font class="comment"># Print struct variable names and primal values</font>
+</pre>
+
+<h2>The Explanation</h2>
+
+<p>We shall now go over this implementation section by section.</p>
+
+<pre class="py">
+import glpk
+</pre>
+
+<p>First we need the module of course.</p>
+
+<pre class="py">
+lp = glpk.LPX()        <font class="comment"># Create empty problem instance</font>
+</pre>
+
+<p>Here we construct a new linear program object with a call to the LPX constructor.</p>
+
+<pre class="py">
+lp.name = 'sample'     <font class="comment"># Assign symbolic name to problem</font>
+</pre>
+
+<p>Linear program objects have various attributes.  One of them is <code>name</code>, which holds a symbolic name for the program.  Initially a program has no name, and <code>name</code> correspondingly has the value <code>None</code>.  Here we name the program <code>'sample'</code>.  Programs do not necessarily require names, but a user may wish to give a program a name nonetheless.</p>
+
+<pre class="py">
+lp.obj.maximize = True <font class="comment"># Set this as a maximization problem</font>
+</pre>
+
+<p>Linear program objects contain other less trivial attributes.  One of the most important is <code>obj</code>, an object representing the linear program's objective function.  In this case, we are assigning <code>lp.obj</code>'s <code>maximize</code> attribute the value <code>True</code>, informing out linear program that we want to maximize our objective function.</p>
+
+<pre class="py">
+lp.rows.add(3)         <font class="comment"># Append three rows to this instance</font>
+</pre>
+
+<p>Another very important component of <code>lp</code> is the <code>rows</code> attribute, holding an object which indexes over the rows of this linear program.  In this case, we call the <code>lp.rows</code> method <code>add</code>, telling it to add three rows to the linear program.</p>
+
+<pre class="py">
+for r in lp.rows:      <font class="comment"># Iterate over all rows</font>
+	r.name = chr(ord('p')+r.index) <font class="comment"># Name them p, q, and r</font>
+</pre>
+
+<p>The <code>lp.rows</code> object is also used for accessing particular rows.  In this case, we are iterating over each row.  In the course of this iteration, <code>r</code> holds the first, second, and third row.  We want to name these rows <code>'p'</code>, <code>'q'</code>, and <code>'r'</code>, in order.</p>
+
+<p>Note that an individual row is an object in itself.  It also has a <code>name</code> attribute, to which we assign the character with ASCII value of <code>p</code> plus whatever the index of this row is.  The first row has <code>index</code> of 0, the next 1, the next and last 2.  So, this will give us the desired names.</p>
+
+<pre class="py">
+lp.rows[0].bounds = None, 100.0  <font class="comment"># Set bound -inf &lt; p &lt;= 100</font>
+lp.rows[1].bounds = None, 600.0  <font class="comment"># Set bound -inf &lt; q &lt;= 600</font>
+lp.rows[2].bounds = None, 300.0  <font class="comment"># Set bound -inf &lt; r &lt;= 300</font>
+</pre>
+
+<p>In addition to iterating over all rows, we can access a particular row by indexing the <code>lp.rows</code> object.  In this case we index by the numeric row index.  (Now that we have set their names, we could alternatively index them by their names!)</p>
+
+<p>In this case, we are using the row's <code>bounds</code> attribute to set the bounds for the corresponding auxiliary variable.  Bounds consist of a lower and upper bound.  In this case, we are specifying that we always want the lower end unbounded (by assigning <code>None</code>, indicating no bound in that direction), and otherwise setting an appropriate upper bound.</p>
+
+<pre class="py">
+lp.cols.add(3)         <font class="comment"># Append three columns to this instance</font>
+</pre>
+
+<p>In addition to the <code>rows</code> object, there is also a <code>cols</code> object for creating and accessing columns.  Indeed, the two objects have the same type.  In this case, we see we are adding three columns to the linear program.</p>
+
+<pre class="py">
+for c in lp.cols:      <font class="comment"># Iterate over all columns</font>
+	c.name = 'x%d' % c.index <font class="comment"># Name them x0, x1, and x2</font>
+	c.bounds = 0.0, None     <font class="comment"># Set bound 0 &lt;= xi &lt; inf</font>
+</pre>
+
+<p>Similar to how we iterated over and assigned names to the rows, in this case we assign appropriate names to our columns.  We also assign bounds to each column's associated structural variable, though in this case we want each structural variable to be greater than 0, and have no upper bound.</p>
+
+<pre class="py">
+lp.obj[:] = [ 10.0, 6.0, 4.0 ]   <font class="comment"># Set objective coefficients</font>
+</pre>
+
+<p>There is one objective coefficient for every column.  In this, we set all the coefficients at once to their desired values.  Note that these <code>lp.obj</code> objects act like sequences over the objective coefficient values, just as the row and column collections do over rows and the columns.</p>
+
+<pre class="py">
+lp.matrix = [ 1.0, 1.0, 1.0,     <font class="comment"># Set nonzero entries of the</font>
+             10.0, 4.0, 5.0,     <font class="comment">#   constraint matrix.  (In this</font>
+              2.0, 2.0, 6.0 ]    <font class="comment">#   case, all are non-zero.)</font>
+</pre>
+
+<p>We are setting the non-zero entries of the coefficient constraint matrix by assigning to the linear program's <code>matrix</code> attribute.  Matrix entries are either (1) values, or (2) tuples specifying the row index, column index, and value.  In the first case, if it is just a value with the indices omitted, it assumes that the value specified is for the next value in the constraint matrix, read top to bottom, left to right.  We could also have explicitly defined the indices with this equivalent statement:</p>
+<pre class="py">
+lp.matrix = [ (0,0, 1.0), (0,1,1.0), (0,2,1.0),
+              (1,0,10.0), (1,1,4.0), (1,2,5.0),
+              (2,0, 2.0), (2,1,2.0), (2,2,6.0) ]
+</pre>
+<p>But we did not.  Let's move on.</p>
+
+<pre class="py">
+lp.simplex()           <font class="comment"># Solve this LP with the simplex method</font>
+</pre>
+
+<p>Here we are calling a simplex solver to solve the defined linear program!</p>
+
+<pre class="py">
+print 'Z = %g;' % lp.obj.value,  <font class="comment"># Retrieve and print obj func value</font>
+print '; '.join('%s = %g' % (c.name, c.primal) for c in lp.cols)
+                       <font class="comment"># Print struct variable names and primal values</font></pre>
+
+<p>After optimization, we want to print out the value of the objective function (as stored in <code>lp.obj.value</code>), and the value of the primal variable for each of the columns (as stored in each column's <code>primal</code> attribute).</p>
+
+<p>This all results in this output.</p>
+
+<pre class="out">
+Z = 733.333; x0 = 33.3333; x1 = 66.6667; x2 = 0
+</pre>
+
+<hr/>
+Thomas Finley, 2007, 2008
+</body>
+</html>

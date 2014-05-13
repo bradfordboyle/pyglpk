@@ -1,0 +1,19 @@
+(present from 4.13)
+lpx_exact
+(present from 4.10)
+lpx_cpx_basis
+(present from 4.9)
+lpx_intopt
+lpx_check_int
+(present from 4.7 to 4.14)
+lpx_order_matrix
+(present from 4.7)
+lpx_create_index
+lpx_find_row
+lpx_find_col
+lpx_delete_index
+lpx_read_freemps
+lpx_write_freemps
+(present from 4.6)
+lpx_read_prob
+lpx_write_prob
