@@ -28,12 +28,12 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #define Environment_Check(op) PyObject_TypeCheck(op, &EnvironmentType)
 
 typedef struct {
-  PyObject_HEAD
-  int mem_limit;
-  unsigned int term_on:1;
-  PyObject *term_hook;
-  PyObject *version;
-  PyObject *weakreflist; // Weak reference list.
+	PyObject_HEAD
+	int mem_limit;
+	unsigned int term_on:1;
+	PyObject *term_hook;
+	PyObject *version;
+	PyObject *weakreflist; // Weak reference list.
 } EnvironmentObject;
 
 extern PyTypeObject EnvironmentType;
