@@ -18,6 +18,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include <glpk.h>
+#include <limits.h>
 #include "environment.h"
 #include "structmember.h"
 #include "util.h"
@@ -108,12 +109,12 @@ static int Environment_setmemlimit(EnvironmentObject *self, PyObject *value,
 #if GLPK_VERSION(4, 19)
 	int limit;
 	if (value == NULL || value == Py_None) {
-		limit = 0x7fffffff;
+		limit = INT_MAX;
 		self->mem_limit = -1;
 	} else if (PyInt_Check(value)) {
 		limit = PyInt_AS_LONG(value);
-		if (limit < 0) {
-			PyErr_SetString(PyExc_ValueError, "mem_limit must be non-negative");
+		if (limit < 1) {
+			PyErr_SetString(PyExc_ValueError, "mem_limit must be positive");
 			return -1;
 		}
 		self->mem_limit = limit;
