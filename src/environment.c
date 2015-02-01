@@ -99,11 +99,15 @@ static int Environment_setmemlimit(EnvironmentObject *self, PyObject *value,
     self->mem_limit = -1;
   } else if (PyInt_Check(value)) {
     limit=PyInt_AS_LONG(value);
-    if (limit<0) {
+	if (limit==0) {
+		limit=0x7fffffff;
+		self->mem_limit = 0;
+	} else if (limit<0) {
       PyErr_SetString(PyExc_ValueError, "mem_limit must be non-negative");
       return -1;
-    }
-    self->mem_limit = limit;
+	} else {
+    	self->mem_limit = limit;
+	}
   } else {
     PyErr_SetString(PyExc_TypeError, "mem_limit must be int");
     return -1;
