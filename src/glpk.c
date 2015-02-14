@@ -21,22 +21,52 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "lp.h"
 #include "environment.h"
 
+#if PY_MAJOR_VERSION < 3
+
+#define MOD_ERROR_VAL
+
+#define MOD_SUCCESS_VAL(val)
+
+#define MOD_INIT(name) void init##name(void)
+
+#define MOD_DEF(ob, name, doc, methods) \
+        ob = Py_InitModule3(name, methods, doc);
+
+#else
+
+#define MOD_ERROR_VAL NULL
+
+#define MOD_SUCCESS_VAL(val) val
+
+#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+
+#define MOD_DEF(ob, name, doc, methods) \
+        static struct PyModuleDef moduledef = { \
+          PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+        ob = PyModule_Create(&moduledef);
+
+#endif
+
 static PyMethodDef GLPKMethods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC initglpk(void) {
+static char module___doc__[] = 
+"The PyGLPK module, encapsulating the functionality of the GNU\n\
+Linear Programming Kit.  Usage of this module will typically\n\
+start with the initialization of an LPX instance to define a\n\
+linear program, and proceed from there to add data to the\n\
+problem and ultimately solve it.  See help on the LPX class,\n\
+as well as the HTML documentation accompanying your PyGLPK\n\
+distribution.";
+
+MOD_INIT(void)
+{
   PyObject *m;
-  m = Py_InitModule3
-    ("glpk", GLPKMethods,
-     "The PyGLPK module, encapsulating the functionality of the GNU\n"
-     "Linear Programming Kit.  Usage of this module will typically\n"
-     "start with the initialization of an LPX instance to define a\n"
-     "linear program, and proceed from there to add data to the\n"
-     "problem and ultimately solve it.  See help on the LPX class,\n"
-     "as well as the HTML documentation accompanying your PyGLPK\n"
-     "distribution.");
-  if (m==NULL) return;
+  
+  MOD_DEF(m, "glpk", module___doc__, GLPKMethods)
+
+  if (m==NULL) return MOD_ERROR_VAL;
   PyModule_AddStringConstant(m, "__version__", "0.3.1");
 
   Environment_InitType(m);
@@ -55,12 +85,12 @@ PyMODINIT_FUNC initglpk(void) {
     char buf[100];
     snprintf(buf, 100, "PyGLPK compiled on GLPK %s, but runtime is GLPK %s",
 	     myversion, glp_version());
-#if PY_MAJOR_VERSION == 2
-#if PY_MINOR_VERSION >= 5
+#if PY_VERSION_HEX >= 0x02050000
     PyErr_WarnEx(PyExc_RuntimeWarning, buf, 1);
 #else
     PyErr_Warn(PyExc_RuntimeWarning, buf);
 #endif
-#endif
   }
+  
+  return MOD_SUCCESS_VAL(m);
 }
