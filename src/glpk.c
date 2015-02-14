@@ -64,7 +64,7 @@ problem and ultimately solve it.  See help on the LPX class,\n\
 as well as the HTML documentation accompanying your PyGLPK\n\
 distribution.";
 
-MOD_INIT(void)
+MOD_INIT(glpk)
 {
   PyObject *m;
   
