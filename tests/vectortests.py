@@ -239,7 +239,7 @@ class DeleteVectorTestCase(Runner):
     def testDeleteExtendedSliceVectorDecreasesLength(self):
         """Tests deleting columns indexed by an extended slice."""
         del self.vc[::2]
-        self.assertEqual(len(self.vc), self.num_vecs / 2)
+        self.assertEqual(len(self.vc), self.num_vecs // 2)
         self.assertEqual([v.name for v in self.vc],
                          ['x%d'%i for i in range(1, self.num_vecs, 2)])
         if env.version >= (4, 7):
