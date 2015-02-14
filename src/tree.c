@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "tree.h"
 #include "structmember.h"
 #include "util.h"
@@ -63,7 +65,7 @@ static void TreeNode_dealloc(TreeNodeObject *tn) {
     PyObject_ClearWeakRefs((PyObject*)tn);
   }
   Py_XDECREF(tn->py_tree);
-  tn->ob_type->tp_free((PyObject*)tn);
+  Py_TYPE(tn)->tp_free((PyObject*)tn);
 }
 
 static PyObject* TreeNode_richcompare(TreeNodeObject *v, PyObject *w, int op) {
@@ -144,13 +146,13 @@ static PyObject* TreeNode_getactive(TreeNodeObject *self, void *closure) {
 static PyObject* TreeNode_Str(TreeNodeObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %sactive subprob %d of %s %p>", self->ob_type->tp_name,
+    ("<%s, %sactive subprob %d of %s %p>", Py_TYPE(self)->tp_name,
      self->active?"":"in",
      self->subproblem, TreeType.tp_name, self->py_tree);
 }
 
 static PyMemberDef TreeNode_members[] = {
-  {"subproblem", T_INT, offsetof(TreeNodeObject, subproblem), RO,
+  {"subproblem", T_INT, offsetof(TreeNodeObject, subproblem), READONLY,
    "The reference number of the subproblem corresponding to this node."},
   {NULL}
 };
@@ -182,8 +184,7 @@ static PyMethodDef TreeNode_methods[] = {
 };
 
 PyTypeObject TreeNodeType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.TreeNode",				/* tp_name */
   sizeof(TreeNodeObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/
@@ -246,7 +247,7 @@ static void TreeIter_dealloc(TreeIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->py_tree);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static PyObject *TreeIter_next(TreeIterObject *self) {
@@ -258,8 +259,7 @@ static PyObject *TreeIter_next(TreeIterObject *self) {
 }
 
 PyTypeObject TreeIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.TreeIter",			/* tp_name */
   sizeof(TreeIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */
@@ -308,7 +308,7 @@ static void Tree_dealloc(TreeObject *self) {
     PyObject_ClearWeakRefs((PyObject*)self);
   }
   Py_XDECREF(self->py_lp);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */
@@ -545,7 +545,7 @@ int Tree_InitType(PyObject *module) {
 }
 
 static PyMemberDef Tree_members[] = {
-  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), RO,
+  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), READONLY,
    "Problem object used by the MIP solver."},
   {NULL}
 };
@@ -623,8 +623,7 @@ static PyMethodDef Tree_methods[] = {
 };
 
 PyTypeObject TreeType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Tree",				/* tp_name */
   sizeof(TreeObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

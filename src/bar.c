@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "bar.h"
 #include "structmember.h"
 #include "util.h"
@@ -49,7 +51,7 @@ static void Bar_dealloc(BarObject *self) {
   }
   Py_DECREF(self->py_bc);
 #endif
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */
@@ -80,7 +82,7 @@ BarObject *Bar_New(BarColObject *py_bc, int index) {
 static PyObject* Bar_Str(BarObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %s %d of %s %p>", self->ob_type->tp_name,
+    ("<%s, %s %d of %s %p>", Py_TYPE(self)->tp_name,
      Bar_Row(self)?"row":"col", Bar_Index(self),
      LPXType.tp_name, self->py_bc->py_lp);
 }
@@ -614,8 +616,7 @@ static PyMethodDef Bar_methods[] = {
 };
 
 PyTypeObject BarType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Bar",				/* tp_name */
   sizeof(BarObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

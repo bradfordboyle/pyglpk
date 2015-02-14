@@ -22,8 +22,8 @@ class MemoryTestCase(Runner, unittest.TestCase):
 
     def testPeakIsBound(self):
         """Tests that the peak is always greater than current."""
-        self.failUnless(env.blocks <= env.blocks_peak)
-        self.failUnless(env.bytes <= env.bytes_peak)
+        self.assertTrue(env.blocks <= env.blocks_peak)
+        self.assertTrue(env.bytes <= env.bytes_peak)
 
     def testIncrease(self):
         """Test that creating a new LPX increases the memory allocated."""
@@ -33,7 +33,7 @@ class MemoryTestCase(Runner, unittest.TestCase):
         lp.rows.add(2)
         lp.cols.add(2)
         lp.name = 'foo'
-        self.failUnless(env.bytes > bytes_first)
+        self.assertTrue(env.bytes > bytes_first)
         del lp
         gc.collect()
         self.assertEqual(env.bytes, bytes_first)
@@ -93,7 +93,7 @@ class TerminalTest(unittest.TestCase):
             self.char_count += len(s)
         env.term_hook = count_hook
         self.lp.simplex(msg_lev=LPX.MSG_ALL)
-        self.failUnless(self.char_count > 0)
+        self.assertTrue(self.char_count > 0)
 
     def testTerminalOnOff(self):
         """Test setting the terminal on and off."""
@@ -104,7 +104,7 @@ class TerminalTest(unittest.TestCase):
             self.char_count += len(s)
         env.term_hook = count_hook
         self.lp.simplex(msg_lev=LPX.MSG_ALL)
-        self.failUnless(self.char_count > 0)
+        self.assertTrue(self.char_count > 0)
         # Now turn the terminal output off.
         env.term_on = False
         oldcount = self.char_count
@@ -116,7 +116,7 @@ class TerminalTest(unittest.TestCase):
         # Now turn the terminal output back on.
         env.term_on = True
         self.lp.simplex(msg_lev=LPX.MSG_ALL)
-        self.failUnless(self.char_count > oldcount)
+        self.assertTrue(self.char_count > oldcount)
 
     def testMultipleTerminalDirect(self):
         """Test setting the hook function multiple times."""
@@ -127,17 +127,17 @@ class TerminalTest(unittest.TestCase):
             def thehook(s):
                 self.char_counts[which]+=len(s)
             return thehook
-        self.hooks = [makehook(i) for i in xrange(numhooks)]
+        self.hooks = [makehook(i) for i in range(numhooks)]
         # Randomly reset the hooks.
         rgen = random.Random(10)
-        for trial in xrange(100):
+        for trial in range(100):
             whichhook = rgen.randint(0, numhooks-1)
             env.term_hook=self.hooks[whichhook]
             old_counts = self.char_counts[:]
             self.lp.simplex(msg_lev=LPX.MSG_ALL)
             # Test that only the count associated with this hook has changed.
-            for w in xrange(numhooks):
+            for w in range(numhooks):
                 if w==whichhook:
-                    self.failUnless(self.char_counts[w] > old_counts[w])
+                    self.assertTrue(self.char_counts[w] > old_counts[w])
                 else:
                     self.assertEqual(self.char_counts[w], old_counts[w])

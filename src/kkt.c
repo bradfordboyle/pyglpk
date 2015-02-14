@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "util.h"
 #include "kkt.h"
 #include "structmember.h"
@@ -25,7 +27,7 @@ static void KKT_dealloc(KKTObject *self) {
   if (self->weakreflist != NULL) {
     PyObject_ClearWeakRefs((PyObject*)self);
   }
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */
@@ -74,24 +76,24 @@ int KKT_InitType(PyObject *module) {
 }
 
 static PyMemberDef KKT_members[] = {
-  {"pe_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_ae_max),  RO,
+  {"pe_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_ae_max),  READONLY,
    "Largest absolute error."},
-  {"pe_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_re_max),  RO,
+  {"pe_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_re_max),  READONLY,
    "Largest relative error."},
 
-  {"pb_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_ae_max),  RO,
+  {"pb_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_ae_max),  READONLY,
    "Largest absolute error."},
-  {"pb_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_re_max),  RO,
+  {"pb_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_re_max),  READONLY,
    "Largest relative error."},
 
-  {"de_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.de_ae_max),  RO,
+  {"de_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.de_ae_max),  READONLY,
    "Largest absolute error."},
-  {"de_re_max", T_DOUBLE, offsetof(KKTObject, kkt.de_re_max),  RO,
+  {"de_re_max", T_DOUBLE, offsetof(KKTObject, kkt.de_re_max),  READONLY,
    "Largest relative error."},
 
-  {"db_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.db_ae_max),  RO,
+  {"db_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.db_ae_max),  READONLY,
    "Largest absolute error."},
-  {"db_re_max", T_DOUBLE, offsetof(KKTObject, kkt.db_re_max),  RO,
+  {"db_re_max", T_DOUBLE, offsetof(KKTObject, kkt.db_re_max),  READONLY,
    "Largest relative error."},
   {NULL}
 };
@@ -137,8 +139,7 @@ static PyMethodDef KKT_methods[] = {
 };
 
 PyTypeObject KKTType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.KKT",				/* tp_name */
   sizeof(KKTObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

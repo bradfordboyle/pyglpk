@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "lp.h"
 #include "structmember.h"
 #include "barcol.h"
@@ -58,7 +60,7 @@ static int LPX_clear(LPXObject *self) {
 static void LPX_dealloc(LPXObject *self) {
   LPX_clear(self);
   if (LP) glp_delete_prob(LP);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 LPXObject* LPX_FromLP(glp_prob*lp) {
@@ -202,7 +204,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds) {
 static PyObject* LPX_Str(LPXObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s %d-by-%d at %p>", self->ob_type->tp_name,
+    ("<%s %d-by-%d at %p>", Py_TYPE(self)->tp_name,
      glp_get_num_rows(LP), glp_get_num_cols(LP), self);
 }
 
@@ -929,12 +931,12 @@ int LPX_InitType(PyObject *module) {
 }
 
 static PyMemberDef LPX_members[] = {
-  {"rows", T_OBJECT_EX, offsetof(LPXObject, rows), RO,
+  {"rows", T_OBJECT_EX, offsetof(LPXObject, rows), READONLY,
    "Row collection.  See the help on class BarCollection."},
-  {"cols", T_OBJECT_EX, offsetof(LPXObject, cols), RO,
+  {"cols", T_OBJECT_EX, offsetof(LPXObject, cols), READONLY,
    "Column collection.  See the help on class BarCollection."},
 #ifdef USEPARAMS
-  {"params", T_OBJECT_EX, offsetof(LPXObject, params), RO,
+  {"params", T_OBJECT_EX, offsetof(LPXObject, params), READONLY,
    "Control parameter collection.  See the help on class Params."},
 #endif
   {NULL}
@@ -1255,8 +1257,7 @@ static PyMethodDef LPX_methods[] = {
 };
 
 PyTypeObject LPXType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.LPX",				/* tp_name */
   sizeof(LPXObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

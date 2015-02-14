@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "params.h"
 #include "util.h"
 #include "structmember.h"
@@ -39,7 +41,7 @@ static int Params_clear(ParamsObject *self) {
 
 static void Params_dealloc(ParamsObject *self) {
   Params_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */
@@ -345,8 +347,7 @@ static PyMethodDef Params_methods[] = {
 };
 
 PyTypeObject ParamsType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Params",			/* tp_name */
   sizeof(ParamsObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

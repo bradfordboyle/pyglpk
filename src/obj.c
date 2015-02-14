@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "obj.h"
 #include "barcol.h"
 #include "util.h"
@@ -54,7 +56,7 @@ static void ObjIter_dealloc(ObjIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->obj);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static Py_ssize_t ObjIter_len(ObjIterObject *it) {
@@ -75,8 +77,7 @@ static PySequenceMethods objiter_as_sequence = {
 };
 
 PyTypeObject ObjIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.ObjectiveIter",			/* tp_name */
   sizeof(ObjIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */
@@ -132,7 +133,7 @@ static int Obj_clear(ObjObject *self) {
 
 static void Obj_dealloc(ObjObject *self) {
   Obj_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */
@@ -496,8 +497,7 @@ static PyMethodDef Obj_methods[] = {
 };
 
 PyTypeObject ObjType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Objective",			/* tp_name */
   sizeof(ObjObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

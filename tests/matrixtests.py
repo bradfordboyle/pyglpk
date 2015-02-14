@@ -63,8 +63,8 @@ class MatrixCoefficientTestCase(Runner, unittest.TestCase):
 
     def testMatrixSetWithImplicitIndices(self):
         """Test setting the matrix with only implicit indices."""
-        imatrix = [0.0 for r in xrange(len(self.lp.rows))
-                   for c in xrange(len(self.lp.cols))]
+        imatrix = [0.0 for r in range(len(self.lp.rows))
+                   for c in range(len(self.lp.cols))]
         for r,c,v in self.matrix:
             imatrix[r*len(self.lp.cols) + c] = float(v)
         self.lp.matrix = imatrix
@@ -99,7 +99,7 @@ class MatrixCoefficientTestCase(Runner, unittest.TestCase):
     def testSetRowVectorsWithImplicitIndices(self):
         """Test setting the matrix row by row with no indices."""
         for row in self.lp.rows:
-            vec = [0.0 for i in xrange(len(self.lp.cols))]
+            vec = [0.0 for i in range(len(self.lp.cols))]
             for c,v in self.rowVector(row.index): vec[c]=v
             row.matrix = vec
         self.checkMatrix()
@@ -119,7 +119,7 @@ class MatrixCoefficientTestCase(Runner, unittest.TestCase):
     def testSetColumnVectorsWithImplicitIndices(self):
         """Test setting the matrix column by column with no indices."""
         for col in self.lp.cols:
-            vec = [0.0 for i in xrange(len(self.lp.rows))]
+            vec = [0.0 for i in range(len(self.lp.rows))]
             for r,v in self.colVector(col.index): vec[r]=v
             col.matrix = vec
         self.checkMatrix()

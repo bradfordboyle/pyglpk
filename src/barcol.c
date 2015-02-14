@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "barcol.h"
 #include "bar.h"
 #include "util.h"
@@ -56,7 +58,7 @@ static void BarColIter_dealloc(BarColIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->bc);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static Py_ssize_t BarColIter_len(BarColIterObject *it) {
@@ -76,8 +78,7 @@ static PySequenceMethods bciter_as_sequence = {
 };
 
 PyTypeObject BarColIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.BarCollectionIter",		/* tp_name */
   sizeof(BarColIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */
@@ -135,7 +136,7 @@ static int BarCol_clear(BarColObject *self) {
 static void BarCol_dealloc(BarColObject *self) {
   BarCol_clear(self);
   //printf("dealloc bar col!\n");
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */
@@ -392,7 +393,7 @@ static int BarCol_ass_item(BarColObject *self, int index, PyObject *v) {
 static PyObject* BarCol_Str(BarColObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %s of %s %p>", self->ob_type->tp_name,
+    ("<%s, %s of %s %p>", Py_TYPE(self)->tp_name,
      (BarCol_Rows(self)?"rows":"cols"),
      LPXType.tp_name, self->py_lp);
 }
@@ -444,8 +445,7 @@ static PyMethodDef BarCol_methods[] = {
 };
 
 PyTypeObject BarColType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.BarCollection",			/* tp_name */
   sizeof(BarColObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

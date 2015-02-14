@@ -130,10 +130,10 @@ class IndexVectorTestCase(Runner):
         """Tests the 'in' operator for string indices."""
         if env.version < (4,7): return
         self.vc.add(5)
-        self.failIf('foo' in self.vc)
+        self.assertFalse('foo' in self.vc)
         self.vc[2].name = 'foo'
-        self.assert_('foo' in self.vc)
-        self.failIf('bar' in self.vc)
+        self.assertTrue('foo' in self.vc)
+        self.assertFalse('bar' in self.vc)
 
     def testStringTupleIndexingOfMultipleVector(self):
         """Tests indexing multiple vectors with a string tuple."""
@@ -162,7 +162,7 @@ class IndexVectorTestCase(Runner):
     def testSliceIndexingOfVectors(self):
         """Tests indexing vectors by slice."""
         to_add = 37
-        i = range(to_add)
+        i = list(range(to_add))
         self.vc.add(to_add)
         self.assertEqual([v.index for v in self.vc[:5]], i[:5])
         self.assertEqual([v.index for v in self.vc[:-4]], i[:-4])
@@ -188,7 +188,7 @@ class IndexVectorTestCase(Runner):
         """Tests that the vector collection may be iterated upon."""
         to_add = 78
         self.vc.add(to_add)
-        self.assertEqual([v.index for v in self.vc], range(to_add))
+        self.assertEqual([v.index for v in self.vc], list(range(to_add)))
 
     def testIteratorWriteAccessToVectors(self):
         """Tests that the vectors from iteration are mutable."""
@@ -216,7 +216,7 @@ class DeleteVectorTestCase(Runner):
         self.assertEqual(len(self.vc), self.num_vecs-1)
         self.assertEqual(self.vc[3].name, 'x4')
         if env.version < (4, 7): return
-        self.failUnless('x3' not in self.vc)
+        self.assertTrue('x3' not in self.vc)
 
     def testDeleteTupleVectorDecreasesLength(self):
         """Tests deleting columns indexed by tuple."""
@@ -231,20 +231,20 @@ class DeleteVectorTestCase(Runner):
         self.assertEqual(len(self.vc), self.num_vecs-2)
         self.assertEqual([v.name for v in self.vc], ['x2', 'x3', 'x4'])
         if env.version >= (4, 7):
-            self.failUnless('x0' not in self.vc)
-            self.failUnless('x1' not in self.vc)
+            self.assertTrue('x0' not in self.vc)
+            self.assertTrue('x1' not in self.vc)
         del self.vc[:]
         self.assertEqual(len(self.vc), 0)
 
     def testDeleteExtendedSliceVectorDecreasesLength(self):
         """Tests deleting columns indexed by an extended slice."""
         del self.vc[::2]
-        self.assertEqual(len(self.vc), self.num_vecs / 2)
+        self.assertEqual(len(self.vc), self.num_vecs // 2)
         self.assertEqual([v.name for v in self.vc],
-                         ['x%d'%i for i in xrange(1, self.num_vecs, 2)])
+                         ['x%d'%i for i in range(1, self.num_vecs, 2)])
         if env.version >= (4, 7):
-            for i in xrange(0, self.num_vecs, 2):
-                self.failUnless(('x%d'%i) not in self.vc)
+            for i in range(0, self.num_vecs, 2):
+                self.assertTrue(('x%d'%i) not in self.vc)
 
     def testDeleteVectorInvalidation(self):
         """Tests Bar invalidation once its index becomes out of bounds."""
@@ -423,16 +423,16 @@ class ComparisonTestCase(unittest.TestCase):
 
     def testComparisonSameCollection(self):
         """Test that vectors in the same collection are ordered by index."""
-        self.failUnless(self.r[0] < self.r[1])
-        self.failUnless(self.r[2] > self.r[1])
-        self.failUnless(self.c[2] > self.c[1])
-        self.failUnless(self.c[2] < self.c[-1])
+        self.assertTrue(self.r[0] < self.r[1])
+        self.assertTrue(self.r[2] > self.r[1])
+        self.assertTrue(self.c[2] > self.c[1])
+        self.assertTrue(self.c[2] < self.c[-1])
 
     def testComparisonDifferentCollection(self):
         """Test vector comparions in different collections."""
         a, b = self.r, self.c
         if b < a: a,b = b,a
         # A should be the lower bar collection.
-        self.failUnless(a[0] < b[0])
-        self.failUnless(b[1] > a[3])
-        self.failUnless(a[1] < b[0])
+        self.assertTrue(a[0] < b[0])
+        self.assertTrue(b[1] > a[3])
+        self.assertTrue(a[1] < b[0])

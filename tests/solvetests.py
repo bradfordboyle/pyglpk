@@ -181,7 +181,7 @@ class SatisfiabilityMIPTest(unittest.TestCase):
         def lit2col(lit):
             if lit>0: return 2*lit-2
             return 2*(-lit)-1
-        for i in xrange(1, numvars+1):
+        for i in range(1, numvars+1):
             lp.cols[lit2col( i)].name =  'x_%d'%i
             lp.cols[lit2col(-i)].name = '!x_%d'%i
             lp.rows.add(1)
@@ -228,7 +228,7 @@ class SatisfiabilityMIPTest(unittest.TestCase):
         solution = self.solve_sat(exp)
         # First assert that this is a solution.
         self.assertNotEqual(solution, None)
-        self.failUnless(self.verify(exp, solution))
+        self.assertTrue(self.verify(exp, solution))
 
     def testInsolvableSat(self):
         """Test that an unsolvable satisfiability problem can't be solved."""
@@ -308,7 +308,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         def lit2col(lit):
             if lit>0: return 2*lit-2
             return 2*(-lit)-1
-        for i in xrange(1, numvars+1):
+        for i in range(1, numvars+1):
             lp.cols[lit2col( i)].name =  'x_%d'%i
             lp.cols[lit2col(-i)].name = '!x_%d'%i
             lp.rows.add(1)
@@ -351,7 +351,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         class Callback:
             pass
         assign = self.solve_sat(callback=Callback())
-        self.failUnless(self.verify(self.expression, assign))
+        self.assertTrue(self.verify(self.expression, assign))
 
     def testUncallableCallback(self):
         """Tests that there is an error with an uncallable callback."""
@@ -369,7 +369,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 self.stopped = False
             def default(self, tree):
                 # We should not be here if we have already made an error.
-                testobj.failIf(self.stopped)
+                testobj.assertFalse(self.stopped)
                 self.stopped = True
                 a = 1 / 0
         self.Callback = Callback
@@ -388,7 +388,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         self.assertNotEqual(len(reasons), 0)
         # The reasons should not include anything other than those
         # reasons listed in the allreasons class member.
-        self.failUnless(reasons.issubset(set(self.allreasons)))
+        self.assertTrue(reasons.issubset(set(self.allreasons)))
 
     def testCallbackMatchsReasons(self):
         """Ensure that callback methods and reasons are properly matched."""
@@ -412,7 +412,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 self.stopped = False
             def default(self, tree):
                 # We should not be here if we have terminated.
-                testobj.failIf(self.stopped)
+                testobj.assertFalse(self.stopped)
                 self.stopped = True
                 tree.terminate()
         def rp(retval, lp):
@@ -427,9 +427,9 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             def __init__(self):
                 self.last_total=0
             def default(self, tree):
-                testobj.failUnless(tree.num_active <= tree.num_all)
-                testobj.failUnless(tree.num_all <= tree.num_total)
-                testobj.failUnless(self.last_total <= tree.num_total)
+                testobj.assertTrue(tree.num_active <= tree.num_all)
+                testobj.assertTrue(tree.num_all <= tree.num_total)
+                testobj.assertTrue(self.last_total <= tree.num_total)
                 testobj.assertEqual(tree.num_active, len(list(tree)))
                 self.last_total = tree.num_total
         assign = self.solve_sat(callback=Callback())
@@ -471,7 +471,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 n = tree.first_node
                 while n:
                     explicit_actives.append(n.subproblem)
-                    n = n.next
+                    n = n.__next__
                 actives = [n.subproblem for n in tree]
                 testobj.assertEqual(actives, explicit_actives)
                 

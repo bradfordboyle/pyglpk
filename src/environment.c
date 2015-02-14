@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "environment.h"
 #include "structmember.h"
 #include "util.h"
@@ -39,7 +41,7 @@ static int Environment_clear(EnvironmentObject *self) {
 
 static void Environment_dealloc(EnvironmentObject *self) {
   Environment_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 EnvironmentObject* Environment_New(void) {
@@ -210,7 +212,7 @@ int Environment_InitType(PyObject *module) {
 }
 
 static PyMemberDef Environment_members[] = {
-  {"version", T_OBJECT_EX, offsetof(EnvironmentObject, version), RO,
+  {"version", T_OBJECT_EX, offsetof(EnvironmentObject, version), READONLY,
    "Tuple holding the major version and minor version of the GLPK\n"
    "that this PyGLPK module was built upon.  For example, if built\n"
    "against GLPK 4.31, version==(4,31)."},
@@ -251,8 +253,7 @@ static PyMethodDef Environment_methods[] = {
 };
 
 PyTypeObject EnvironmentType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Environment",			/* tp_name */
   sizeof(EnvironmentObject),		/* tp_basicsize*/
   0,					/* tp_itemsize*/
