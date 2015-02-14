@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "py3k.h"
+
 #include "util.h"
 #include "barcol.h"
 #include "lp.h"
