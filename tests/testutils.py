@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import sys, os.path
+import collections
 newpath = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, newpath)
 
@@ -48,10 +49,10 @@ def extractSuite(obj):
     if hasattr(obj, 'suite'):
         s = obj.suite
         if issubclass(type(s), unittest.TestSuite): return s
-        if callable(s): return s()
+        if isinstance(s, collections.Callable): return s()
     # Build the test suite.
     the_suite = unittest.TestSuite()
-    for v in vars(obj).values():
+    for v in list(vars(obj).values()):
         if type(v)==type and issubclass(v, unittest.TestCase):
             subsuite = tload.loadTestsFromTestCase(v)
             the_suite.addTests(subsuite)

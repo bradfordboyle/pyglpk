@@ -1,1 +1,1 @@
-import test_glpk
+from . import test_glpk
