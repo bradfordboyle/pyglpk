@@ -212,7 +212,7 @@ int Environment_InitType(PyObject *module) {
 }
 
 static PyMemberDef Environment_members[] = {
-  {"version", T_OBJECT_EX, offsetof(EnvironmentObject, version), RO,
+  {"version", T_OBJECT_EX, offsetof(EnvironmentObject, version), READONLY,
    "Tuple holding the major version and minor version of the GLPK\n"
    "that this PyGLPK module was built upon.  For example, if built\n"
    "against GLPK 4.31, version==(4,31)."},

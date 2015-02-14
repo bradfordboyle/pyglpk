@@ -152,7 +152,7 @@ static PyObject* TreeNode_Str(TreeNodeObject *self) {
 }
 
 static PyMemberDef TreeNode_members[] = {
-  {"subproblem", T_INT, offsetof(TreeNodeObject, subproblem), RO,
+  {"subproblem", T_INT, offsetof(TreeNodeObject, subproblem), READONLY,
    "The reference number of the subproblem corresponding to this node."},
   {NULL}
 };
@@ -545,7 +545,7 @@ int Tree_InitType(PyObject *module) {
 }
 
 static PyMemberDef Tree_members[] = {
-  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), RO,
+  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), READONLY,
    "Problem object used by the MIP solver."},
   {NULL}
 };
