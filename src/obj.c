@@ -77,8 +77,7 @@ static PySequenceMethods objiter_as_sequence = {
 };
 
 PyTypeObject ObjIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.ObjectiveIter",			/* tp_name */
   sizeof(ObjIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */
@@ -498,8 +497,7 @@ static PyMethodDef Obj_methods[] = {
 };
 
 PyTypeObject ObjType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Objective",			/* tp_name */
   sizeof(ObjObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

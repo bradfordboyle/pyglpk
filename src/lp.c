@@ -1257,8 +1257,7 @@ static PyMethodDef LPX_methods[] = {
 };
 
 PyTypeObject LPXType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.LPX",				/* tp_name */
   sizeof(LPXObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

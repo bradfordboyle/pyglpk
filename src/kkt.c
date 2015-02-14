@@ -139,8 +139,7 @@ static PyMethodDef KKT_methods[] = {
 };
 
 PyTypeObject KKTType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.KKT",				/* tp_name */
   sizeof(KKTObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/
