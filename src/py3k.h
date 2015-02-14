@@ -9,7 +9,7 @@
 #define PyString_FromFormat(format, ...) PyUnicode_FromFormat(format, __VA_ARGS__)
 #define PyString_Size(val) PyUnicode_GET_SIZE(val)
 #define PyInt_Type PyLong_Type
-#define PyInt_AS_LONG(val) val
+#define PyInt_AS_LONG(val) PyLong_AsLong(val)
 #define PyInt_Check(val) PyLong_Check(val)
 #define PyInt_FromLong(val) PyLong_FromLong(val)
 #define PyInt_AsLong(val) PyLong_AsLong(val)
