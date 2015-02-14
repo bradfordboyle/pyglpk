@@ -1,5 +1,7 @@
 """Contains material useful for all the different PyGLPK test modules."""
 
+from __future__ import print_function
+
 import sys, os.path
 newpath = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, newpath)
@@ -61,7 +63,7 @@ def testsRunner(obj):
     This will run this module's suite function upon the passed in
     object, and run the resulting test suite upon a
     unittest.TextTestRunner."""
-    print obj.__name__, ':', obj.__doc__
+    print(obj.__name__, ':', obj.__doc__)
     return unittest.TextTestRunner(verbosity=2).run(extractSuite(obj))
 
 # The runner convenience class.

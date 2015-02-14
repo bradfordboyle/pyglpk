@@ -1,5 +1,7 @@
 """The main module for running the tests."""
 
+from __future__ import print_function
+
 from testutils import *
 
 errors, failures, total = 0, 0, 0
@@ -17,8 +19,8 @@ for name_of_test in test_names:
 # Print the final summary report.
 if errors + failures:
     import sys
-    print 'TESTS FAILED!! : %d failures, %d errors from %d tests total' % (
-        failures, errors, total)
+    print('TESTS FAILED!! : %d failures, %d errors from %d tests total' % (
+        failures, errors, total))
     sys.exit(1)
 else:
-    print 'TESTS PASSED!!  %d tests total' % total
+    print('TESTS PASSED!!  %d tests total' % total)
