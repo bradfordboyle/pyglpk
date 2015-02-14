@@ -39,7 +39,7 @@ static int Environment_clear(EnvironmentObject *self) {
 
 static void Environment_dealloc(EnvironmentObject *self) {
   Environment_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 EnvironmentObject* Environment_New(void) {

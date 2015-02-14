@@ -39,7 +39,7 @@ static int Params_clear(ParamsObject *self) {
 
 static void Params_dealloc(ParamsObject *self) {
   Params_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */

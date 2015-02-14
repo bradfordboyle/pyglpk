@@ -54,7 +54,7 @@ static void ObjIter_dealloc(ObjIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->obj);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static Py_ssize_t ObjIter_len(ObjIterObject *it) {
@@ -132,7 +132,7 @@ static int Obj_clear(ObjObject *self) {
 
 static void Obj_dealloc(ObjObject *self) {
   Obj_clear(self);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */

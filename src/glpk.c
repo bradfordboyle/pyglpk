@@ -47,6 +47,10 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 
 #endif
 
+#ifndef Py_TYPE
+  #define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#endif
+
 static PyMethodDef GLPKMethods[] = {
   {NULL, NULL, 0, NULL}
 };

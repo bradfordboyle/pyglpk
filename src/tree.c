@@ -63,7 +63,7 @@ static void TreeNode_dealloc(TreeNodeObject *tn) {
     PyObject_ClearWeakRefs((PyObject*)tn);
   }
   Py_XDECREF(tn->py_tree);
-  tn->ob_type->tp_free((PyObject*)tn);
+  Py_TYPE(tn)->tp_free((PyObject*)tn);
 }
 
 static PyObject* TreeNode_richcompare(TreeNodeObject *v, PyObject *w, int op) {
@@ -144,7 +144,7 @@ static PyObject* TreeNode_getactive(TreeNodeObject *self, void *closure) {
 static PyObject* TreeNode_Str(TreeNodeObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %sactive subprob %d of %s %p>", self->ob_type->tp_name,
+    ("<%s, %sactive subprob %d of %s %p>", Py_TYPE(self)->tp_name,
      self->active?"":"in",
      self->subproblem, TreeType.tp_name, self->py_tree);
 }
@@ -246,7 +246,7 @@ static void TreeIter_dealloc(TreeIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->py_tree);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static PyObject *TreeIter_next(TreeIterObject *self) {
@@ -308,7 +308,7 @@ static void Tree_dealloc(TreeObject *self) {
     PyObject_ClearWeakRefs((PyObject*)self);
   }
   Py_XDECREF(self->py_lp);
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */
