@@ -623,8 +623,7 @@ static PyMethodDef Tree_methods[] = {
 };
 
 PyTypeObject TreeType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Tree",				/* tp_name */
   sizeof(TreeObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/
