@@ -32,6 +32,8 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 
 #define LP (self->lp)
 
+static PyObject* glpstatus2string(int);
+
 static int LPX_traverse(LPXObject *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->rows);
@@ -551,9 +553,13 @@ static PyObject* LPX_solver_exact(LPXObject *self)
 
 static PyObject* LPX_solver_interior(LPXObject *self) {
 	int retval = lpx_interior(LP);
+	int status = glp_ipt_status(LP);
 	if (retval != LPX_E_FAULT)
 		self->last_solver = 1;
-	return solver_retval_to_message(retval);
+	if (retval == LPX_E_OK && status != GLP_OPT)
+		return glpstatus2string(status);
+	else
+		return solver_retval_to_message(retval);
 }
 
 #if GLPK_VERSION(4, 20)
