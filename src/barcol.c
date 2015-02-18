@@ -58,7 +58,7 @@ static void BarColIter_dealloc(BarColIterObject *it) {
     PyObject_ClearWeakRefs((PyObject*)it);
   }
   Py_XDECREF(it->bc);
-  it->ob_type->tp_free((PyObject*)it);
+  Py_TYPE(it)->tp_free((PyObject*)it);
 }
 
 static Py_ssize_t BarColIter_len(BarColIterObject *it) {
@@ -136,7 +136,7 @@ static int BarCol_clear(BarColObject *self) {
 static void BarCol_dealloc(BarColObject *self) {
   BarCol_clear(self);
   //printf("dealloc bar col!\n");
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */
@@ -393,7 +393,7 @@ static int BarCol_ass_item(BarColObject *self, int index, PyObject *v) {
 static PyObject* BarCol_Str(BarColObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %s of %s %p>", self->ob_type->tp_name,
+    ("<%s, %s of %s %p>", Py_TYPE(self)->tp_name,
      (BarCol_Rows(self)?"rows":"cols"),
      LPXType.tp_name, self->py_lp);
 }

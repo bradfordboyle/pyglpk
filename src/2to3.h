@@ -17,3 +17,9 @@
 PyObject_HEAD_INIT(type) size,
 
 #endif
+
+#ifndef Py_TYPE
+
+#define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+
+#endif

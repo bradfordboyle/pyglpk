@@ -65,7 +65,7 @@ static void LPX_dealloc(LPXObject *self)
 {
 	LPX_clear(self);
 	if (LP) glp_delete_prob(LP);
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 LPXObject* LPX_FromLP(glp_prob*lp)
@@ -215,7 +215,7 @@ static PyObject* LPX_Str(LPXObject *self)
 {
 	// Returns a string representation of this object.
 	return PyString_FromFormat("<%s %d-by-%d at %p>",
-			self->ob_type->tp_name, glp_get_num_rows(LP), glp_get_num_cols(LP), self);
+			Py_TYPE(self)->tp_name, glp_get_num_rows(LP), glp_get_num_cols(LP), self);
 }
 
 PyObject *LPX_GetMatrix(LPXObject *self)

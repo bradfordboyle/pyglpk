@@ -27,7 +27,7 @@ static void KKT_dealloc(KKTObject *self) {
   if (self->weakreflist != NULL) {
     PyObject_ClearWeakRefs((PyObject*)self);
   }
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new parameter collection object. */

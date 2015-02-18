@@ -51,7 +51,7 @@ static void Bar_dealloc(BarObject *self) {
   }
   Py_DECREF(self->py_bc);
 #endif
-  self->ob_type->tp_free((PyObject*)self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 /** Create a new bar collection object. */
@@ -82,7 +82,7 @@ BarObject *Bar_New(BarColObject *py_bc, int index) {
 static PyObject* Bar_Str(BarObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
-    ("<%s, %s %d of %s %p>", self->ob_type->tp_name,
+    ("<%s, %s %d of %s %p>", Py_TYPE(self)->tp_name,
      Bar_Row(self)?"row":"col", Bar_Index(self),
      LPXType.tp_name, self->py_bc->py_lp);
 }
