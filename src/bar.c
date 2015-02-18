@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include "2to3.h"
+
 #include "bar.h"
 #include "structmember.h"
 #include "util.h"
