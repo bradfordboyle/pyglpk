@@ -1105,12 +1105,12 @@ int LPX_InitType(PyObject *module)
 }
 
 static PyMemberDef LPX_members[] = {
-	{"rows", T_OBJECT_EX, offsetof(LPXObject, rows), RO,
+	{"rows", T_OBJECT_EX, offsetof(LPXObject, rows), READONLY,
 		"Row collection. See the help on class BarCollection."},
-	{"cols", T_OBJECT_EX, offsetof(LPXObject, cols), RO,
+	{"cols", T_OBJECT_EX, offsetof(LPXObject, cols), READONLY,
 		"Column collection. See the help on class BarCollection."},
 #ifdef USEPARAMS
-	{"params", T_OBJECT_EX, offsetof(LPXObject, params), RO,
+	{"params", T_OBJECT_EX, offsetof(LPXObject, params), READONLY,
 		"Control parameter collection. See the help on class Params."},
 #endif
 	{NULL}
