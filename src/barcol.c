@@ -231,8 +231,13 @@ static PyObject* BarCol_subscript(BarColObject *self, PyObject *item) {
     // They input a slice.
     Py_ssize_t start, stop, step, subsize;
     PyObject *sublist = NULL;
+#if PY_MAJOR_VERSION >= 3
+    if (PySlice_GetIndicesEx(item,size,&start,&stop,
+                 &step,&subsize)<0) return NULL;
+#else
     if (PySlice_GetIndicesEx((PySliceObject*)item,size,&start,&stop,
 			     &step,&subsize)<0) return NULL;
+#endif
     sublist = PyList_New(subsize);
     if (sublist==NULL) return NULL;
     for (i=0; i<subsize; ++i) {
@@ -305,8 +310,13 @@ static int BarCol_ass_subscript(BarColObject *self, PyObject *item,
     } else if (PySlice_Check(item)) {
       // They input a slice.
       Py_ssize_t start, stop, step;
+#if PY_MAJOR_VERSION >= 3
+      if (PySlice_GetIndicesEx(item,size,&start,&stop,
+                   &step,&numtodel)<0) return -1;
+#else
       if (PySlice_GetIndicesEx((PySliceObject*)item,size,&start,&stop,
 			       &step,&numtodel)<0) return -1;
+#endif
       if (numtodel==0) return 0; // Trivial...
       indtodel = (int*)calloc(numtodel, sizeof(int));
       for (i=0; i<numtodel; ++i) {
