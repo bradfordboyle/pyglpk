@@ -78,8 +78,7 @@ static PySequenceMethods bciter_as_sequence = {
 };
 
 PyTypeObject BarColIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.BarCollectionIter",		/* tp_name */
   sizeof(BarColIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */
@@ -446,8 +445,7 @@ static PyMethodDef BarCol_methods[] = {
 };
 
 PyTypeObject BarColType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.BarCollection",			/* tp_name */
   sizeof(BarColObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/

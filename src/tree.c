@@ -184,8 +184,7 @@ static PyMethodDef TreeNode_methods[] = {
 };
 
 PyTypeObject TreeNodeType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.TreeNode",				/* tp_name */
   sizeof(TreeNodeObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/
@@ -260,8 +259,7 @@ static PyObject *TreeIter_next(TreeIterObject *self) {
 }
 
 PyTypeObject TreeIterType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.TreeIter",			/* tp_name */
   sizeof(TreeIterObject),		/* tp_basicsize */
   0,					/* tp_itemsize */

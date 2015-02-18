@@ -277,8 +277,7 @@ static PyMethodDef Environment_methods[] = {
 	{NULL}
 };
 PyTypeObject EnvironmentType = {
-	PyObject_HEAD_INIT(NULL)
-	0,					/* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"glpk.Environment",			/* tp_name */
 	sizeof(EnvironmentObject),		/* tp_basicsize*/
 	0,					/* tp_itemsize*/

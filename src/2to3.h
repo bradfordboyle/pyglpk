@@ -10,3 +10,10 @@
 #define PyInt_FromSize_t(v) PyLong_FromSize_t(v)
 
 #endif
+
+#ifndef PyVarObject_HEAD_INIT
+
+#define PyVarObject_HEAD_INIT(type, size) \
+PyObject_HEAD_INIT(type) size,
+
+#endif

@@ -347,8 +347,7 @@ static PyMethodDef Params_methods[] = {
 };
 
 PyTypeObject ParamsType = {
-  PyObject_HEAD_INIT(NULL)
-  0,					/* ob_size */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.Params",			/* tp_name */
   sizeof(ParamsObject),			/* tp_basicsize*/
   0,					/* tp_itemsize*/
