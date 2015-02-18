@@ -71,7 +71,7 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
 
     def testInitialCoefficients(self):
         """Test that the initial coefficients are 0."""
-        for i in xrange(len(self.lp.cols)):
+        for i in range(len(self.lp.cols)):
             self.assertEqual(self.lp.obj[i], 0.0)
         # While we're at it, run the same test with the iterator
         # functionality of the objective.

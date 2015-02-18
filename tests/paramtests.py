@@ -47,9 +47,9 @@ class ParamsTestCase(Runner, unittest.TestCase):
             p2bt[n] = illegals
         # Integer in range 255.
         for n in 'usecuts'.split():
-            p2v[n] = xrange(0, 0x100)
+            p2v[n] = range(0, 0x100)
             p2bt[n] = illegals
-            p2bv[n] = tuple(xrange(-10,0)) + tuple(xrange(0x100, 0x110))
+            p2bv[n] = tuple(range(-10,0)) + tuple(range(0x100, 0x110))
 
         # FLOAT PARAMETER VALUES
 
@@ -98,7 +98,7 @@ class ParamsTestCase(Runner, unittest.TestCase):
         """Sets all parameters to their default values."""
         p2dv = dict(self.param_name2default)
         del p2dv['itcnt']
-        for pname, pvalue in p2dv.iteritems():
+        for pname, pvalue in p2dv.items():
             setattr(self.lp.params, pname, pvalue)
 
     def listOfParameterPairs(self, pname2pvalues):
@@ -107,7 +107,7 @@ class ParamsTestCase(Runner, unittest.TestCase):
         Given a mapping from parameter names to a parameter value
         sequence, construct a list of all parameter names and
         parameter values."""
-        pp = [(name, value) for name, values in pname2pvalues.iteritems()
+        pp = [(name, value) for name, values in pname2pvalues.items()
               for value in values]
         return pp
 
@@ -127,7 +127,7 @@ class ParamsTestCase(Runner, unittest.TestCase):
         for n, v in pp:
             setattr(self.lp.params, n, v)
         self.lp.params.reset()
-        for n, v in sorted(self.param_name2default.iteritems()):
+        for n, v in sorted(self.param_name2default.items()):
             self.assertEqual(getattr(self.lp.params, n), v)
 
     def testSetBadValues(self):
