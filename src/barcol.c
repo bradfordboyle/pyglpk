@@ -171,6 +171,41 @@ static PyObject *BarCol_add(BarColObject *self, PyObject *args) {
   return PyInt_FromLong(n);
 }
 
+#if PY_MAJOR_VERSION >= 3
+// emulate the rich comparison provided by Python 2's object()
+static PyObject* BarCol_richcompare(BarColObject *self, PyObject *w, int op) {
+    if (!BarCol_Check(w)) {
+        // Different type
+        switch (op) {
+        case Py_EQ: Py_RETURN_FALSE;
+        case Py_NE: Py_RETURN_TRUE;
+        case Py_LT: Py_RETURN_TRUE;
+        case Py_LE: Py_RETURN_TRUE;
+        case Py_GT: Py_RETURN_TRUE;
+        case Py_GE: Py_RETURN_TRUE;
+        default:
+          Py_INCREF(Py_NotImplemented);
+          return Py_NotImplemented;
+        }
+    }
+    // Now we know it is a barcollection object
+    BarColObject *x = (BarColObject *)w;
+    long x_id = (long)x;
+    long self_id = (long)self;
+    switch (op) {
+    case Py_EQ: if (x_id == self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    case Py_NE: if (x_id != self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    case Py_LE: if (x_id <= self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    case Py_GE: if (x_id >= self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    case Py_LT: if (x_id <  self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    case Py_GT: if (x_id >  self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+    default:
+      Py_INCREF(Py_NotImplemented);
+      return Py_NotImplemented;
+    }
+}
+#endif
+
 /********** ABSTRACT PROTOCOL FUNCTIONS *******/
 
 int BarCol_Size(BarColObject* self) {
@@ -496,7 +531,11 @@ PyTypeObject BarColType = {
 	/* tp_doc */
   (traverseproc)BarCol_traverse,	/* tp_traverse */
   (inquiry)BarCol_clear,		/* tp_clear */
-  0,					/* tp_richcompare */
+#if PY_MAJOR_VERSION >= 3
+  (richcmpfunc)BarCol_richcompare, /* tp_richcompare */
+#else
+  0, /* tp_richcompare */
+#endif
   offsetof(BarColObject, weakreflist),	/* tp_weaklistoffset */
   BarCol_Iter,				/* tp_iter */
   0,					/* tp_iternext */
