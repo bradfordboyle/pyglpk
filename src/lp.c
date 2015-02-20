@@ -812,7 +812,7 @@ static KKTObject* LPX_kkt(LPXObject *self, PyObject *args)
 	KKTObject *kkt = KKT_New();
 	if (!kkt)
 		return NULL;
-	lpx_check_kkt(LP, scaling, &(kkt->kkt));
+	pyglpk_kkt_check(LP, scaling, &(kkt->kkt));
 	return kkt;
 }
 
@@ -820,7 +820,7 @@ static KKTObject* LPX_kktint(LPXObject *self) {
 	KKTObject *kkt = KKT_New();
 	if (!kkt)
 		return NULL;
-	lpx_check_int(LP, &(kkt->kkt));
+	pyglpk_int_check(LP, &(kkt->kkt));
 	return kkt;
 }
 

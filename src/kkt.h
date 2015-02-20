@@ -21,14 +21,48 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #define _KKT_H
 
 #include <Python.h>
-/*#include "lp.h"*/
-#include "lpx.h"
+#include "lp.h"
+#include "util.h"
 
 #define KKT_Check(op) PyObject_TypeCheck(op, &KKTType)
 
+#if GLPK_VERSION(4, 49)
+typedef struct pyglpk_kkt {
+  /* primal equality constraints */
+  double pe_ae_max;
+  int    pe_ae_row;
+  double pe_re_max;
+  int    pe_re_row;
+  int    pe_quality;
+
+  /* primal bound constraints */
+  double pb_ae_max;
+  int    pb_ae_ind;
+  double pb_re_max;
+  int    pb_re_ind;
+  int    pb_quality;
+
+  /* dual equality constraints */
+  double de_ae_max;
+  int    de_ae_col;
+  double de_re_max;
+  int    de_re_col;
+  int    de_quality;
+
+  /* dual bound constraints */
+  double db_ae_max;
+  int    db_ae_ind;
+  double db_re_max;
+  int    db_re_ind;
+  int    db_quality;
+} pyglpk_kkt_t;
+#else
+typedef struct LPXKKT pyglpk_kkt_t;
+#endif
+
 typedef struct {
   PyObject_HEAD
-  LPXKKT kkt;
+  pyglpk_kkt_t kkt;
   PyObject *weakreflist; // Weak reference list.
 } KKTObject;
 
@@ -39,5 +73,8 @@ KKTObject *KKT_New(void);
 
 /* Init the type and related types it contains. 0 on success. */
 int KKT_InitType(PyObject *module);
+
+void pyglpk_kkt_check(glp_prob *, int, pyglpk_kkt_t *);
+void pyglpk_int_check(glp_prob *, pyglpk_kkt_t *);
 
 #endif // _PARAMS_H

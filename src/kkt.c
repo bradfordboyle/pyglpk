@@ -32,9 +32,78 @@ static void KKT_dealloc(KKTObject *self) {
 KKTObject *KKT_New(void) {
   KKTObject *k = (KKTObject*)PyObject_New(KKTObject, &KKTType);
   if (k==NULL) return k;
-  bzero((void*)(&(k->kkt)), sizeof(LPXKKT));
+  bzero((void*)(&(k->kkt)), sizeof(pyglpk_kkt_t));
   k->weakreflist = NULL;
   return k;
+}
+
+static inline int quality(double re_max)
+{
+  int ret;
+  if (re_max <= 1e-9)
+    ret = 'H';
+  else if (re_max <= 1e-6)
+    ret = 'M';
+  else if (re_max <= 1e-3)
+    ret = 'L';
+  else
+    ret = '?';
+
+  return ret;
+}
+
+void pyglpk_kkt_check(glp_prob *lp, int scaling, pyglpk_kkt_t *kkt)
+{
+#if GLPK_VERSION(4, 49)
+  int m = glp_get_num_rows(lp);
+
+  /* check primal equality constraints */
+  glp_check_kkt(lp, GLP_SOL, GLP_KKT_PE,
+                &(kkt->pe_ae_max), &(kkt->pe_ae_row),
+                &(kkt->pe_re_max), &(kkt->pe_re_row));
+  kkt->pe_quality = quality(kkt->pe_re_max);
+
+  /* check primal bound constraints */
+  glp_check_kkt(lp, GLP_SOL, GLP_KKT_PB,
+                &(kkt->pb_ae_max), &(kkt->pb_ae_ind),
+                &(kkt->pb_re_max), &(kkt->pb_re_ind));
+  kkt->pb_quality = quality(kkt->pb_re_max);
+
+  /* check dual equality constraints */
+  glp_check_kkt(lp, GLP_SOL, GLP_KKT_DE,
+                &(kkt->de_ae_max), &(kkt->de_ae_col),
+                &(kkt->de_re_max), &(kkt->de_re_col));
+  kkt->de_ae_col = kkt->de_ae_col == 0 ? 0 : kkt->de_ae_col - m;
+  kkt->de_re_col = kkt->de_re_col == 0 ? 0 : kkt->de_re_col - m;
+  kkt->de_quality = quality(kkt->de_re_max);
+
+  /* check dual bound constraints */
+  glp_check_kkt(lp, GLP_SOL, GLP_KKT_DB,
+                &(kkt->db_ae_max), &(kkt->db_ae_ind),
+                &(kkt->db_re_max), &(kkt->db_re_ind));
+  kkt->db_quality = quality(kkt->db_re_max);
+#else
+  lpx_check_kkt(lp, scaling, kkt);
+#endif
+}
+
+void pyglpk_int_check(glp_prob *lp, pyglpk_kkt_t *kkt)
+{
+#if GLPK_VERSION(4, 49)
+  /* check primal equality constraints */
+  glp_check_kkt(lp, GLP_MIP, GLP_KKT_PE,
+                &(kkt->pe_ae_max), &(kkt->pe_ae_row),
+                &(kkt->pe_re_max), &(kkt->pe_re_row));
+  kkt->pe_quality = quality(kkt->pe_re_max);
+
+  /* check primal bound constraints */
+  glp_check_kkt(lp, GLP_MIP, GLP_KKT_PB,
+                &(kkt->pb_ae_max), &(kkt->pb_ae_ind),
+                &(kkt->pb_re_max), &(kkt->pb_re_ind));
+  kkt->pb_quality = quality(kkt->pb_re_max);
+#else
+  lpx_check_int(lp, kkt);
+#endif
 }
 
 /****************** GET-SET-ERS ***************/

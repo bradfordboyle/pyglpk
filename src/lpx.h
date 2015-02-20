@@ -351,99 +351,11 @@ struct LPXCPS
       /* relative MIP gap tolerance */
 };
 
-typedef struct LPXKKT
-{     /* this structure contains results reported by the routines which
-         checks Karush-Kuhn-Tucker conditions (for details see comments
-         to those routines) */
-      /*--------------------------------------------------------------*/
-      /* xR - A * xS = 0 (KKT.PE) */
-      double pe_ae_max;
-      /* largest absolute error */
-      int    pe_ae_row;
-      /* number of row with largest absolute error */
-      double pe_re_max;
-      /* largest relative error */
-      int    pe_re_row;
-      /* number of row with largest relative error */
-      int    pe_quality;
-      /* quality of primal solution:
-         'H' - high
-         'M' - medium
-         'L' - low
-         '?' - primal solution is wrong */
-      /*--------------------------------------------------------------*/
-      /* l[k] <= x[k] <= u[k] (KKT.PB) */
-      double pb_ae_max;
-      /* largest absolute error */
-      int    pb_ae_ind;
-      /* number of variable with largest absolute error */
-      double pb_re_max;
-      /* largest relative error */
-      int    pb_re_ind;
-      /* number of variable with largest relative error */
-      int    pb_quality;
-      /* quality of primal feasibility:
-         'H' - high
-         'M' - medium
-         'L' - low
-         '?' - primal solution is infeasible */
-      /*--------------------------------------------------------------*/
-      /* A' * (dR - cR) + (dS - cS) = 0 (KKT.DE) */
-      double de_ae_max;
-      /* largest absolute error */
-      int    de_ae_col;
-      /* number of column with largest absolute error */
-      double de_re_max;
-      /* largest relative error */
-      int    de_re_col;
-      /* number of column with largest relative error */
-      int    de_quality;
-      /* quality of dual solution:
-         'H' - high
-         'M' - medium
-         'L' - low
-         '?' - dual solution is wrong */
-      /*--------------------------------------------------------------*/
-      /* d[k] >= 0 or d[k] <= 0 (KKT.DB) */
-      double db_ae_max;
-      /* largest absolute error */
-      int    db_ae_ind;
-      /* number of variable with largest absolute error */
-      double db_re_max;
-      /* largest relative error */
-      int    db_re_ind;
-      /* number of variable with largest relative error */
-      int    db_quality;
-      /* quality of dual feasibility:
-         'H' - high
-         'M' - medium
-         'L' - low
-         '?' - dual solution is infeasible */
-      /*--------------------------------------------------------------*/
-      /* (x[k] - bound of x[k]) * d[k] = 0 (KKT.CS) */
-      double cs_ae_max;
-      /* largest absolute error */
-      int    cs_ae_ind;
-      /* number of variable with largest absolute error */
-      double cs_re_max;
-      /* largest relative error */
-      int    cs_re_ind;
-      /* number of variable with largest relative error */
-      int    cs_quality;
-      /* quality of complementary slackness:
-         'H' - high
-         'M' - medium
-         'L' - low
-         '?' - primal and dual solutions are not complementary */
-} LPXKKT;
-
 LPX *lpx_read_model(const char *model, const char *data, const char *output);
 int lpx_read_bas(glp_prob *lp, const char *fname);
 int lpx_exact(LPX *lp);
 int lpx_interior(LPX *lp);
 int lpx_intopt(LPX *lp);
-void lpx_check_kkt(LPX *lp, int scaled, LPXKKT *kkt);
-void lpx_check_int(LPX *lp, LPXKKT *kkt);
 int lpx_get_ray_info(LPX *lp);
 int lpx_get_int_parm(LPX *lp, int parm);
 double lpx_get_real_parm(LPX *lp, int parm);
