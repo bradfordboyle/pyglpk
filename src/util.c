@@ -22,7 +22,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "lp.h"
 #include <string.h>
 #include <stdio.h>
-#include "lpx.h"
 
 int util_extract_if(PyObject *ob, PyObject *barcol,
 		    int *len, int **ind, double **val) {
@@ -141,7 +140,7 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
   PyObject *iter=NULL,*index2value=NULL,*item=NULL,*index=NULL,*value=NULL;
   int curr_index1 = 0, curr_index2 = 0, num_zero = 0;
   LPXObject *lp = (LPXObject*)lpobj;
-  int size1 = lpx_get_num_rows(lp->lp), size2 = lpx_get_num_cols(lp->lp);
+  int size1 = glp_get_num_rows(lp->lp), size2 = glp_get_num_cols(lp->lp);
 
   if ((iter=PyObject_GetIter(ob)) == NULL) return 0;
   if ((index2value=PyDict_New()) == NULL) return 0;
