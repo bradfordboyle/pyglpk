@@ -354,7 +354,6 @@ struct LPXCPS
 LPX *lpx_read_model(const char *model, const char *data, const char *output);
 int lpx_read_bas(glp_prob *lp, const char *fname);
 int lpx_exact(LPX *lp);
-int lpx_interior(LPX *lp);
 int lpx_intopt(LPX *lp);
 int lpx_get_int_parm(LPX *lp, int parm);
 double lpx_get_real_parm(LPX *lp, int parm);

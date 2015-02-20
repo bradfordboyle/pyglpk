@@ -433,6 +433,10 @@ static PyObject* glpsolver_retval_to_message(int retval)
 		returnval = "root"; break;
 	case GLP_ESTOP:
 		returnval = "stop"; break;
+	case GLP_ENOCVG:
+		returnval = "nocvg"; break;
+	case GLP_EINSTAB:
+		returnval = "instab"; break;
 #endif
 	default:
 		returnval = "unknown?"; break;
@@ -552,14 +556,10 @@ static PyObject* LPX_solver_exact(LPXObject *self)
 }
 
 static PyObject* LPX_solver_interior(LPXObject *self) {
-	int retval = lpx_interior(LP);
-	int status = glp_ipt_status(LP);
-	if (retval != LPX_E_FAULT)
+	int retval = glp_interior(LP, NULL);
+	if (!retval)
 		self->last_solver = 1;
-	if (retval == LPX_E_OK && status != GLP_OPT)
-		return glpstatus2string(status);
-	else
-		return solver_retval_to_message(retval);
+	return glpsolver_retval_to_message(retval);
 }
 
 #if GLPK_VERSION(4, 20)

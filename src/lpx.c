@@ -103,22 +103,6 @@ int lpx_exact(LPX *lp)
 	return ret;
 }
 
-int lpx_interior(LPX *lp)
-{     /* easy-to-use driver to the interior-point method */
-      int ret;
-      ret = glp_interior(lp, NULL);
-      switch (ret)
-      {  case 0:           ret = LPX_E_OK;      break;
-         case GLP_EFAIL:   ret = LPX_E_FAULT;   break;
-         case GLP_ENOFEAS: ret = LPX_E_NOFEAS;  break;
-         case GLP_ENOCVG:  ret = LPX_E_NOCONV;  break;
-         case GLP_EITLIM:  ret = LPX_E_ITLIM;   break;
-         case GLP_EINSTAB: ret = LPX_E_INSTAB;  break;
-         default:          xassert(ret != ret);
-      }
-      return ret;
-}
-
 int lpx_intopt(LPX *lp)
 {     /* easy-to-use driver to the branch-and-bound method */
       return solve_mip(lp, GLP_ON);
