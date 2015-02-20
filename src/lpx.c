@@ -26,7 +26,6 @@
 #include "lpx.h"
 
 /* forward declare static methods */
-static void fill_smcp(LPX *lp, glp_smcp *parm);
 static struct LPXCPS *access_parms(LPX *lp);
 static void reset_parms(LPX *lp);
 static int solve_mip(LPX *lp, int presolve);
@@ -71,36 +70,6 @@ int lpx_read_bas(LPX *lp, const char *fname)
 	xerror("lpx_read_bas: operation not supported\n");
 	return 0;
 #endif
-}
-
-/* easy-to-use driver to the exact simplex method */
-/* glpk-4.45/glplpx01.c:539--556 */
-int lpx_exact(LPX *lp)
-{
-	glp_smcp parm;
-	int ret;
-	fill_smcp(lp, &parm);
-	ret = glp_exact(lp, &parm);
-	switch (ret) {
-	case 0:
-		ret = LPX_E_OK;
-		break;
-	case GLP_EBADB:
-	case GLP_ESING:
-	case GLP_EBOUND:
-	case GLP_EFAIL:
-		ret = LPX_E_FAULT;
-		break;
-	case GLP_EITLIM:
-		ret = LPX_E_ITLIM;
-		break;
-	case GLP_ETMLIM:
-		ret = LPX_E_TMLIM;
-		break;
-	default:
-		xassert(ret != ret);
-	}
-	return ret;
 }
 
 int lpx_intopt(LPX *lp)
@@ -300,7 +269,7 @@ int lpx_get_int_parm(LPX *lp, int parm)
       return val;
 }
 
-static void fill_smcp(LPX *lp, glp_smcp *parm)
+void fill_smcp(LPX *lp, glp_smcp *parm)
 {
 	glp_init_smcp(parm);
 	switch (lpx_get_int_parm(lp, LPX_K_MSGLEV)) {

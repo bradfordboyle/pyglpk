@@ -549,10 +549,14 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 
 static PyObject* LPX_solver_exact(LPXObject *self)
 {
-	int retval = lpx_exact(LP);
-	if (retval != LPX_E_FAULT)
+	glp_smcp parm;
+	int retval;
+
+	fill_smcp(LP, &parm);
+	retval = glp_exact(LP, &parm);
+	if (!retval)
 		self->last_solver = 0;
-	return solver_retval_to_message(retval);
+	return glpsolver_retval_to_message(retval);
 }
 
 static PyObject* LPX_solver_interior(LPXObject *self) {
