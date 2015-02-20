@@ -242,50 +242,6 @@ int lpx_write_mps(LPX *lp, const char *fname)
       return glp_write_mps(lp, GLP_MPS_DECK, NULL, fname);
 }
 
-int lpx_get_num_rows(LPX *lp)
-{     /* retrieve number of rows */
-      return glp_get_num_rows(lp);
-}
-
-int lpx_get_num_cols(LPX *lp)
-{     /* retrieve number of columns */
-      return glp_get_num_cols(lp);
-}
-
-const char *lpx_get_row_name(LPX *lp, int i)
-{     /* retrieve row name */
-      return glp_get_row_name(lp, i);
-}
-
-void lpx_set_row_name(LPX *lp, int i, const char *name)
-{     /* assign (change) row name */
-      glp_set_row_name(lp, i, name);
-      return;
-}
-
-void lpx_set_col_name(LPX *lp, int j, const char *name)
-{     /* assign (change) column name */
-      glp_set_col_name(lp, j, name);
-      return;
-}
-
-void lpx_set_row_stat(LPX *lp, int i, int stat)
-{     /* set (change) row status */
-      glp_set_row_stat(lp, i, stat - LPX_BS + GLP_BS);
-      return;
-}
-
-void lpx_set_col_stat(LPX *lp, int j, int stat)
-{     /* set (change) column status */
-      glp_set_col_stat(lp, j, stat - LPX_BS + GLP_BS);
-      return;
-}
-
-int lpx_get_class(LPX *lp)
-{     /* determine problem klass */
-      return glp_get_num_int(lp) == 0 ? LPX_LP : LPX_MIP;
-}
-
 static int solve_mip(LPX *lp, int presolve)
 {     glp_iocp parm;
       int ret;

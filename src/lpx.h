@@ -447,12 +447,5 @@ void lpx_check_int(LPX *lp, LPXKKT *kkt);
 int lpx_get_ray_info(LPX *lp);
 int lpx_get_int_parm(LPX *lp, int parm);
 double lpx_get_real_parm(LPX *lp, int parm);
-int lpx_get_num_rows(LPX *lp);
-int lpx_get_num_cols(LPX *lp);
-int lpx_get_class(LPX *lp);
-void lpx_set_row_stat(LPX *lp, int i, int stat);
-void lpx_set_col_stat(LPX *lp, int j, int stat);
-void lpx_set_row_name(LPX *lp, int i, const char *name);
-void lpx_set_col_name(LPX *lp, int j, const char *name);
 
 #endif // # _LPX_H
