@@ -124,16 +124,6 @@ int lpx_intopt(LPX *lp)
       return solve_mip(lp, GLP_ON);
 }
 
-int lpx_get_ray_info(LPX *lp)
-{     /* determine what causes primal unboundness */
-      return glp_get_unbnd_ray(lp);
-}
-
-int lpx_write_mps(LPX *lp, const char *fname)
-{     /* write problem data in fixed MPS format */
-      return glp_write_mps(lp, GLP_MPS_DECK, NULL, fname);
-}
-
 static int solve_mip(LPX *lp, int presolve)
 {     glp_iocp parm;
       int ret;

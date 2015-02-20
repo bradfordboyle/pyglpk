@@ -1003,7 +1003,7 @@ static PyObject* LPX_getspecstatus(LPXObject *self, int(*statfunc)(LPX*))
 
 static PyObject* LPX_getray(LPXObject *self, void *closure)
 {
-	int ray = lpx_get_ray_info(LP), numrows;
+	int ray = glp_get_unbnd_ray(LP), numrows;
 	if (ray == 0)
 		Py_RETURN_NONE;
 	numrows = glp_get_num_rows(LP);
