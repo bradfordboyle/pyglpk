@@ -21,7 +21,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "bar.h"
 #include "util.h"
 #include "structmember.h"
-#include "lpx.h"
 
 #define LP (self->py_lp->lp)
 
@@ -179,7 +178,7 @@ int BarCol_Size(BarColObject* self) {
 }
 
 int BarCol_Index(BarColObject *self, PyObject *obj, int *index, int except){
-  int size = (BarCol_Rows(self) ? lpx_get_num_rows : lpx_get_num_cols)(LP);
+  int size = (BarCol_Rows(self) ? glp_get_num_rows : glp_get_num_cols)(LP);
   if (PyInt_Check(obj)) {
     int i = PyInt_AsLong(obj);
     if (i < 0) i += size;
