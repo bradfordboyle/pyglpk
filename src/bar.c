@@ -21,7 +21,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "structmember.h"
 #include "util.h"
 #include <string.h>
-#include "lpx.h"
 
 #define LP (self->py_bc->py_lp->lp)
 
@@ -128,7 +127,7 @@ int Bar_SetMatrix(BarObject *self, PyObject *newvals) {
   double*val;
   if (!Bar_Valid(self, 1)) return -1;
   // Get the alternate length (e.g., col length if this is a row).
-  len = (Bar_Row(self) ? lpx_get_num_cols : lpx_get_num_rows)(LP);
+  len = (Bar_Row(self) ? glp_get_num_cols : glp_get_num_rows)(LP);
   // Now, attempt to convert the input item.
   if (newvals == NULL || newvals == Py_None) {
     len = 0;
@@ -182,7 +181,7 @@ static PyObject* Bar_richcompare(BarObject *v, PyObject *w, int op) {
 /********** ABSTRACT PROTOCOL FUNCTIONS *******/
 
 /*int Bar_Size(BarObject* self) {
-  return (Bar_Row(self) ? lpx_get_num_rows : lpx_get_num_cols)(LP); }
+  return (Bar_Row(self) ? glp_get_num_rows : glp_get_num_cols)(LP); }
 static PyObject* Bar_subscript(BarObject *self, PyObject *item) {
   printf("bar subscript\n"); Py_RETURN_NONE;}
 static int Bar_ass_subscript(BarObject *self,PyObject *item,PyObject *value) {
@@ -214,7 +213,7 @@ static int Bar_setname(BarObject *self, PyObject *value, void *closure) {
     PyErr_SetString(PyExc_ValueError, "name may be at most 255 chars");
     return -1;
   }
-  (Bar_Row(self) ? lpx_set_row_name : lpx_set_col_name)
+  (Bar_Row(self) ? glp_set_row_name : glp_set_col_name)
     (LP, Bar_Index(self)+1, name);
   return 0;
 }
@@ -394,7 +393,7 @@ static int Bar_setstatus(BarObject *self, PyObject *value, void *closure) {
       (PyExc_ValueError, "status string value '%s' unrecognized", sstr);
     return -1;
   }
-  (Bar_Row(self) ? lpx_set_row_stat : lpx_set_col_stat)
+  (Bar_Row(self) ? glp_set_row_stat : glp_set_col_stat)
     (LP, Bar_Index(self)+1, status);
   return 0;
 }
@@ -489,7 +488,7 @@ static PyObject* Bar_getspecvarval(BarObject *self,
 static PyObject* Bar_getspecvarvalm(BarObject *self,
 				    double(*valfuncs[])(glp_prob*, int)) {
   if (!Bar_Valid(self, 1)) return NULL;
-  if (lpx_get_class(LP)!=LPX_MIP) {
+  if (glp_get_num_int(LP) == 0) {
     PyErr_SetString(PyExc_TypeError, 
 		    "MIP values require mixed integer problem");
     return NULL;
