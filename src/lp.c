@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
+#include <Python.h>
+#include <glpk.h>
 #include "lp.h"
 #include "structmember.h"
 #include "barcol.h"
@@ -24,7 +26,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "kkt.h"
 #include "util.h"
 #include "tree.h"
-#include "lpx.h"
 
 #ifdef USEPARAMS
 #include "params.h"
@@ -106,6 +107,33 @@ static PyObject * LPX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		self->last_solver = -1;
 	}
 	return (PyObject*)self;
+}
+
+static glp_prob *lpx_read_model(const char *model, const char *data, const char *output)
+{
+        glp_prob *lp = NULL;
+        glp_tran *tran;
+        /* allocate the translator workspace */
+        tran = glp_mpl_alloc_wksp();
+        /* read model section and optional data section */
+        if (glp_mpl_read_model(tran, model, data != NULL))
+                goto done;
+        /* read separate data section, if required */
+        /* TODO: compound and statement? */
+        if (data != NULL)
+                if (glp_mpl_read_data(tran, data))
+                        goto done;
+        /* generate the model */
+        if (glp_mpl_generate(tran, output))
+                goto done;
+        /* build the problem instance from the model */
+        lp = glp_create_prob();
+        glp_mpl_build_prob(tran, lp);
+done:
+        /* free the translator workspace */
+        glp_mpl_free_wksp(tran);
+        /* bring the problem object to the calling program */
+        return lp;
 }
 
 static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
@@ -350,54 +378,7 @@ static PyObject* LPX_basis_cpx(LPXObject *self)
 	Py_RETURN_NONE;
 }
 
-static PyObject* LPX_basis_read(LPXObject *self, PyObject *args)
-{
-	char *bas_filename = NULL;
-	if (!PyArg_ParseTuple(args, "s", &bas_filename))
-		return NULL;
-	if (lpx_read_bas(LP, bas_filename)) {
-		PyErr_SetString(PyExc_RuntimeError, "could not read basis file");
-		return NULL;
-	}
-	Py_RETURN_NONE;
-}
-
 /**************** SOLVER METHODS **************/
-
-static PyObject* solver_retval_to_message(int retval)
-{
-	switch (retval) {
-	case LPX_E_OK:
-		Py_RETURN_NONE;
-	case LPX_E_FAULT:
-		return PyString_FromString("fault");
-	case LPX_E_OBJLL:
-		return PyString_FromString("objll");
-	case LPX_E_OBJUL:
-		return PyString_FromString("objul");
-	case LPX_E_ITLIM:
-		return PyString_FromString("itlim");
-	case LPX_E_TMLIM:
-		return PyString_FromString("tmlim");
-	case LPX_E_SING:
-		return PyString_FromString("sing");
-
-	case LPX_E_NOPFS:
-		return PyString_FromString("nopfs");
-	case LPX_E_NODFS:
-		return PyString_FromString("nodfs");
-
-	case LPX_E_NOFEAS:
-		return PyString_FromString("nofeas");
-	case LPX_E_NOCONV:
-		return PyString_FromString("noconv");
-	case LPX_E_INSTAB:
-		return PyString_FromString("instab");
-
-	default:
-		return PyString_FromString("unknown?");
-	}
-}
 
 static PyObject* glpsolver_retval_to_message(int retval)
 {
@@ -549,10 +530,11 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 
 static PyObject* LPX_solver_exact(LPXObject *self)
 {
-	glp_smcp parm;
 	int retval;
+	glp_smcp parm;
 
-	fill_smcp(LP, &parm);
+        //TODO: add kwargs for smcp
+	glp_init_smcp(&parm);
 	retval = glp_exact(LP, &parm);
 	if (!retval)
 		self->last_solver = 0;
@@ -791,10 +773,15 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 
 static PyObject* LPX_solver_intopt(LPXObject *self)
 {
-	int retval = lpx_intopt(LP);
-	if (retval != LPX_E_FAULT)
+        int retval;
+        glp_iocp parm;
+
+        //TODO: add kwargs for iocp
+        glp_init_iocp(&parm);
+	retval = glp_intopt(LP, &parm);
+	if (!retval)
 		self->last_solver = 2;
-	return solver_retval_to_message(retval);
+	return glpsolver_retval_to_message(retval);
 }
 
 static KKTObject* LPX_kkt(LPXObject *self, PyObject *args)
@@ -1000,7 +987,7 @@ static PyObject* LPX_getstatus(LPXObject *self, void *closure)
 	return glpstatus2string(status);
 }
 
-static PyObject* LPX_getspecstatus(LPXObject *self, int(*statfunc)(LPX*))
+static PyObject* LPX_getspecstatus(LPXObject *self, int(*statfunc)(glp_prob *))
 {
 	return glpstatus2string(statfunc(LP));
 }
@@ -1213,9 +1200,6 @@ static PyMethodDef LPX_methods[] = {
 		"Robert E. Bixby. Implementing the Simplex Method: The Initial\n"
 		"Basis.  ORSA Journal on Computing, Vol. 4, No. 3, 1992,\n"
 		"pp. 267-84."},
-	{"read_basis", (PyCFunction)LPX_basis_read, METH_VARARGS,
-		"read_basis(filename)\n\n"
-		"Reads an LP basis in the fixed MPS format from a given file."},
 	// Solver routines.
 	{"simplex", (PyCFunction)LPX_solver_simplex, METH_VARARGS|METH_KEYWORDS,
 		"simplex([keyword arguments])\n\n"

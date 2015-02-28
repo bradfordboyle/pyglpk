@@ -3,7 +3,7 @@ import sys, os, os.path, re
 
 useparams = False
 
-sources = 'glpk lp lpx barcol bar obj util kkt tree environment'
+sources = 'glpk lp barcol bar obj util kkt tree environment'
 source_roots = sources.split()
 if useparams: source_roots.append('params')
 
