@@ -109,112 +109,98 @@ static PyObject * LPX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	return (PyObject*)self;
 }
 
-static glp_prob *lpx_read_model(const char *model, const char *data, const char *output)
-{
-        glp_prob *lp = NULL;
-        glp_tran *tran;
-        /* allocate the translator workspace */
-        tran = glp_mpl_alloc_wksp();
-        /* read model section and optional data section */
-        if (glp_mpl_read_model(tran, model, data != NULL))
-                goto done;
-        /* read separate data section, if required */
-        /* TODO: compound and statement? */
-        if (data != NULL)
-                if (glp_mpl_read_data(tran, data))
-                        goto done;
-        /* generate the model */
-        if (glp_mpl_generate(tran, output))
-                goto done;
-        /* build the problem instance from the model */
-        lp = glp_create_prob();
-        glp_mpl_build_prob(tran, lp);
-done:
-        /* free the translator workspace */
-        glp_mpl_free_wksp(tran);
-        /* bring the problem object to the calling program */
-        return lp;
-}
-
 static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 {
 	char *mps_n=NULL, *freemps_n=NULL, *cpxlp_n=NULL;
-	PyObject *model_obj=NULL;
+	char *model[] = {NULL,NULL,NULL};
+	PyObject *model_obj = NULL, *so = NULL;
 	static char *kwlist[] = {"gmp","mps","freemps","cpxlp",NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Osss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n)) {
-		return -1;
-	}
-	int numargs = (mps_n?1:0)+(freemps_n?1:0)+(cpxlp_n?1:0)+(model_obj?1:0);
+        Py_ssize_t numargs = 0, model_size = 0;
+        int failure = 0, i;
+        glp_tran *tran;
+
+        numargs += args ? PyTuple_Size(args) : 0;
+        numargs += kwds ? PyDict_Size(args) : 0;
 	if (numargs>1) {
 		PyErr_SetString(PyExc_TypeError, "cannot specify multiple data sources");
 		return -1;
 	}
-	if (numargs==0) {
-		// No arguments.  Create an empty problem.
-		self->lp = glp_create_prob();
-	} else {
-		// Some of these are pretty straightforward data reading routines.
-		if (mps_n) {
-			self->lp = glp_create_prob();
-			int failure = glp_read_mps(self->lp, GLP_MPS_DECK, NULL, mps_n);
-			if (failure) {
-				PyErr_SetString(PyExc_RuntimeError, "MPS reader failed");
-				return -1;
-			}
-		} else if (freemps_n) {
-			self->lp = glp_create_prob();
-			int failure = glp_read_mps(self->lp, GLP_MPS_FILE, NULL, mps_n);
-			if (failure) {
-				PyErr_SetString(PyExc_RuntimeError, "Free MPS reader failed");
-				return -1;
-			}
-		} else if (cpxlp_n) {
-			self->lp = glp_create_prob();
-			int failure = glp_read_lp(self->lp, NULL, mps_n);
-			if (failure) {
-				PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
-				return -1;
-			}
-		} else if (model_obj) {
-			// This one can take a few possible values.
-			char *model[] = {NULL,NULL,NULL};
-			if (PyString_Check(model_obj)) {
-				// Single string object.
-				model[0] = PyString_AsString(model_obj);
-				if (!model[0])
-					return -1;
-			} else if (PyTuple_Check(model_obj)) {
-				// Possibly module arguments.
-				int i,size = PyTuple_Size(model_obj);
-				if (size < -1)
-					return -1;
-				if (size >  3) {
-					PyErr_SetString(PyExc_ValueError, "model tuple must have length<=3");
-					return -1;
-				}
-				for (i=0; i < size; ++i) {
-					PyObject *so = PyTuple_GET_ITEM(model_obj,i);
-					if (so == Py_None)
-						continue;
-					model[i] = PyString_AsString(so);
-					if (model[i] == NULL)
-						return -1;
-				}
-			} else {
-				PyErr_SetString(PyExc_TypeError, "model arg must be string or tuple");
-				return -1;
-			}
-			// Now, pass in that information.
-			if (!model[0])
-				return -1;
-			self->lp = lpx_read_model(model[0], model[1], model[2]);
-		}
-	}
-	// Any of the methods above may have failed, so the LP would be null.
-	if (LP == NULL) {
-		PyErr_SetString(numargs ? PyExc_RuntimeError : PyExc_MemoryError, "could not create problem");
+
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Osss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n)) {
 		return -1;
 	}
+
+        if (model_obj && PyString_Check(model_obj)) {
+                model[0] = PyString_AsString(model_obj);
+		if (!model[0])
+                        return -1;
+        } else if (model_obj && PyTuple_Check(model_obj)) {
+		model_size = PyTuple_Size(model_obj);
+		if (model_size < -1)
+			return -1;
+		if (model_size >  3) {
+			PyErr_SetString(PyExc_ValueError, "model tuple must have length<=3");
+			return -1;
+		}
+		for (i = 0; i < model_size; i++) {
+			so = PyTuple_GET_ITEM(model_obj,i);
+			if (so == Py_None)
+				continue;
+			model[i] = PyString_AsString(so);
+			if (model[i] == NULL)
+				return -1;
+		}
+        } else if (model_obj) {
+	        PyErr_SetString(PyExc_TypeError, "model arg must be string or tuple");
+                return -1;
+        }
+
+        // start by create an empty problem
+	self->lp = glp_create_prob();
+	// Some of these are pretty straightforward data reading routines.
+	if (mps_n) {
+		failure = glp_read_mps(self->lp, GLP_MPS_DECK, NULL, mps_n);
+		if (failure)
+			PyErr_SetString(PyExc_RuntimeError, "MPS reader failed");
+	} else if (freemps_n) {
+		failure = glp_read_mps(self->lp, GLP_MPS_FILE, NULL, mps_n);
+		if (failure)
+			PyErr_SetString(PyExc_RuntimeError, "Free MPS reader failed");
+	} else if (cpxlp_n) {
+		failure = glp_read_lp(self->lp, NULL, mps_n);
+		if (failure)
+			PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
+	} else if (model_obj) {
+                /* allocate the translator workspace */
+                tran = glp_mpl_alloc_wksp();
+
+                /* read model section and optional data section */
+                failure = glp_mpl_read_model(tran, model[0], model[1] != NULL);
+                if (failure)
+                        PyErr_SetString(PyExc_RuntimeError, "GMP model reader failed");
+
+                /* read separate data section, if required */
+                if (!failure && !model[1] && (failure = glp_mpl_read_data(tran, model[1])))
+                        PyErr_SetString(PyExc_RuntimeError, "GMP data reader failed");
+
+                /* generate the model */
+                if (!failure && (failure = glp_mpl_generate(tran, model[2])))
+                        PyErr_SetString(PyExc_RuntimeError, "GMP generator failed");
+
+                /* build the problem instance from the model */
+                if (!failure)
+                        glp_mpl_build_prob(tran, self->lp);
+
+                /* free the translator workspace */
+                glp_mpl_free_wksp(tran);
+	}
+	// Any of the methods above may have failed, so the LP would be null.
+	if (failure) {
+                glp_delete_prob(self->lp);
+                self->lp = NULL;
+                return -1;
+        }
+
 	// Create those rows and cols and things.
 	self->cols = (PyObject*)BarCol_New(self, 0);
 	self->rows = (PyObject*)BarCol_New(self, 1);
