@@ -24,7 +24,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include <string.h>
 
-#if GLPK_VERSION(4, 20)
 ;
 #define TREE (self->py_tree->tree)
 #define CHECKTREE							\
@@ -350,7 +349,6 @@ static PyObject *Tree_terminate(TreeObject *self) {
 }
 
 
-#if GLPK_VERSION(4, 21)
 static PyObject *Tree_select(TreeObject *self, PyObject *args) {
   TreeNodeObject *node=NULL;
   CHECKTREE;
@@ -430,7 +428,6 @@ static PyObject *Tree_branchupon(TreeObject *self, PyObject *args) {
     return NULL;
   }
 }
-#endif // GLPK_VERSION(4, 21)
 
 static PyObject *Tree_heuristic(TreeObject *self, PyObject *arg) {
   CHECKTREE;
@@ -476,11 +473,9 @@ static PyObject *Tree_heuristic(TreeObject *self, PyObject *arg) {
 static PyObject* Tree_getreason(TreeObject *self, void *closure) {
   CHECKTREE;
   switch (glp_ios_reason(TREE)) {
-#if GLPK_VERSION (4, 21)
   case GLP_ISELECT: return PyString_FromString("select"); break;
   case GLP_IPREPRO: return PyString_FromString("prepro"); break;
   case GLP_IBRANCH: return PyString_FromString("branch"); break;
-#endif
   case GLP_IROWGEN: return PyString_FromString("rowgen"); break; 
   case GLP_IHEUR:   return PyString_FromString("heur");   break;
   case GLP_ICUTGEN: return PyString_FromString("cutgen"); break;
@@ -585,7 +580,6 @@ static PyMethodDef Tree_methods[] = {
   {"terminate", (PyCFunction)Tree_terminate, METH_NOARGS,
    "terminate()\n\n"
    "Prematurely terminate the MIP solver's search."},
-#if GLPK_VERSION(4, 21)
   {"select", (PyCFunction)Tree_select, METH_VARARGS,
    "select(node)\n\n"
    "Selects a tree node to continue search from.  Note that this\n"
@@ -608,7 +602,6 @@ static PyMethodDef Tree_methods[] = {
    "of the two branches is selected to next continue the search\n"
    "with 'D', 'U', and 'N' corresponding to choosing the down,\n"
    "up, or letting GLPK select a branch, respectively."},
-#endif // GLPK_VERSION(4, 21)
   {"heuristic", (PyCFunction)Tree_heuristic, METH_O,
    "heuristic(values)\n\n"
    "Provide an integer feasible solution of the primal problem,\n"
@@ -661,4 +654,3 @@ PyTypeObject TreeType = {
   Tree_getset,				/* tp_getset */
 };
 
-#endif // GLPK_VERSION(4, 20)

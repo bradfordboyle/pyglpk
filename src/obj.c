@@ -23,7 +23,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "barcol.h"
 #include "util.h"
 #include "structmember.h"
-#include "lpx.h"
 
 #define LP (self->py_lp->lp)
 
@@ -153,7 +152,7 @@ ObjObject *Obj_New(LPXObject *py_lp) {
 
 int Obj_Size(ObjObject* self) {
   // There are as many objective values as there are columns.
-  return lpx_get_num_cols(LP);
+  return glp_get_num_cols(LP);
 }
 
 static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
@@ -445,7 +444,7 @@ static PyObject* Obj_getvalue(ObjObject *self, void *closure) {
     return NULL;
   }
 }
-static PyObject* Obj_getspecvalue(ObjObject *self, double(*objvalfunc)(LPX*)) {
+static PyObject* Obj_getspecvalue(ObjObject *self, double(*objvalfunc)(glp_prob *)) {
   return PyFloat_FromDouble(objvalfunc(LP));
 }
 

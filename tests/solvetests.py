@@ -121,9 +121,9 @@ class TwoDimensionalTest(unittest.TestCase):
         x1.bounds = None, 1
         x2.bounds = None, 2
         lp.obj.maximize = True
-        # This should fault, since interior point methods need some
+        # This should fail, since interior point methods need some
         # rows, and some columns.
-        self.assertEqual('fault', lp.interior())
+        self.assertEqual('fail', lp.interior())
         # Now try pushing it into unbounded territory.
         lp.obj[0] = -1
         # Redefine the bounds so it is bounded again.
@@ -150,7 +150,8 @@ class TwoDimensionalTest(unittest.TestCase):
         self.assertAlmostEqual(x2.primal, 1.5)
         # Now go for the gusto.  Change column constraint, force infeasibility.
         x2.bounds = 3, None # Instead of x2<=2, must now be >=3!  Tee hee.
-        self.assertEqual('nofeas', lp.interior())
+        self.assertEqual(None, lp.interior())
+        self.assertEqual('nofeas', lp.status)
         # By removing the first row constraint, we allow opt point (-1,4).
         del lp.rows[0]
         lp.std_basis()

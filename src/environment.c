@@ -108,7 +108,6 @@ static PyObject* Environment_getmemlimit(EnvironmentObject *self,
 static int Environment_setmemlimit(EnvironmentObject *self, PyObject *value,
 				   void *closure)
 {
-#if GLPK_VERSION(4, 19)
 	int limit;
 	if (value == NULL || value == Py_None) {
 		limit = INT_MAX;
@@ -127,20 +126,9 @@ static int Environment_setmemlimit(EnvironmentObject *self, PyObject *value,
 	}
 	glp_mem_limit(limit);
 	return 0;
-#else
-	if (value == NULL || value == Py_None) {
-		return 0;
-	}
-	PyErr_SetString(PyExc_NotImplementedError,
-			"memory limits not supported prior to GLPK 4.19");
-	return -1;
-#endif
 }
 
 /**************** TERMINAL BEHAVIOR ***********/
-#if !GLPK_VERSION(4, 21)
-static int empty_term_hook(void *info, const char *s) { return 1; }
-#endif
 
 static int environment_term_hook(EnvironmentObject *env, const char *s)
 {
@@ -166,20 +154,7 @@ static int Environment_settermon(EnvironmentObject *self,
 		PyErr_SetString(PyExc_TypeError, "term_on must be set with bool");
 		return -1;
 	}
-#if GLPK_VERSION(4, 21)
 	glp_term_out(value==Py_True ? GLP_ON : GLP_OFF);
-#else
-	if (value==Py_True) {
-		if (self->term_hook) {
-			glp_term_hook((int(*)(void*,const char*))environment_term_hook, (void*)self);
-		} else {
-			glp_term_hook(NULL, NULL);
-		}
-	} else {
-		// Approximate its functionality with an empty terminal hook.
-		glp_term_hook(empty_term_hook, NULL);
-	}
-#endif
 	self->term_on = value == Py_True ? 1 : 0;
 	return 0;
 }
@@ -214,10 +189,6 @@ static int Environment_settermhook(EnvironmentObject *self,
 		self->term_hook = value;
 	}
 	// Next, set the hook with the glp_set_hook function.
-#if !GLPK_VERSION(4, 21)
-	if (self->term_on == 0)
-		return 0;
-#endif
 	if (self->term_hook) {
 		glp_term_hook((int(*)(void*,const char*))environment_term_hook,
 				(void*)self);

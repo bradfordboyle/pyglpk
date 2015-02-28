@@ -24,8 +24,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "lp.h"
 #include "util.h"
 
-#if GLPK_VERSION(4, 20)
-
 #define Tree_Check(op) PyObject_TypeCheck(op, &TreeType)
 
 typedef struct {
@@ -44,7 +42,5 @@ extern PyTypeObject TreeNodeType;
 TreeObject *Tree_New(glp_tree *tree, LPXObject *py_lp);
 /* Init the type and related types it contains. 0 on success. */
 int Tree_InitType(PyObject *module);
-
-#endif // GLPK_VERSION(4, 20)
 
 #endif // _TREE_H
