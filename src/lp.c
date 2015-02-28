@@ -155,38 +155,26 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 	} else {
 		// Some of these are pretty straightforward data reading routines.
 		if (mps_n) {
-#if GLPK_VERSION(4, 29)
 			self->lp = glp_create_prob();
 			int failure = glp_read_mps(self->lp, GLP_MPS_DECK, NULL, mps_n);
 			if (failure) {
 				PyErr_SetString(PyExc_RuntimeError, "MPS reader failed");
 				return -1;
 			}
-#else
-			self->lp = lpx_read_mps(mps_n);
-#endif
 		} else if (freemps_n) {
-#if GLPK_VERSION(4, 29)
 			self->lp = glp_create_prob();
 			int failure = glp_read_mps(self->lp, GLP_MPS_FILE, NULL, mps_n);
 			if (failure) {
 				PyErr_SetString(PyExc_RuntimeError, "Free MPS reader failed");
 				return -1;
 			}
-#else
-			self->lp = lpx_read_freemps(freemps_n);
-#endif
 		} else if (cpxlp_n) {
-#if GLPK_VERSION(4, 29)
 			self->lp = glp_create_prob();
 			int failure = glp_read_lp(self->lp, NULL, mps_n);
 			if (failure) {
 				PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
 				return -1;
 			}
-#else
-			self->lp = lpx_read_cpxlp(cpxlp_n);
-#endif
 		} else if (model_obj) {
 			// This one can take a few possible values.
 			char *model[] = {NULL,NULL,NULL};
@@ -316,29 +304,15 @@ int LPX_SetMatrix(LPXObject *self, PyObject *newvals)
 
 static PyObject* LPX_Erase(LPXObject *self)
 {
-#if GLPK_VERSION(4, 29)
 	glp_erase_prob(LP);
-#else
-	/*
-	 * Approximate the functionality by deleting and reassigning the
-	 * underlying pointer. The Python code shouldn't actually know the
-	 * difference.
-	 */
-	if (LP) glp_delete_prob(LP);
-	self->lp = glp_create_prob();
-#endif
 	Py_RETURN_NONE;
 }
 
 static PyObject* LPX_Scale(LPXObject *self, PyObject*args)
 {
-#if GLPK_VERSION(4, 31)
 	int flags = GLP_SF_AUTO;
 	PyArg_ParseTuple(args, "|i", &flags);
 	glp_scale_prob(LP, flags);
-#else
-	lpx_scale_prob(LP);
-#endif
 	Py_RETURN_NONE;
 }
 
@@ -350,31 +324,19 @@ static PyObject* LPX_Unscale(LPXObject *self)
 
 static PyObject* LPX_basis_std(LPXObject *self)
 {
-#if GLPK_VERSION(4, 31)
 	glp_std_basis(LP);
-#else
-	lpx_std_basis(LP);
-#endif
 	Py_RETURN_NONE;
 }
 
 static PyObject* LPX_basis_adv(LPXObject *self)
 {
-#if GLPK_VERSION(4, 31)
 	glp_adv_basis(LP, 0);
-#else
-	lpx_adv_basis(LP);
-#endif
 	Py_RETURN_NONE;
 }
 
 static PyObject* LPX_basis_cpx(LPXObject *self)
 {
-#if GLPK_VERSION(4, 31)
 	glp_cpx_basis(LP);
-#else
-	lpx_cpx_basis(LP);
-#endif
 	Py_RETURN_NONE;
 }
 
@@ -409,7 +371,6 @@ static PyObject* glpsolver_retval_to_message(int retval)
 		returnval = "nopfs"; break;
 	case GLP_ENODFS:
 		returnval = "nodfs"; break;
-#if GLPK_VERSION(4, 20)
 	case GLP_EROOT:
 		returnval = "root"; break;
 	case GLP_ESTOP:
@@ -418,7 +379,6 @@ static PyObject* glpsolver_retval_to_message(int retval)
 		returnval = "nocvg"; break;
 	case GLP_EINSTAB:
 		returnval = "instab"; break;
-#endif
 	default:
 		returnval = "unknown?"; break;
 	}
@@ -428,7 +388,6 @@ static PyObject* glpsolver_retval_to_message(int retval)
 static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 				    PyObject *keywds)
 {
-#if GLPK_VERSION(4, 18)
 	glp_smcp cp;
 	/*
 	 * Set all to GLPK defaults, except for the message level, which
@@ -463,10 +422,8 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 	case GLP_PRIMAL:
 	case GLP_DUALP:
 		break;
-#if GLPK_VERSION(4, 31)
 	case GLP_DUAL:
 		break;
-#endif
 	default:
 		PyErr_SetString(PyExc_ValueError, "invalid value for meth (LPX.PRIMAL, LPX.DUAL, LPX.DUALP valid values)");
 		return NULL;
@@ -520,12 +477,6 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 	if (retval != GLP_EBADB && retval != GLP_ESING && retval != GLP_ECOND && retval != GLP_EBOUND && retval != GLP_EFAIL)
 		self->last_solver = 0;
 	return glpsolver_retval_to_message(retval);
-#else
-	int retval = lpx_simplex(LP);
-	if (retval != LPX_E_FAULT)
-		self->last_solver = 0;
-	return solver_retval_to_message(retval);
-#endif
 }
 
 static PyObject* LPX_solver_exact(LPXObject *self)
@@ -548,7 +499,6 @@ static PyObject* LPX_solver_interior(LPXObject *self) {
 	return glpsolver_retval_to_message(retval);
 }
 
-#if GLPK_VERSION(4, 20)
 struct mip_callback_object {
 	PyObject *callback;
 	LPXObject *py_lp;
@@ -560,7 +510,6 @@ static void mip_callback(glp_tree *tree, void *info)
 	PyObject *method_name = NULL;
 	// Choose the method name for the callback object that is appropriate.
 	switch (glp_ios_reason(tree)) {
-#if GLPK_VERSION(4, 21)
 	case GLP_ISELECT:
 		method_name = PyString_FromString("select");
 		break;
@@ -570,7 +519,6 @@ static void mip_callback(glp_tree *tree, void *info)
 	case GLP_IBRANCH:
 		method_name = PyString_FromString("branch");
 		break;
-#endif
 	case GLP_IROWGEN:
 		method_name = PyString_FromString("rowgen");
 		break;
@@ -622,7 +570,6 @@ static void mip_callback(glp_tree *tree, void *info)
 	}
 	Py_DECREF(retval);
 }
-#endif // GLPK_VERSION(4, 20)
 
 static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyObject *keywds)
@@ -631,7 +578,6 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_RuntimeError, "integer solver requires existing optimal basic solution");
 		return NULL;
 	}
-#if GLPK_VERSION(4, 20)
 	PyObject *callback = NULL;
 	struct mip_callback_object*info = NULL;
 	glp_iocp cp;
@@ -639,48 +585,26 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 	cp.msg_lev = GLP_MSG_OFF;
 	// Map the keyword arguments to the appropriate entries.
 	static char *kwlist[] = {"msg_lev", "br_tech", "bt_tech",
-#if GLPK_VERSION(4, 21)
 		"pp_tech",
-#endif // GLPK_VERSION(4, 21)
-#if GLPK_VERSION(4, 24)
 		"gmi_cuts",
-#endif // GLPK_VERSION(4, 24)
-#if GLPK_VERSION(4, 23)
 		"mir_cuts",
-#endif // GLPK_VERSION(4, 23)
 		"tol_int", "tol_obj", "tm_lim", "out_frq", "out_dly",
 		"callback", //"cb_info", "cb_size",
 		NULL};
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iii"
-#if GLPK_VERSION(4, 21)
 				"i"
-#endif // GLPK_VERSION(4, 21)
-#if GLPK_VERSION(4, 24)
 				"i"
-#endif // GLPK_VERSION(4, 24)
-#if GLPK_VERSION(4, 23)
 				"i"
-#endif // GLPK_VERSION(4, 23)
 				"ddiiiO", kwlist, &cp.msg_lev, &cp.br_tech, &cp.bt_tech,
-#if GLPK_VERSION(4, 21)
 				&cp.pp_tech,
-#endif // GLPK_VERSION(4, 21)
-#if GLPK_VERSION(4, 24)
 				&cp.gmi_cuts,
-#endif // GLPK_VERSION(4, 24)
-#if GLPK_VERSION(4, 23)
 				&cp.mir_cuts,
-#endif // GLPK_VERSION(4, 23)
 				&cp.tol_int, &cp.tol_obj, &cp.tm_lim,
 				&cp.out_frq, &cp.out_dly, &callback)) {
 					return NULL;
 				}
-#if GLPK_VERSION(4, 24)
 	cp.gmi_cuts = cp.gmi_cuts ? GLP_ON : GLP_OFF;
-#endif // GLPK_VERSION(4, 24)
-#if GLPK_VERSION(4, 23)
 	cp.mir_cuts = cp.mir_cuts ? GLP_ON : GLP_OFF;
-#endif // GLPK_VERSION(4, 23)
 	// Do checking on the various entries.
 	switch (cp.msg_lev) {
 	case GLP_MSG_OFF:
@@ -712,7 +636,6 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "invalid value for bt_tech (LPX.BT_* are valid values)");
 		return NULL;
 	}
-#if GLPK_VERSION(4, 21)
 	switch (cp.pp_tech) {
 	case GLP_PP_NONE:
 	case GLP_PP_ROOT:
@@ -722,7 +645,6 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "invalid value for pp_tech (LPX.PP_* are valid values)");
 		return NULL;
 	}
-#endif // GLPK_VERSION(4, 21)
 	if (cp.tol_int <= 0 || cp.tol_int >= 1) {
 		PyErr_SetString(PyExc_ValueError, "tol_int must obey 0<tol_int<1");
 		return NULL;
@@ -764,11 +686,6 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 	if (retval!=GLP_EBADB && retval!=GLP_ESING && retval!=GLP_ECOND && retval!=GLP_EBOUND && retval!=GLP_EFAIL)
 		self->last_solver = 2;
 	return glpsolver_retval_to_message(retval);
-#else
-	int retval = lpx_integer(LP);
-	if (retval != LPX_E_FAULT) self->last_solver = 2;
-	return solver_retval_to_message(retval);
-#endif // GLPK_VERSION(4, 20)
 }
 
 static PyObject* LPX_solver_intopt(LPXObject *self)
@@ -1034,14 +951,12 @@ int LPX_InitType(PyObject *module)
 	 * The following macro helps set constants.
 	 */
 #define SETCONST(A) PyDict_SetIntString(LPXType.tp_dict, #A, GLP_ ## A)
-#if GLPK_VERSION(4, 31)
 	// These are used in the LPX.scale method.
 	SETCONST(SF_GM);
 	SETCONST(SF_EQ);
 	SETCONST(SF_2N);
 	SETCONST(SF_SKIP);
 	SETCONST(SF_AUTO);
-#endif
 	// These are used in control parameters for solvers.
 	SETCONST(MSG_OFF);
 	SETCONST(MSG_ERR);
@@ -1049,9 +964,7 @@ int LPX_InitType(PyObject *module)
 	SETCONST(MSG_ALL);
 
 	SETCONST(PRIMAL);
-#if GLPK_VERSION(4, 31)
 	SETCONST(DUAL);
-#endif
 	SETCONST(DUALP);
 
 	SETCONST(PT_STD);
@@ -1060,7 +973,6 @@ int LPX_InitType(PyObject *module)
 	SETCONST(RT_STD);
 	SETCONST(RT_HAR);
 
-#if GLPK_VERSION(4, 20)
 	SETCONST(BR_FFV);
 	SETCONST(BR_LFV);
 	SETCONST(BR_MFV);
@@ -1070,12 +982,9 @@ int LPX_InitType(PyObject *module)
 	SETCONST(BT_BFS);
 	SETCONST(BT_BLB);
 	SETCONST(BT_BPH);
-#endif
-#if GLPK_VERSION(4, 21)
 	SETCONST(PP_NONE);
 	SETCONST(PP_ROOT);
 	SETCONST(PP_ALL);
-#endif
 #undef SETCONST
 	// Add in the calls to the other objects.
 	if ((retval = Obj_InitType(module)) != 0)
@@ -1088,10 +997,8 @@ int LPX_InitType(PyObject *module)
 		return retval;
 	if ((retval = KKT_InitType(module)) != 0)
 		return retval;
-#if GLPK_VERSION(4, 20)
 	if ((retval = Tree_InitType(module)) != 0)
 		return retval;
-#endif
 	return 0;
 }
 
@@ -1214,9 +1121,7 @@ static PyMethodDef LPX_methods[] = {
 		"  LPX.MSG_ALL -- full informational output\n"
 		"meth    : Simplex method option\n"
 		"  LPX.PRIMAL  -- use two phase primal simplex (default)\n"
-#if GLPK_VERSION(4, 31)
 		"  LPX.DUAL    -- use two phase dual simplex\n"
-#endif
 		"  LPX.DUALP   -- use two phase dual simplex, primal if that fails\n"
 		"pricing : Pricing technique\n"
 		"  LPX.PT_STD  -- standard textbook technique\n"
@@ -1279,7 +1184,6 @@ static PyMethodDef LPX_methods[] = {
 	{"integer", (PyCFunction)LPX_solver_integer, METH_VARARGS|METH_KEYWORDS,
 		"integer()\n\n"
 		"MIP solver based on branch-and-bound.\n\n"
-#if GLPK_VERSION(4, 20)
 		"This procedure has a great number of optional keyword arguments\n"
 		"to control the functioning of the solver.  We list these here,\n"
 		"including descriptions of their legal values.\n\n"
@@ -1298,18 +1202,12 @@ static PyMethodDef LPX_methods[] = {
 		"  LPX.BT_BFS  -- breadth first search\n"
 		"  LPX.BT_BLB  -- best local bound (default)\n"
 		"  LPX.BT_BPH  -- best projection heuristic\n"
-#if GLPK_VERSION(4, 21)
 		"pp_tech : Preprocessing technique option.\n"
 		"  LPX.PP_NONE -- disable preprocessing\n"
 		"  LPX.PP_ROOT -- perform preprocessing only on the root level\n"
 		"  LPX.PP_ALL  -- perform preprocessing on all levels (default)\n"
-#endif
-#if GLPK_VERSION(4, 24)
 		"gmi_cuts: Use Gomory's mixed integer cuts (default False)\n"
-#endif
-#if GLPK_VERSION(4, 23)
 		"mir_cuts: Use mixed integer rounding cuts (default False)\n"
-#endif
 		"tol_int : Tolerance used to check if the optimal solution to the\n"
 		"  current LP relaxation is integer feasible.\n"
 		"tol_obj : Tolerance used to check if the objective value in the\n"
@@ -1345,11 +1243,6 @@ static PyMethodDef LPX_methods[] = {
 		"not exist, then instead the method 'default' is called with the\n"
 		"same signature.  If neither the named hook method nor the default\n"
 		"method exist, then the hook is ignored.\n\n"
-#else
-		"This procedure has a great number of optional keyword arguments\n"
-		"if built against GLPK 4.20 or later.  Your PyGLPK was built against\n"
-		"an earlier version.\n\n"
-#endif
 		"This method requires a mixed-integer problem where an optimal\n"
 		"solution to an LP relaxation (either through simplex() or\n"
 		"exact()) has already been found.  Alternately, try intopt().\n\n"
