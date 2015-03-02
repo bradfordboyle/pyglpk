@@ -37,7 +37,7 @@ PyMODINIT_FUNC initglpk(void) {
      "as well as the HTML documentation accompanying your PyGLPK\n"
      "distribution.");
   if (m==NULL) return;
-  PyModule_AddStringConstant(m, "__version__", "0.3.1");
+  PyModule_AddStringConstant(m, "__version__", "0.4");
 
   Environment_InitType(m);
 
