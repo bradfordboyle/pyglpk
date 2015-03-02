@@ -84,17 +84,33 @@ static PyObject* Environment_getblocks_peak(EnvironmentObject *self,
 
 static PyObject* Environment_getbytes(EnvironmentObject *self,void *closure)
 {
+#if GLPK_VERSION(4, 48)
 	size_t total;
+#else
+	glp_long total;
+#endif
 	glp_mem_usage(NULL, NULL, &total, NULL);
-	return PyLong_FromSize_t(total);
+#if GLPK_VERSION(4, 48)
+	return PyInt_FromSize_t(total);
+#else
+	return PyInt_FromLong(((long)total.hi) << 32 | total.lo);
+#endif
 }
 
 static PyObject* Environment_getbytes_peak(EnvironmentObject *self,
 					   void *closure)
 {
+#if GLPK_VERSION(4, 48)
 	size_t tpeak;
+#else
+	glp_long tpeak;
+#endif
 	glp_mem_usage(NULL, NULL, NULL, &tpeak);
+#if GLPK_VERSION(4, 48)
 	return PyInt_FromSize_t(tpeak);
+#else
+	return PyInt_FromLong(((long)tpeak.hi) << 32 | tpeak.lo);
+#endif
 }
 
 static PyObject* Environment_getmemlimit(EnvironmentObject *self,

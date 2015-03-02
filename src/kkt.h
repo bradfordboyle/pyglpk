@@ -57,7 +57,7 @@ typedef struct pyglpk_kkt {
   int    db_quality;
 } pyglpk_kkt_t;
 #else
-typedef struct LPXKKT pyglpk_kkt_t;
+typedef LPXKKT pyglpk_kkt_t;
 #endif
 
 typedef struct {
