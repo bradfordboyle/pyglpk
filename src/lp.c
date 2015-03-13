@@ -263,8 +263,8 @@ PyObject *LPX_GetMatrix(LPXObject *self)
 
 int LPX_SetMatrix(LPXObject *self, PyObject *newvals)
 {
-	int len, *ind1, *ind2;
-	double *val;
+	int len, *ind1 = NULL, *ind2 = NULL;
+	double *val = NULL;
 	// Now, attempt to convert the input item.
 	if (newvals == NULL || newvals == Py_None)
 		len = 0;

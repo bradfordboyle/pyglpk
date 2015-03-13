@@ -107,11 +107,11 @@ PyObject *Bar_GetMatrix(BarObject *self) {
   nnz = get_mat(LP, i, NULL, NULL);
   retval = PyList_New(nnz);
   if (nnz==0 || retval==NULL) return retval;
-  
+
   int*ind = (int*)calloc(nnz,sizeof(int));
   double*val = (double*)calloc(nnz,sizeof(double));
   nnz = get_mat(LP, i, ind-1, val-1);
-  
+
   for (i=0; i<nnz; ++i) {
     PyList_SET_ITEM(retval, i, Py_BuildValue("id", ind[i]-1, val[i]));
   }
@@ -125,8 +125,8 @@ PyObject *Bar_GetMatrix(BarObject *self) {
 }
 
 int Bar_SetMatrix(BarObject *self, PyObject *newvals) {
-  int len, *ind;
-  double*val;
+  int len, *ind = NULL;
+  double *val = NULL;
   if (!Bar_Valid(self, 1)) return -1;
   // Get the alternate length (e.g., col length if this is a row).
   len = (Bar_Row(self) ? glp_get_num_cols : glp_get_num_rows)(LP);
@@ -228,7 +228,7 @@ static PyObject* Bar_getbounds(BarObject *self, void *closure) {
   double lb, ub;
   int i;
   if (!Bar_Valid(self, 1)) return NULL;
-  
+
   i = Bar_Index(self)+1;
   lb = (Bar_Row(self) ? glp_get_row_lb : glp_get_col_lb)(LP, i);
   ub = (Bar_Row(self) ? glp_get_row_ub : glp_get_col_ub)(LP, i);
@@ -276,12 +276,12 @@ static int Bar_setbounds(BarObject *self, PyObject *value, void *closure) {
     PyErr_SetString(PyExc_TypeError, t_error);
     return -1;
   }
-  
+
   // Get the lower and upper object.  These references are borrowed.
   lo = PyTuple_GetItem(value, 0);
   uo = PyTuple_GetItem(value, 1);
 
-  if ((lo!=Py_None && !PyNumber_Check(lo)) || 
+  if ((lo!=Py_None && !PyNumber_Check(lo)) ||
       (uo!=Py_None && !PyNumber_Check(uo))) {
     PyErr_SetString(PyExc_TypeError, t_error);
     return -1;
@@ -290,7 +290,7 @@ static int Bar_setbounds(BarObject *self, PyObject *value, void *closure) {
   if (PyErr_Occurred()) return -1;
   if (uo==Py_None) uo=NULL; else ub=PyFloat_AsDouble(uo);
   if (PyErr_Occurred()) return -1;
-  
+
   if (!lo && !uo)	bounder(LP, i, GLP_FR, 0.0, 0.0);
   else if (!uo)		bounder(LP, i, GLP_LO, lb, 0.0);
   else if (!lo)		bounder(LP, i, GLP_UP, 0.0, ub);
@@ -491,7 +491,7 @@ static PyObject* Bar_getspecvarvalm(BarObject *self,
 				    double(*valfuncs[])(glp_prob*, int)) {
   if (!Bar_Valid(self, 1)) return NULL;
   if (glp_get_num_int(LP) == 0) {
-    PyErr_SetString(PyExc_TypeError, 
+    PyErr_SetString(PyExc_TypeError,
 		    "MIP values require mixed integer problem");
     return NULL;
   }
