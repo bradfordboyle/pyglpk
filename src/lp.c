@@ -116,9 +116,9 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 	char *model[] = {NULL,NULL,NULL};
 	PyObject *model_obj = NULL, *so = NULL;
 	static char *kwlist[] = {"gmp","mps","freemps","cpxlp",NULL};
-        Py_ssize_t numargs = 0, model_size = 0;
-        int failure = 0, i;
-        glp_tran *tran;
+	Py_ssize_t numargs = 0, model_size = 0;
+	int failure = 0, i;
+	glp_tran *tran;
 
 	numargs += args ? PyTuple_Size(args) : 0;
 	numargs += kwds ? PyDict_Size(kwds) : 0;
@@ -127,15 +127,15 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Osss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Osss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n)) {
 		return -1;
 	}
 
-        if (model_obj && PyString_Check(model_obj)) {
-                model[0] = PyString_AsString(model_obj);
+	if (model_obj && PyString_Check(model_obj)) {
+		model[0] = PyString_AsString(model_obj);
 		if (!model[0])
-                        return -1;
-        } else if (model_obj && PyTuple_Check(model_obj)) {
+			return -1;
+	} else if (model_obj && PyTuple_Check(model_obj)) {
 		model_size = PyTuple_Size(model_obj);
 		if (model_size < -1)
 			return -1;
@@ -151,12 +151,12 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 			if (model[i] == NULL)
 				return -1;
 		}
-        } else if (model_obj) {
-	        PyErr_SetString(PyExc_TypeError, "model arg must be string or tuple");
-                return -1;
-        }
+	} else if (model_obj) {
+		PyErr_SetString(PyExc_TypeError, "model arg must be string or tuple");
+		return -1;
+	}
 
-        // start by create an empty problem
+	// start by create an empty problem
 	self->lp = glp_create_prob();
 	// Some of these are pretty straightforward data reading routines.
 	if (mps_n) {
@@ -172,28 +172,28 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
 	} else if (model_obj) {
-                /* allocate the translator workspace */
-                tran = glp_mpl_alloc_wksp();
+		/* allocate the translator workspace */
+		tran = glp_mpl_alloc_wksp();
 
-                /* read model section and optional data section */
-                failure = glp_mpl_read_model(tran, model[0], model[1] != NULL);
-                if (failure)
-                        PyErr_SetString(PyExc_RuntimeError, "GMP model reader failed");
+		/* read model section and optional data section */
+		failure = glp_mpl_read_model(tran, model[0], model[1] != NULL);
+		if (failure)
+		        PyErr_SetString(PyExc_RuntimeError, "GMP model reader failed");
 
-                /* read separate data section, if required */
-                if (!failure && !model[1] && (failure = glp_mpl_read_data(tran, model[1])))
-                        PyErr_SetString(PyExc_RuntimeError, "GMP data reader failed");
+		/* read separate data section, if required */
+		if (!failure && !model[1] && (failure = glp_mpl_read_data(tran, model[1])))
+		        PyErr_SetString(PyExc_RuntimeError, "GMP data reader failed");
 
-                /* generate the model */
-                if (!failure && (failure = glp_mpl_generate(tran, model[2])))
-                        PyErr_SetString(PyExc_RuntimeError, "GMP generator failed");
+		/* generate the model */
+		if (!failure && (failure = glp_mpl_generate(tran, model[2])))
+		        PyErr_SetString(PyExc_RuntimeError, "GMP generator failed");
 
-                /* build the problem instance from the model */
-                if (!failure)
-                        glp_mpl_build_prob(tran, self->lp);
+		/* build the problem instance from the model */
+		if (!failure)
+		        glp_mpl_build_prob(tran, self->lp);
 
-                /* free the translator workspace */
-                glp_mpl_free_wksp(tran);
+		/* free the translator workspace */
+		glp_mpl_free_wksp(tran);
 	}
 	// Any of the methods above may have failed, so the LP would be null.
 	if (failure) {
