@@ -120,8 +120,8 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
         int failure = 0, i;
         glp_tran *tran;
 
-        numargs += args ? PyTuple_Size(args) : 0;
-        numargs += kwds ? PyDict_Size(args) : 0;
+	numargs += args ? PyTuple_Size(args) : 0;
+	numargs += kwds ? PyDict_Size(kwds) : 0;
 	if (numargs>1) {
 		PyErr_SetString(PyExc_TypeError, "cannot specify multiple data sources");
 		return -1;
@@ -164,7 +164,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "MPS reader failed");
 	} else if (freemps_n) {
-		failure = glp_read_mps(self->lp, GLP_MPS_FILE, NULL, mps_n);
+		failure = glp_read_mps(self->lp, GLP_MPS_FILE, NULL, freemps_n);
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "Free MPS reader failed");
 	} else if (cpxlp_n) {
