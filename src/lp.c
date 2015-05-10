@@ -168,7 +168,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "Free MPS reader failed");
 	} else if (cpxlp_n) {
-		failure = glp_read_lp(self->lp, NULL, mps_n);
+		failure = glp_read_lp(self->lp, NULL, cpxlp_n);
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
 	} else if (model_obj) {
