@@ -112,10 +112,10 @@ static PyObject * LPX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 {
-	char *mps_n=NULL, *freemps_n=NULL, *cpxlp_n=NULL;
+	char *mps_n=NULL, *freemps_n=NULL, *cpxlp_n=NULL, *glp_n=NULL;
 	char *model[] = {NULL,NULL,NULL};
 	PyObject *model_obj = NULL, *so = NULL;
-	static char *kwlist[] = {"gmp","mps","freemps","cpxlp",NULL};
+	static char *kwlist[] = {"gmp","mps","freemps","cpxlp", "glp", NULL};
 	Py_ssize_t numargs = 0, model_size = 0;
 	int failure = 0, i;
 	glp_tran *tran;
@@ -127,7 +127,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Osss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Ossss", kwlist, &model_obj, &mps_n, &freemps_n, &cpxlp_n, &glp_n)) {
 		return -1;
 	}
 
@@ -171,6 +171,10 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		failure = glp_read_lp(self->lp, NULL, cpxlp_n);
 		if (failure)
 			PyErr_SetString(PyExc_RuntimeError, "CPLEX LP reader failed");
+	} else if (glp_n) {
+		failure = glp_read_prob(self->lp, 0, glp_n);
+		if (failure)
+			PyErr_SetString(PyExc_RuntimeError, "GLPK LP/MIP reader failed");
 	} else if (model_obj) {
 		/* allocate the translator workspace */
 		tran = glp_mpl_alloc_wksp();
@@ -721,9 +725,9 @@ static KKTObject* LPX_kktint(LPXObject *self) {
 
 static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 {
-	static char* kwlist[] = {"mps", "freemps", "prob", "sol", "sens_bnds",
+	static char* kwlist[] = {"mps", "freemps", "cpxlp", "glp", "sol", "sens_bnds",
 		"ips", "mip", NULL};
-	char* fnames[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+	char* fnames[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 	char* fname;
 	const char* err_msg = "writer for '%s' failed to write to '%s'";
 	int rv;
@@ -763,7 +767,7 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 
 	fname = fnames[3];
 	if (fname != NULL) {
-		rv = glp_print_sol(LP, fname);
+		rv = glp_write_prob(LP, 0, fname);
 		if (rv != 0) {
 			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[3], fname);
 			return NULL;
@@ -772,9 +776,7 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 
 	fname = fnames[4];
 	if (fname != NULL) {
-		if (glp_get_status(LP) == GLP_OPT && !glp_bf_exists(LP))
-			glp_factorize(LP);
-		rv = glp_print_ranges(LP, 0, NULL, 0, fname);
+		rv = glp_print_sol(LP, fname);
 		if (rv != 0) {
 			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[4], fname);
 			return NULL;
@@ -783,7 +785,9 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 
 	fname = fnames[5];
 	if (fname != NULL) {
-		rv = glp_print_ipt(LP, fname);
+		if (glp_get_status(LP) == GLP_OPT && !glp_bf_exists(LP))
+			glp_factorize(LP);
+		rv = glp_print_ranges(LP, 0, NULL, 0, fname);
 		if (rv != 0) {
 			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[5], fname);
 			return NULL;
@@ -792,9 +796,18 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 
 	fname = fnames[6];
 	if (fname != NULL) {
-		glp_print_mip(LP, fname);
+		rv = glp_print_ipt(LP, fname);
 		if (rv != 0) {
 			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[6], fname);
+			return NULL;
+		}
+	}
+
+	fname = fnames[7];
+	if (fname != NULL) {
+		glp_print_mip(LP, fname);
+		if (rv != 0) {
+			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[7], fname);
 			return NULL;
 		}
 	}
@@ -1281,7 +1294,6 @@ static PyMethodDef LPX_methods[] = {
 		"freemps   -- Problem data in the free MPS format.\n"
 		"cpxlp     -- Problem data in the CPLEX LP format.\n"
 		"glp       -- Problem data in the GNU LP format.\n"
-		"prob      -- Problem data in a plain text format.\n"
 		"sol       -- Basic solution in printable format.\n"
 		"sens_bnds -- Bounds sensitivity information.\n"
 		"ips       -- Interior-point solution in printable format.\n"
