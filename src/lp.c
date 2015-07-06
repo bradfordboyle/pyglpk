@@ -226,6 +226,8 @@ static PyObject* LPX_Str(LPXObject *self)
 PyObject *LPX_GetMatrix(LPXObject *self)
 {
 	int row, numrows, listi, i, nnz, rownz;
+	int *ind;
+	double *val;
 	PyObject *retval;
 
 	numrows = glp_get_num_rows(LP);
@@ -235,8 +237,8 @@ PyObject *LPX_GetMatrix(LPXObject *self)
 		return retval;
 
 	// We don't really need this much memory, but, eh...
-	int *ind = (int*)calloc(nnz, sizeof(int));
-	double *val = (double*)calloc(nnz, sizeof(double));
+	ind = (int*)calloc(nnz, sizeof(int));
+	val = (double*)calloc(nnz, sizeof(double));
 
 	listi = 0;
 	for (row=1; row<=numrows; ++row) {
@@ -379,7 +381,12 @@ static PyObject* glpsolver_retval_to_message(int retval)
 static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 				    PyObject *keywds)
 {
+	static char *kwlist[] = {"msg_lev", "meth", "pricing", "r_test",
+		"tol_bnd", "tol_dj", "tol_piv", "obj_ll", "obj_ul", "it_lim",
+		"tm_lim", "out_frq", "out_dly", "presolve", NULL};
+
 	glp_smcp cp;
+	int retval = -1;
 	/*
 	 * Set all to GLPK defaults, except for the message level, which
 	 * inexplicably has a default "verbose" setting.
@@ -387,9 +394,7 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 	glp_init_smcp(&cp);
 	cp.msg_lev = GLP_MSG_OFF;
 	// Map the keyword arguments to the appropriate entries.
-	static char *kwlist[] = {"msg_lev", "meth", "pricing", "r_test",
-		"tol_bnd", "tol_dj", "tol_piv", "obj_ll", "obj_ul", "it_lim",
-		"tm_lim", "out_frq", "out_dly", "presolve", NULL};
+
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iiiidddddiiiii",
 				kwlist, &cp.msg_lev, &cp.meth, &cp.pricing,
 				&cp.r_test, &cp.tol_bnd, &cp.tol_dj,
@@ -464,7 +469,7 @@ static PyObject* LPX_solver_simplex(LPXObject *self, PyObject *args,
 		return NULL;
 	}
 	// All the checks are complete. Call the simplex solver.
-	int retval = glp_simplex(LP, &cp);
+	retval = glp_simplex(LP, &cp);
 	if (retval != GLP_EBADB && retval != GLP_ESING && retval != GLP_ECOND && retval != GLP_EBOUND && retval != GLP_EFAIL)
 		self->last_solver = 0;
 	return glpsolver_retval_to_message(retval);
@@ -499,6 +504,9 @@ static void mip_callback(glp_tree *tree, void *info)
 {
 	struct mip_callback_object *obj = (struct mip_callback_object *)info;
 	PyObject *method_name = NULL;
+	TreeObject *py_tree;
+	PyObject *retval = NULL;
+
 	// Choose the method name for the callback object that is appropriate.
 	switch (glp_ios_reason(tree)) {
 	case GLP_ISELECT:
@@ -539,13 +547,13 @@ static void mip_callback(glp_tree *tree, void *info)
 		}
 	}
 	// Try calling the method.
-	TreeObject *py_tree = Tree_New(tree, obj->py_lp);
+	py_tree = Tree_New(tree, obj->py_lp);
 	if (py_tree == NULL) {
 		Py_DECREF(method_name);
 		glp_ios_terminate(tree);
 		return;
 	}
-	PyObject *retval = NULL;
+
 	retval = PyObject_CallMethodObjArgs(obj->callback, method_name, py_tree, NULL);
 	py_tree->tree = NULL; // Invalidate the Tree object.
 	Py_DECREF(py_tree);
@@ -565,16 +573,6 @@ static void mip_callback(glp_tree *tree, void *info)
 static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyObject *keywds)
 {
-	if (glp_get_status(LP) != GLP_OPT) {
-		PyErr_SetString(PyExc_RuntimeError, "integer solver requires existing optimal basic solution");
-		return NULL;
-	}
-	PyObject *callback = NULL;
-	struct mip_callback_object*info = NULL;
-	glp_iocp cp;
-	glp_init_iocp(&cp);
-	cp.msg_lev = GLP_MSG_OFF;
-	// Map the keyword arguments to the appropriate entries.
 	static char *kwlist[] = {"msg_lev", "br_tech", "bt_tech",
 		"pp_tech",
 		"gmi_cuts",
@@ -582,6 +580,20 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		"tol_int", "tol_obj", "tm_lim", "out_frq", "out_dly",
 		"callback", //"cb_info", "cb_size",
 		NULL};
+	PyObject *callback = NULL;
+	struct mip_callback_object *info = NULL;
+	glp_iocp cp;
+	int retval;
+
+	if (glp_get_status(LP) != GLP_OPT) {
+		PyErr_SetString(PyExc_RuntimeError, "integer solver requires existing optimal basic solution");
+		return NULL;
+	}
+
+	glp_init_iocp(&cp);
+	cp.msg_lev = GLP_MSG_OFF;
+
+	// Map the keyword arguments to the appropriate entries.
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iii"
 				"i"
 				"i"
@@ -656,7 +668,7 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "out_dly must be non-negative");
 		return NULL;
 	}
-	int retval;
+
 	if (callback != NULL && callback != Py_None) {
 		info = (struct mip_callback_object*)
 			malloc(sizeof(struct mip_callback_object));
@@ -694,21 +706,24 @@ static PyObject* LPX_solver_intopt(LPXObject *self)
 
 static KKTObject* LPX_kkt(LPXObject *self, PyObject *args)
 {
+	int scaling = 0;
+	KKTObject *kkt;
+	PyObject *arg = NULL;
+
 	// Cannot get for undefined primal or dual.
 	if (glp_get_prim_stat(LP) == GLP_UNDEF || glp_get_dual_stat(LP) == GLP_UNDEF) {
 		PyErr_SetString(PyExc_RuntimeError, "cannot get KKT when primal or dual basic solution undefined");
 		return NULL;
 	}
+
 	// Check the Python arguments.
-	int scaling = 0;
-	PyObject *arg = NULL;
 	if (!PyArg_ParseTuple(args, "|O", &arg))
 		return NULL;
 	scaling = ((arg == NULL) ? 0 : PyObject_IsTrue(arg));
 	if (scaling == -1)
 		return NULL;
 	// OK, all done with those checks. Now get the KKT condition.
-	KKTObject *kkt = KKT_New();
+	kkt = KKT_New();
 	if (!kkt)
 		return NULL;
 	pyglpk_kkt_check(LP, scaling, &(kkt->kkt));

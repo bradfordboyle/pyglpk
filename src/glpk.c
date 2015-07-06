@@ -56,6 +56,7 @@ distribution.";
 
 MOD_INIT(glpk) {
   PyObject *m;
+  char myversion[10];
   
   MOD_DEF(m, "glpk", module___doc__, GLPKMethods)
   
@@ -73,7 +74,6 @@ MOD_INIT(glpk) {
   // Do a quick and dirty version check, so as to warn the user that
   // they should recompile PyGLPK if the underlying glpk shared
   // library has changed.
-  char myversion[10];
   snprintf(myversion, 10, "%d.%d", GLP_MAJOR_VERSION, GLP_MINOR_VERSION);
   if (strcmp(myversion, glp_version())) {
     char buf[100];

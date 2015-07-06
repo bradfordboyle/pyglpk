@@ -96,8 +96,10 @@ int Bar_Valid(BarObject *self, int except) {
 }
 
 PyObject *Bar_GetMatrix(BarObject *self) {
-  int nnz, i;
+  int nnz, i, *ind;
+  double *val;
   PyObject *retval;
+
   int (*get_mat)(glp_prob*,int,int[],double[]);
 
   if (!Bar_Valid(self, 1)) return NULL;
@@ -108,8 +110,8 @@ PyObject *Bar_GetMatrix(BarObject *self) {
   retval = PyList_New(nnz);
   if (nnz==0 || retval==NULL) return retval;
 
-  int*ind = (int*)calloc(nnz,sizeof(int));
-  double*val = (double*)calloc(nnz,sizeof(double));
+  ind = (int*)calloc(nnz,sizeof(int));
+  val = (double*)calloc(nnz,sizeof(double));
   nnz = get_mat(LP, i, ind-1, val-1);
 
   for (i=0; i<nnz; ++i) {
@@ -150,6 +152,7 @@ int Bar_SetMatrix(BarObject *self, PyObject *newvals) {
 }
 
 static PyObject* Bar_richcompare(BarObject *v, PyObject *w, int op) {
+  BarObject *x;
   if (!Bar_Check(w)) {
     switch (op) {
     case Py_EQ: Py_RETURN_FALSE;
@@ -160,7 +163,7 @@ static PyObject* Bar_richcompare(BarObject *v, PyObject *w, int op) {
     }
   }
   // Now we know it is a bar object.
-  BarObject *x = (BarObject *)w;
+  x = (BarObject *)w;
   if (v->py_bc != x->py_bc) {
     // "Inherit" the judgement of our containing objects.
     return PyObject_RichCompare((PyObject*)v->py_bc, (PyObject*)x->py_bc, op);
@@ -195,12 +198,14 @@ static int Bar_ass_item(BarObject *self, int index, PyObject *v) {
 
 /****************** GET-SET-ERS ***************/
 static PyObject* Bar_getname(BarObject *self, void *closure) {
+  const char *name;
   if (!Bar_Valid(self, 1)) return NULL;
-  const char *name = (Bar_Row(self) ? glp_get_row_name : glp_get_col_name)
+  name = (Bar_Row(self) ? glp_get_row_name : glp_get_col_name)
     (LP, Bar_Index(self)+1);
   if (name==NULL) Py_RETURN_NONE;
   return PyString_FromString(name);
 }
+
 static int Bar_setname(BarObject *self, PyObject *value, void *closure) {
   char *name;
   if (!Bar_Valid(self, 1)) return -1;
@@ -271,9 +276,8 @@ static int Bar_setbounds(BarObject *self, PyObject *value, void *closure) {
     return 0;
   }
 
-  char t_error[] = "bounds must be set to None, number, or pair of numbers";
   if (!PyTuple_Check(value) || PyTuple_GET_SIZE(value)!=2) {
-    PyErr_SetString(PyExc_TypeError, t_error);
+    PyErr_SetString(PyExc_TypeError, "bounds must be set to None, number, or pair of numbers");
     return -1;
   }
 
@@ -283,7 +287,7 @@ static int Bar_setbounds(BarObject *self, PyObject *value, void *closure) {
 
   if ((lo!=Py_None && !PyNumber_Check(lo)) ||
       (uo!=Py_None && !PyNumber_Check(uo))) {
-    PyErr_SetString(PyExc_TypeError, t_error);
+    PyErr_SetString(PyExc_TypeError, "bounds must be set to None, number, or pair of numbers");
     return -1;
   }
   if (lo==Py_None) lo=NULL; else lb=PyFloat_AsDouble(lo);
@@ -323,9 +327,11 @@ static PyObject* Bar_getiscol(BarObject *self, void *closure) {
 }
 
 static PyObject* Bar_getscale(BarObject *self, void *closure) {
-  if (!Bar_Valid(self, 1)) return NULL;
   int index;
   double scale;
+
+  if (!Bar_Valid(self, 1)) return NULL;
+
   index = Bar_Index(self);
   scale = (Bar_Row(self) ? glp_get_rii : glp_get_sjj)(LP,index+1);
   return PyFloat_FromDouble(scale);
@@ -356,8 +362,10 @@ static int Bar_setscale(BarObject *self, PyObject *value, void *closure){
 }
 
 static PyObject* Bar_getstatus(BarObject *self, void *closure) {
-  if (!Bar_Valid(self, 1)) return NULL;
   int index, status;
+
+  if (!Bar_Valid(self, 1)) return NULL;
+
   index = Bar_Index(self);
   status = (Bar_Row(self) ? glp_get_row_stat : glp_get_col_stat)(LP,index+1);
   switch (status) {
@@ -372,18 +380,21 @@ static PyObject* Bar_getstatus(BarObject *self, void *closure) {
   }
 }
 static int Bar_setstatus(BarObject *self, PyObject *value, void *closure) {
+  int status;
+  char *sstr;
+
   if (!Bar_Valid(self, 1)) return -1;
   if (value==NULL) {
     PyErr_SetString(PyExc_AttributeError, "cannot delete status");
     return -1;
   }
-  char *sstr = PyString_AsString(value);
+  sstr = PyString_AsString(value);
   if (sstr == NULL) return -1;
   if (sstr[0]==0 || sstr[1]==0 || sstr[2]!=0) {
     PyErr_SetString(PyExc_ValueError, "status strings must be length 2");
     return -1;
   }
-  int status;
+
   // Whee...
   if      (!strncmp("bs", sstr, 2)) status=GLP_BS;
   else if (!strncmp("nl", sstr, 2)) status=GLP_NL;
@@ -457,11 +468,14 @@ static double(*rowcol_primdual_funcptrs[])(glp_prob*,int) = {
   glp_mip_col_val,  glp_mip_row_val,   NULL,            NULL };
 
 static PyObject* Bar_getvarval(BarObject *self, void *closure) {
+  int isrow, isdual, last;
+  double (*valfunc)(glp_prob*, int);
+
   if (!Bar_Valid(self, 1)) return NULL;
   // Compute what we need to index to get the appropriate function pointer.
-  int isrow = Bar_Row(self) ? 1 : 0;
-  int isdual = closure==NULL ? 0 : 1;
-  int last = self->py_bc->py_lp->last_solver;
+  isrow = Bar_Row(self) ? 1 : 0;
+  isdual = closure==NULL ? 0 : 1;
+  last = self->py_bc->py_lp->last_solver;
   if (last < 0) last = 0; // If no solver called yet, assume simplex is OK.
   if (last > 2) {
     PyErr_Format(PyExc_RuntimeError,
@@ -469,8 +483,7 @@ static PyObject* Bar_getvarval(BarObject *self, void *closure) {
     return NULL;
   }
   // Get and verify that function pointer.
-  double(*valfunc)(glp_prob*,int) =
-    rowcol_primdual_funcptrs[last*4 + isdual*2 + isrow];
+  valfunc = rowcol_primdual_funcptrs[last*4 + isdual*2 + isrow];
   if (valfunc==NULL) {
     PyErr_SetString(PyExc_RuntimeError,
 		    "dual values do not exist for MIP solver");
@@ -482,20 +495,22 @@ static PyObject* Bar_getvarval(BarObject *self, void *closure) {
 
 static PyObject* Bar_getspecvarval(BarObject *self,
 				   double(*valfuncs[])(glp_prob*, int)) {
+  double (*valfunc)(glp_prob*, int);
   if (!Bar_Valid(self, 1)) return NULL;
-  double(*valfunc)(glp_prob*, int) = valfuncs[Bar_Row(self) ? 1 : 0];
+  valfunc = valfuncs[Bar_Row(self) ? 1 : 0];
   return PyFloat_FromDouble(valfunc(LP, Bar_Index(self)+1));
 }
 
 static PyObject* Bar_getspecvarvalm(BarObject *self,
 				    double(*valfuncs[])(glp_prob*, int)) {
+  double (*valfunc)(glp_prob*, int);
   if (!Bar_Valid(self, 1)) return NULL;
   if (glp_get_num_int(LP) == 0) {
     PyErr_SetString(PyExc_TypeError,
 		    "MIP values require mixed integer problem");
     return NULL;
   }
-  double(*valfunc)(glp_prob*, int) = valfuncs[Bar_Row(self) ? 1 : 0];
+  valfunc = valfuncs[Bar_Row(self) ? 1 : 0];
   return PyFloat_FromDouble(valfunc(LP, Bar_Index(self)+1));
 }
 

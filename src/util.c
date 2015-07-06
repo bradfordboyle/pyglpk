@@ -29,8 +29,9 @@ int util_extract_if(PyObject *ob, PyObject *barcol,
 		    int *len, int **ind, double **val) {
   PyObject *iter=NULL,*index2value=NULL,*item=NULL,*index=NULL,*value=NULL;
   BarColObject *bc = (BarColObject*)barcol;
+	Py_ssize_t ppos = 0;
 
-  int curr_index = 0, num_zero = 0, size = BarCol_Size(bc);
+  int i = 0, curr_index = 0, num_zero = 0, size = BarCol_Size(bc);
 
   if ((iter=PyObject_GetIter(ob)) == NULL) return 0;
   if ((index2value=PyDict_New()) == NULL) return 0;
@@ -69,12 +70,12 @@ int util_extract_if(PyObject *ob, PyObject *barcol,
 	PyErr_SetString(PyExc_TypeError, "matrix values must be numbers");
 	break;
       }
-      
+
       index = PyInt_FromLong(curr_index);
       Py_INCREF(value);
     } else {
       // Something other than a single number, or a tuple.
-      PyErr_SetString(PyExc_TypeError, 
+      PyErr_SetString(PyExc_TypeError,
 		      "vector entries must be tuple or number");
       break;
     }
@@ -85,7 +86,7 @@ int util_extract_if(PyObject *ob, PyObject *barcol,
     value = fvalue;
     if (value == NULL) {
       Py_DECREF(index);
-      PyErr_SetString(PyExc_TypeError, 
+      PyErr_SetString(PyExc_TypeError,
 		      "vector values must be interpretable as floats");
       break;
     }
@@ -116,8 +117,6 @@ int util_extract_if(PyObject *ob, PyObject *barcol,
   }
   // Wow.  Now we have a dictionary of known Int to Float objects.
   // Allocate and copy into our arrays.
-  Py_ssize_t ppos = 0;
-  int i = 0;
   *len = PyDict_Size(index2value) - num_zero;
   if (*len > 0) {
     *ind = (int*)calloc(*len, sizeof(int));
@@ -143,6 +142,8 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
   int curr_index1 = 0, curr_index2 = 0, num_zero = 0;
   LPXObject *lp = (LPXObject*)lpobj;
   int size1 = glp_get_num_rows(lp->lp), size2 = glp_get_num_cols(lp->lp);
+	Py_ssize_t ppos = 0;
+  int i = 0;
 
   if ((iter=PyObject_GetIter(ob)) == NULL) return 0;
   if ((index2value=PyDict_New()) == NULL) return 0;
@@ -182,12 +183,12 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
 	PyErr_SetString(PyExc_TypeError, "matrix values must be numbers");
 	break;
       }
-      
+
       index = Py_BuildValue("ii", curr_index1, curr_index2);
       Py_INCREF(value);
       // Done with the tuple code.
     } else {
-      PyErr_SetString(PyExc_TypeError, 
+      PyErr_SetString(PyExc_TypeError,
 		      "vector entries must be tuple or number");
       break;
     }
@@ -197,7 +198,7 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
     value = fvalue;
     if (value == NULL) {
       Py_DECREF(index);
-      PyErr_SetString(PyExc_TypeError, 
+      PyErr_SetString(PyExc_TypeError,
 		      "matrix values must be interpretable as floats");
       break;
     }
@@ -232,8 +233,6 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
   }
 
   // Allocate and copy into our arrays.
-  Py_ssize_t ppos = 0;
-  int i = 0;
   *len = PyDict_Size(index2value) - num_zero;
   if (*len > 0) {
     *ind1 = (int*)calloc(*len, sizeof(int));
@@ -257,13 +256,15 @@ int util_extract_iif(PyObject *ob, PyObject*lpobj,
 }
 
 int util_add_type(PyObject *module, PyTypeObject *type) {
-  if (PyType_Ready(type) < 0) return -1;
-  Py_INCREF(type);
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 5
   char*last_period = strrchr(type->tp_name, '.');
 #else
   const char*last_period = strrchr(type->tp_name, '.');
 #endif
+
+  if (PyType_Ready(type) < 0) return -1;
+  Py_INCREF(type);
+  last_period = strrchr(type->tp_name, '.');
   if (last_period==NULL) {
     // Um... we really shouldn't have this happen, but OK.
     last_period = type->tp_name;

@@ -68,6 +68,7 @@ static void TreeNode_dealloc(TreeNodeObject *tn) {
 }
 
 static PyObject* TreeNode_richcompare(TreeNodeObject *v, PyObject *w, int op) {
+  TreeNodeObject *x;
   if (!TreeNode_Check(w)) {
     switch (op) {
     case Py_EQ: Py_RETURN_FALSE;
@@ -78,7 +79,7 @@ static PyObject* TreeNode_richcompare(TreeNodeObject *v, PyObject *w, int op) {
     }
   }
   // Now we know it is a tree node object.
-  TreeNodeObject *x = (TreeNodeObject *)w;
+  x = (TreeNodeObject *)w;
   if (v->py_tree != x->py_tree) {
     // "Inherit" the judgement of our containing objects.
     return PyObject_RichCompare
@@ -107,6 +108,7 @@ static PyObject* TreeNode_richcompare(TreeNodeObject *v, PyObject *w, int op) {
 
 static PyObject* TreeNode_getothernode(TreeNodeObject *self, void *closure) {
   int(*othernodefunc)(glp_tree*,int) = (int(*)(glp_tree*,int))closure;
+  int othersubproblem;
   CHECKTREE;
   if (!self->active) {
     // What is appropriate?  Throw an exception, or just return None?
@@ -115,14 +117,15 @@ static PyObject* TreeNode_getothernode(TreeNodeObject *self, void *closure) {
     // exception.
     Py_RETURN_NONE;
   }
-  int othersubproblem = othernodefunc(TREE, self->subproblem);
+  othersubproblem = othernodefunc(TREE, self->subproblem);
   if (othersubproblem==0) Py_RETURN_NONE;
   return TreeNode_New(self->py_tree, othersubproblem, 1);
 }
 
 static PyObject* TreeNode_getupnode(TreeNodeObject *self, void *closure) {
+  int othersubproblem;
   CHECKTREE;
-  int othersubproblem = glp_ios_up_node(TREE, self->subproblem);
+  othersubproblem = glp_ios_up_node(TREE, self->subproblem);
   if (othersubproblem==0) Py_RETURN_NONE;
   return TreeNode_New(self->py_tree, othersubproblem, 0);
 }
@@ -250,8 +253,9 @@ static void TreeIter_dealloc(TreeIterObject *it) {
 }
 
 static PyObject *TreeIter_next(TreeIterObject *self) {
+  int subproblem;
   CHECKTREE;
-  int subproblem = glp_ios_next_node(TREE, self->last_subproblem);
+  subproblem = glp_ios_next_node(TREE, self->last_subproblem);
   if (subproblem==0) return NULL;
   self->last_subproblem = subproblem;
   return (PyObject*)TreeNode_New(self->py_tree, subproblem, 1);
@@ -378,17 +382,18 @@ static PyObject *Tree_select(TreeObject *self, PyObject *args) {
 }
 
 static PyObject *Tree_canbranch(TreeObject *self, PyObject *args) {
+  int j, numcols;
   CHECKTREE;
   if (glp_ios_reason(TREE) != GLP_IBRANCH) {
     PyErr_SetString(PyExc_RuntimeError,
 		    "function may only be called during branch phase");
     return NULL;
   }
-  int j;
+
   if (!PyArg_ParseTuple(args, "i", &j)) {
     return NULL;
   }
-  int numcols = glp_get_num_cols(LP);
+  numcols = glp_get_num_cols(LP);
   if (j<0 || j>=numcols) {
     PyErr_Format(PyExc_IndexError, "index %d out of bound for %d columns",
 		 j, numcols);
@@ -398,18 +403,19 @@ static PyObject *Tree_canbranch(TreeObject *self, PyObject *args) {
 }
 
 static PyObject *Tree_branchupon(TreeObject *self, PyObject *args) {
+  int j, numcols;
+  char select = 'N';
   CHECKTREE;
   if (glp_ios_reason(TREE) != GLP_IBRANCH) {
     PyErr_SetString(PyExc_RuntimeError,
 		    "function may only be called during branch phase");
     return NULL;
   }
-  int j;
-  char select='N';
+
   if (!PyArg_ParseTuple(args, "i|c", &j, &select)) {
     return NULL;
   }
-  int numcols = glp_get_num_cols(LP);
+  numcols = glp_get_num_cols(LP);
   if (j<0 || j>=numcols) {
     PyErr_Format(PyExc_IndexError, "index %d out of bound for %d columns",
 		 j, numcols);
@@ -430,17 +436,19 @@ static PyObject *Tree_branchupon(TreeObject *self, PyObject *args) {
 }
 
 static PyObject *Tree_heuristic(TreeObject *self, PyObject *arg) {
+  int i, notaccepted, numcols;
+  double *x;
   CHECKTREE;
   if (glp_ios_reason(TREE) != GLP_IHEUR) {
     PyErr_SetString(PyExc_RuntimeError,
 		    "function may only be called during heur phase");
     return NULL;
   }
-  int i, notaccepted, numcols = glp_get_num_cols(LP);
+  numcols = glp_get_num_cols(LP);
   // Try to get an iterator.
   arg = PyObject_GetIter(arg);
   if (arg==NULL) return NULL;
-  double *x = calloc(numcols, sizeof(double));
+  x = calloc(numcols, sizeof(double));
   for (i=0; i<numcols; ++i) {
     PyObject *item = PyIter_Next(arg);
     if (item==NULL) {
@@ -476,7 +484,7 @@ static PyObject* Tree_getreason(TreeObject *self, void *closure) {
   case GLP_ISELECT: return PyString_FromString("select"); break;
   case GLP_IPREPRO: return PyString_FromString("prepro"); break;
   case GLP_IBRANCH: return PyString_FromString("branch"); break;
-  case GLP_IROWGEN: return PyString_FromString("rowgen"); break; 
+  case GLP_IROWGEN: return PyString_FromString("rowgen"); break;
   case GLP_IHEUR:   return PyString_FromString("heur");   break;
   case GLP_ICUTGEN: return PyString_FromString("cutgen"); break;
   case GLP_IBINGO:  return PyString_FromString("bingo");  break;
@@ -488,38 +496,43 @@ static PyObject* Tree_getreason(TreeObject *self, void *closure) {
 }
 
 static PyObject* Tree_getnumactive(TreeObject *self, void *closure) {
-  CHECKTREE;
   int count;
+  CHECKTREE;
   glp_ios_tree_size(TREE, &count, NULL, NULL);
   return PyInt_FromLong(count);
 }
 
 static PyObject* Tree_getnumall(TreeObject *self, void *closure) {
-  CHECKTREE;
   int count;
+
+  CHECKTREE;
   glp_ios_tree_size(TREE, NULL, &count, NULL);
   return PyInt_FromLong(count);
 }
 
 static PyObject* Tree_getnumtotal(TreeObject *self, void *closure) {
-  CHECKTREE;
   int count;
+
+  CHECKTREE;
   glp_ios_tree_size(TREE, NULL, NULL, &count);
   return PyInt_FromLong(count);
 }
 
 static PyObject* Tree_gettreenode(TreeObject *self, void *closure) {
   int(*nodefunc)(glp_tree*) = (int(*)(glp_tree*))closure;
+  int subproblem;
   CHECKTREE;
-  int subproblem = nodefunc(TREE);
+  subproblem = nodefunc(TREE);
   if (subproblem==0) Py_RETURN_NONE;
   return TreeNode_New(self, subproblem, 1);
 }
 
 static PyObject* Tree_getfirstlastnode(TreeObject *self, void *closure) {
   int(*othernodefunc)(glp_tree*,int) = (int(*)(glp_tree*,int))closure;
+  int subproblem;
+
   CHECKTREE;
-  int subproblem = othernodefunc(TREE, 0);
+  subproblem = othernodefunc(TREE, 0);
   if (subproblem==0) Py_RETURN_NONE;
   return TreeNode_New(self, subproblem, 1);
 }
@@ -653,4 +666,3 @@ PyTypeObject TreeType = {
   Tree_members,				/* tp_members */
   Tree_getset,				/* tp_getset */
 };
-

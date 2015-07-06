@@ -97,7 +97,7 @@ PyTypeObject ObjIterType = {
   0,					/* tp_as_buffer */
   Py_TPFLAGS_DEFAULT,			/* tp_flags */
   "Objective function iterator objects, used to cycle over the\n"
-  "coefficients of the objective function.",	
+  "coefficients of the objective function.",
   /* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */
@@ -158,6 +158,7 @@ int Obj_Size(ObjObject* self) {
 static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
   int size = Obj_Size(self), index=0;
   BarColObject *bc = (BarColObject*) (self->py_lp->cols);
+  PyObject *objcoef;
 
   if (PySlice_Check(item)) {
     // It's a slice.  (Of zest!!)
@@ -204,7 +205,7 @@ static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
 	return NULL;
       }
       // Try to get the coefficient.
-      PyObject *objcoef=PyFloat_FromDouble(glp_get_obj_coef(LP,index+1));
+      objcoef = PyFloat_FromDouble(glp_get_obj_coef(LP,index+1));
       if (objcoef==NULL) {
 	Py_DECREF(sublist);
 	return NULL;
@@ -213,12 +214,12 @@ static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
     }
     return sublist;
   }
-  
+
   if (Py_None == item) {
     // They input none.  Bastards!
     return PyFloat_FromDouble(glp_get_obj_coef(LP,0));
   }
-  
+
   if (BarCol_Index(bc, item, &index, -1)) return NULL;
   return PyFloat_FromDouble(glp_get_obj_coef(LP, index+1));
 
@@ -253,7 +254,7 @@ static int Obj_ass_subscript(ObjObject *self,PyObject *item,PyObject *value) {
       (PyExc_TypeError, "objective function doesn't support item deletion");
     return -1;
   }
-  
+
   if (PySlice_Check(item)) {
     // Sliceness!  Again of zest!
     Py_ssize_t start, stop, step, subsize, i, valsize;
@@ -314,7 +315,7 @@ static int Obj_ass_subscript(ObjObject *self,PyObject *item,PyObject *value) {
 
     subsize = PyTuple_Size(item);
     if (subsize==-1) return -1;
-    
+
     // Repeated single number assignment.
     if (PyNumber_Check(value)) {
       if (extract_double(value, &val)) return -1;
@@ -346,7 +347,7 @@ static int Obj_ass_subscript(ObjObject *self,PyObject *item,PyObject *value) {
 	return -1;
       }
       Py_DECREF(subval);
-      
+
       if ((subitem = PyTuple_GET_ITEM(item, i))==NULL) {
 	Py_DECREF(value);
 	return -1;
@@ -438,7 +439,7 @@ static PyObject* Obj_getvalue(ObjObject *self, void *closure) {
   case 0: return PyFloat_FromDouble(glp_get_obj_val(LP));
   case 1: return PyFloat_FromDouble(glp_ipt_obj_val(LP));
   case 2: return PyFloat_FromDouble(glp_mip_obj_val(LP));
-  default: 
+  default:
     PyErr_SetString(PyExc_RuntimeError,
 		    "bad internal state for last solver identifier");
     return NULL;

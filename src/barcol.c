@@ -173,6 +173,9 @@ static PyObject *BarCol_add(BarColObject *self, PyObject *args) {
 #if PY_MAJOR_VERSION >= 3
 // emulate the rich comparison provided by Python 2's object()
 static PyObject* BarCol_richcompare(BarColObject *self, PyObject *w, int op) {
+  BarColObject *x;
+  long x_id, self_id;
+
     if (!BarCol_Check(w)) {
         // Different type
         switch (op) {
@@ -188,9 +191,9 @@ static PyObject* BarCol_richcompare(BarColObject *self, PyObject *w, int op) {
         }
     }
     // Now we know it is a barcollection object
-    BarColObject *x = (BarColObject *)w;
-    long x_id = (long)x;
-    long self_id = (long)self;
+    x = (BarColObject *)w;
+    x_id = (long)x;
+    self_id = (long)self;
     switch (op) {
     case Py_EQ: if (x_id == self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
     case Py_NE: if (x_id != self_id) Py_RETURN_TRUE; else Py_RETURN_FALSE;
@@ -214,6 +217,9 @@ int BarCol_Size(BarColObject* self) {
 }
 
 int BarCol_Index(BarColObject *self, PyObject *obj, int *index, int except){
+  char *name;
+  int i = 0;
+
   int size = (BarCol_Rows(self) ? glp_get_num_rows : glp_get_num_cols)(LP);
   if (PyInt_Check(obj)) {
     int i = PyInt_AsLong(obj);
@@ -228,9 +234,9 @@ int BarCol_Index(BarColObject *self, PyObject *obj, int *index, int except){
     return 0;
   } else if (PyString_Check(obj)) {
     glp_create_index(LP); // No effect if already present.
-    char *name = PyString_AsString(obj);
+    name = PyString_AsString(obj);
     if (name==NULL) return -1;
-    int i = (BarCol_Rows(self) ? glp_find_row : glp_find_col)(LP,name);
+    i = (BarCol_Rows(self) ? glp_find_row : glp_find_col)(LP,name);
     if (i==0) {
       if (except & 4)
 	PyErr_Format(PyExc_KeyError, "%s named '%s' does not exist",
@@ -255,7 +261,8 @@ static int BarCol_contains(BarColObject *self, PyObject *item) {
 
 static PyObject* BarCol_subscript(BarColObject *self, PyObject *item) {
   Py_ssize_t size = BarCol_Size(self), i;
-  
+  PyObject *bar;
+
   if (PyInt_Check(item) || PyString_Check(item)) {
     // They input a single number or string.
     int index = 0;
@@ -303,7 +310,7 @@ static PyObject* BarCol_subscript(BarColObject *self, PyObject *item) {
 	return NULL;
       }
       // Get the actual bar now.
-      PyObject *bar = (PyObject*) BarCol_Bar(self, index);
+      bar = (PyObject*) BarCol_Bar(self, index);
       if (bar==NULL) {
 	Py_DECREF(sublist);
 	return NULL;
@@ -328,6 +335,7 @@ static int PySet_Size(PyObject*s) { return PyDict_Size(s); }
 
 static int BarCol_ass_subscript(BarColObject *self, PyObject *item,
 				PyObject *value) {
+  BarObject *bar;
   if (value == NULL) {
     // We're deleting.  Woo hoo.
     int size = BarCol_Size(self);
@@ -409,14 +417,14 @@ static int BarCol_ass_subscript(BarColObject *self, PyObject *item,
   } else {
     int size = BarCol_Size(self);
     //Py_ssize_t i;
-    
+
     // This is an actual value assignment.
     if (PyInt_Check(item)) {
       // They input a single number.
       int index;
       index = PyInt_AsLong(item);
       if (index < 0) index += size;
-      BarObject *bar = BarCol_Bar(self, index);
+      bar = BarCol_Bar(self, index);
       if (!bar) return -1;
       index = Bar_SetMatrix(bar, value);
       Py_DECREF(bar);
