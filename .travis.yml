@@ -2,14 +2,20 @@ language: python
 
 python:
   - "2.7"
-  - "3.2"
+  - "3.4"
+  - "3.5"
+
+env:
+  - GLPK_VERSION=4.55
+  - GLPK_VERSION=4.57
+  - GLPK_VERSION=4.59
 
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libgmp3-dev
-  - wget http://ftp.gnu.org/gnu/glpk/glpk-4.55.tar.gz
-  - tar vxfz glpk-4.55.tar.gz
-  - pushd glpk-4.55 && ./configure --prefix=/usr && make && sudo make install && popd
+  - wget http://ftp.gnu.org/gnu/glpk/glpk-${GLPK_VERSION}.tar.gz
+  - tar vxfz glpk-${GLPK_VERSION}.tar.gz
+  - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
 
 install:
   - pip install -e .
