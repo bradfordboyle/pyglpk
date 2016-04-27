@@ -185,7 +185,7 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		        PyErr_SetString(PyExc_RuntimeError, "GMP model reader failed");
 
 		/* read separate data section, if required */
-		if (!failure && !model[1] && (failure = glp_mpl_read_data(tran, model[1])))
+		if (!failure && model[1] && (failure = glp_mpl_read_data(tran, model[1])))
 		        PyErr_SetString(PyExc_RuntimeError, "GMP data reader failed");
 
 		/* generate the model */
