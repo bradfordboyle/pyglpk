@@ -732,8 +732,8 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 	const char* err_msg = "writer for '%s' failed to write to '%s'";
 	int rv;
 
-	rv = PyArg_ParseTupleAndKeywords(args, keywds, "|sssssss", kwlist,
-	fnames,fnames+1,fnames+2,fnames+3, fnames+4,fnames+5,fnames+6);
+	rv = PyArg_ParseTupleAndKeywords(args, keywds, "|ssssssss", kwlist,
+	fnames,fnames+1,fnames+2,fnames+3, fnames+4,fnames+5,fnames+6,fnames+7);
 
 	if (!rv)
 		return NULL;
@@ -805,7 +805,7 @@ static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
 
 	fname = fnames[7];
 	if (fname != NULL) {
-		glp_print_mip(LP, fname);
+		rv = glp_print_mip(LP, fname);
 		if (rv != 0) {
 			PyErr_Format(PyExc_RuntimeError, err_msg, kwlist[7], fname);
 			return NULL;
