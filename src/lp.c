@@ -575,7 +575,9 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		"br_tech", 		// int
 		"bt_tech", 		// int
 		"pp_tech", 		// int
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
 		"sr_heur",		// int
+#endif
 		"fp_heur", 		// int
 		"ps_heur", 		// int
 		"ps_tm_lim",	// int
@@ -595,12 +597,19 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		"binarize", 	// int
 		NULL};
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, 
-			"|iiiiiiiiiiiidddiiiOii", kwlist, 
+#if GLP_MAJOR_VERSION >=4 && GLP_MINOR_VERSION >= 57
+	"|iiiiiiiiiiiidddiiiOii",
+#else
+	"|iiiiiiiiiiidddiiiOii",
+#endif
+			kwlist,
 			&cp.msg_lev, 
 			&cp.br_tech, 
 			&cp.bt_tech,
 			&cp.pp_tech,
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
 			&cp.sr_heur,
+#endif
 			&cp.fp_heur,
 			&cp.ps_heur,
 			&cp.ps_tm_lim,
@@ -621,7 +630,9 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 	}
 
 	// Convert on/off parameters. 
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
 	cp.sr_heur = cp.sr_heur ? GLP_ON : GLP_OFF;
+#endif
 	cp.fp_heur = cp.fp_heur ? GLP_ON : GLP_OFF;
 	cp.ps_heur = cp.ps_heur ? GLP_ON : GLP_OFF;
 	cp.gmi_cuts = cp.gmi_cuts ? GLP_ON : GLP_OFF;
@@ -1260,7 +1271,9 @@ static PyMethodDef LPX_methods[] = {
 		"  LPX.PP_NONE -- disable preprocessing\n"
 		"  LPX.PP_ROOT -- perform preprocessing only on the root level\n"
 		"  LPX.PP_ALL  -- perform preprocessing on all levels (default)\n"
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
 		"sr_heur: Simple rounding heuristic (default True)\n"
+#endif
 		"fp_heur: Feasibility pump heurisic (default False)\n"
 		"ps_heur: Proximity search heuristic (default False)\n"
 		"ps_tm_lim: Proximity search time limit in milliseconds (default 60000)\n"
