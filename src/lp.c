@@ -565,37 +565,88 @@ static void mip_callback(glp_tree *tree, void *info)
 static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyObject *keywds)
 {
-	if (glp_get_status(LP) != GLP_OPT) {
-		PyErr_SetString(PyExc_RuntimeError, "integer solver requires existing optimal basic solution");
-		return NULL;
-	}
 	PyObject *callback = NULL;
 	struct mip_callback_object*info = NULL;
 	glp_iocp cp;
 	glp_init_iocp(&cp);
 	cp.msg_lev = GLP_MSG_OFF;
 	// Map the keyword arguments to the appropriate entries.
-	static char *kwlist[] = {"msg_lev", "br_tech", "bt_tech",
-		"pp_tech",
-		"gmi_cuts",
-		"mir_cuts",
-		"tol_int", "tol_obj", "tm_lim", "out_frq", "out_dly",
-		"callback", //"cb_info", "cb_size",
+	static char *kwlist[] = {"msg_lev", // int
+		"br_tech", 		// int
+		"bt_tech", 		// int
+		"pp_tech", 		// int
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
+		"sr_heur",		// int
+#endif
+		"fp_heur", 		// int
+		"ps_heur", 		// int
+		"ps_tm_lim",	// int
+		"gmi_cuts", 	// int
+		"mir_cuts", 	// int
+		"cov_cuts", 	// int
+		"clq_cuts",		// int
+		"tol_int",		// double
+		"tol_obj", 		// double 
+		"mip_gap", 		// double
+		"tm_lim",  		// int
+		"out_frq", 		// int
+		"out_dly", 		// int
+		"callback", 	// void 
+		//"cb_info", "cb_size",
+		"presolve", 	// int
+		"binarize", 	// int
 		NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iii"
-				"i"
-				"i"
-				"i"
-				"ddiiiO", kwlist, &cp.msg_lev, &cp.br_tech, &cp.bt_tech,
-				&cp.pp_tech,
-				&cp.gmi_cuts,
-				&cp.mir_cuts,
-				&cp.tol_int, &cp.tol_obj, &cp.tm_lim,
-				&cp.out_frq, &cp.out_dly, &callback)) {
-					return NULL;
-				}
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, 
+#if GLP_MAJOR_VERSION >=4 && GLP_MINOR_VERSION >= 57
+	"|iiiiiiiiiiiidddiiiOii",
+#else
+	"|iiiiiiiiiiidddiiiOii",
+#endif
+			kwlist,
+			&cp.msg_lev, 
+			&cp.br_tech, 
+			&cp.bt_tech,
+			&cp.pp_tech,
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
+			&cp.sr_heur,
+#endif
+			&cp.fp_heur,
+			&cp.ps_heur,
+			&cp.ps_tm_lim,
+			&cp.gmi_cuts,
+			&cp.mir_cuts,
+			&cp.cov_cuts,
+			&cp.clq_cuts,
+			&cp.tol_int, 
+			&cp.tol_obj, 
+			&cp.mip_gap,
+			&cp.tm_lim,
+			&cp.out_frq, 
+			&cp.out_dly, 
+			&callback,
+			&cp.presolve,
+			&cp.binarize)) {
+		return NULL;
+	}
+
+	// Convert on/off parameters. 
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
+	cp.sr_heur = cp.sr_heur ? GLP_ON : GLP_OFF;
+#endif
+	cp.fp_heur = cp.fp_heur ? GLP_ON : GLP_OFF;
+	cp.ps_heur = cp.ps_heur ? GLP_ON : GLP_OFF;
 	cp.gmi_cuts = cp.gmi_cuts ? GLP_ON : GLP_OFF;
 	cp.mir_cuts = cp.mir_cuts ? GLP_ON : GLP_OFF;
+	cp.cov_cuts = cp.cov_cuts ? GLP_ON : GLP_OFF;
+	cp.clq_cuts = cp.clq_cuts ? GLP_ON : GLP_OFF;
+	cp.presolve = cp.presolve ? GLP_ON : GLP_OFF;
+	cp.binarize = cp.binarize ? GLP_ON : GLP_OFF;
+
+	if ((cp.presolve == GLP_OFF) && (glp_get_status(LP) != GLP_OPT)) {
+		PyErr_SetString(PyExc_RuntimeError, "integer solver without presolve requires existing optimal basic solution");
+		return NULL;
+	}
+
 	// Do checking on the various entries.
 	switch (cp.msg_lev) {
 	case GLP_MSG_OFF:
@@ -612,6 +663,7 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 	case GLP_BR_LFV:
 	case GLP_BR_MFV:
 	case GLP_BR_DTH:
+	case GLP_BR_PCH:
 		break;
 	default:
 		PyErr_SetString(PyExc_ValueError, "invalid value for br_tech (LPX.BR_* are valid values)");
@@ -636,12 +688,21 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "invalid value for pp_tech (LPX.PP_* are valid values)");
 		return NULL;
 	}
+
+	if (cp.ps_tm_lim < 0) {
+		PyErr_SetString(PyExc_ValueError, "ps_tm_lim must be nonnegative");
+		return NULL;
+	}
 	if (cp.tol_int <= 0 || cp.tol_int >= 1) {
 		PyErr_SetString(PyExc_ValueError, "tol_int must obey 0<tol_int<1");
 		return NULL;
 	}
 	if (cp.tol_obj <= 0 || cp.tol_obj >= 1) {
 		PyErr_SetString(PyExc_ValueError, "tol_obj must obey 0<tol_obj<1");
+		return NULL;
+	}
+	if (cp.mip_gap < 0) {
+		PyErr_SetString(PyExc_ValueError, "mip_gap must be non-negative");
 		return NULL;
 	}
 	if (cp.tm_lim < 0) {
@@ -656,6 +717,7 @@ static PyObject* LPX_solver_integer(LPXObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "out_dly must be non-negative");
 		return NULL;
 	}
+
 	int retval;
 	if (callback != NULL && callback != Py_None) {
 		info = (struct mip_callback_object*)
@@ -977,11 +1039,13 @@ int LPX_InitType(PyObject *module)
 	SETCONST(BR_LFV);
 	SETCONST(BR_MFV);
 	SETCONST(BR_DTH);
+	SETCONST(BR_PCH);
 
 	SETCONST(BT_DFS);
 	SETCONST(BT_BFS);
 	SETCONST(BT_BLB);
 	SETCONST(BT_BPH);
+
 	SETCONST(PP_NONE);
 	SETCONST(PP_ROOT);
 	SETCONST(PP_ALL);
@@ -1197,6 +1261,7 @@ static PyMethodDef LPX_methods[] = {
 		"  LPX.BR_LFV  -- last fractional variable\n"
 		"  LPX.BR_MFV  -- most fractional variable\n"
 		"  LPX.BR_DTH  -- heuristic by Driebeck and Tomlin (default)\n"
+		"  LPX.BR_PCH  -- hybrid pseudo-cost heuristic\n"
 		"bt_tech : Backtracking technique option.\n"
 		"  LPX.BT_DFS  -- depth first search\n"
 		"  LPX.BT_BFS  -- breadth first search\n"
@@ -1206,16 +1271,28 @@ static PyMethodDef LPX_methods[] = {
 		"  LPX.PP_NONE -- disable preprocessing\n"
 		"  LPX.PP_ROOT -- perform preprocessing only on the root level\n"
 		"  LPX.PP_ALL  -- perform preprocessing on all levels (default)\n"
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
+		"sr_heur: Simple rounding heuristic (default True)\n"
+#endif
+		"fp_heur: Feasibility pump heurisic (default False)\n"
+		"ps_heur: Proximity search heuristic (default False)\n"
+		"ps_tm_lim: Proximity search time limit in milliseconds (default 60000)\n"
 		"gmi_cuts: Use Gomory's mixed integer cuts (default False)\n"
 		"mir_cuts: Use mixed integer rounding cuts (default False)\n"
+		"cov_cuts: Use mixed cover cuts (default False)\n"
+		"clq_cuts: Use clique cuts (default False)\n"
 		"tol_int : Tolerance used to check if the optimal solution to the\n"
 		"  current LP relaxation is integer feasible.\n"
 		"tol_obj : Tolerance used to check if the objective value in the\n"
 		"  optimal solution to the current LP is not better than the best\n"
 		"  known integer feasible solution.\n"
+        "mip_gap: Relative mip gap tolerance (default 0.0)\n"
 		"tm_lim  : Search time limit in milliseconds. (default is max int)\n"
 		"out_frq : Terminal output frequency in milliseconds. (default 5000)\n"
 		"out_dly : Terminal output delay in milliseconds. (default 10000)\n"
+        "presolve: MIP presolver (default False)\n"
+        "binarize: Binarization option, used only if presolver is enabled\n"
+        "  (default False)\n"
 		"callback: A callback object the user may use to monitor and control\n"
 		"  the solver.  During certain portions of the optimization, the\n"
 		"  solver will call methods of callback object. (default None)\n\n"

@@ -467,14 +467,14 @@ class IntegerControlParametersTestCase(Runner, unittest.TestCase):
     def testBranchingTechnique(self):
         """Test the br_tech parameter."""
         if env.version==(4,33): return
-        legals=LPX.BR_FFV, LPX.BR_LFV, LPX.BR_MFV, LPX.BR_DTH
+        legals=LPX.BR_FFV, LPX.BR_LFV, LPX.BR_MFV, LPX.BR_DTH, LPX.BR_PCH
         for p in legals:
             self.lp.integer(br_tech=p)
 
     def testBranchingTechniqueValueErrors(self):
         """Test whether illegal values for br_tech throw exceptions."""
         self.runValueErrorTest("br_tech", [
-            LPX.BR_FFV, LPX.BR_LFV, LPX.BR_MFV, LPX.BR_DTH])
+            LPX.BR_FFV, LPX.BR_LFV, LPX.BR_MFV, LPX.BR_DTH, LPX.BR_PCH])
 
     def testBacktrackingTechnique(self):
         """Test the bt_tech parameter."""
