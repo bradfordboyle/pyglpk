@@ -61,7 +61,7 @@ MOD_INIT(glpk) {
   
   if (m==NULL) return MOD_ERROR_VAL;
   
-  PyModule_AddStringConstant(m, "__version__", "0.4.1");
+  PyModule_AddStringConstant(m, "__version__", "0.4.2");
 
   Environment_InitType(m);
 
