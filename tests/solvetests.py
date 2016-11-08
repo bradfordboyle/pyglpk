@@ -140,6 +140,72 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertTrue(kkt.db_quality in ['H', 'M', 'L', '?'])
 
 
+class SimpleIntegerSolverTest(unittest.TestCase):
+    """A simple suite of tests for this problem.
+
+    max (x+y) subject to
+    0.5*x + y <= 1
+    0 <= x <= 1
+    0 <= y <= 1
+    x, y integer
+
+    This should have optimal solution x=1, y=0."""
+    def setUp(self):
+        lp = self.lp = LPX()
+        lp.rows.add(1)
+        lp.cols.add(2)
+        lp.cols[0].name = 'x'
+        lp.cols[1].name = 'y'
+        for c in lp.cols:
+            c.bounds = 0,1
+            c.kind = int
+        lp.obj[:] = [1,1]
+        lp.obj.maximize = True
+        lp.rows[0].matrix = [0.5, 1.0]
+        lp.rows[0].bounds = None, 1
+
+    def testInteger(self):
+        """Tests solving the simple problem with integer."""
+        self.lp.integer(presolve=True)
+        self.assertAlmostEqual(self.lp.cols['x'].value, 1.0)
+        self.assertAlmostEqual(self.lp.cols['y'].value, 0.0)
+
+    def testIntegerKKT(self):
+        """Tests the KKT check with solution from integer solver."""
+        # Solve test LP using the simplex method,
+        # check KKT conditions on optimal solution
+        self.lp.integer(presolve=True)
+        kkt = self.lp.kktint()
+
+        # The test LP has an optimal solution.
+        # The primal KKT conditions should be (approximately) satisfied.
+        self.assertAlmostEqual(kkt.pe_ae_max, 0.0)
+        self.assertAlmostEqual(kkt.pe_re_max, 0.0)
+        self.assertAlmostEqual(kkt.pb_ae_max, 0.0)
+        self.assertAlmostEqual(kkt.pb_re_max, 0.0)
+
+        # Are the row/column/variable vertices valid?
+        # In the test LP, there is:
+        # - 1 row
+        # - 2 columns
+        # - 3 variables (rows + columns)
+        # If the error reported is exactly 0, then glp_check_kkt
+        # returns an index of 0.
+
+        # Primal equality constraints (one for each row)
+        self.assertTrue(kkt.pe_ae_row in [0, 1])
+        self.assertTrue(kkt.pe_re_row in [0, 1])
+
+        # Primal bound constraints (one for each variable)
+        # There are one row and two columns in the test LP.
+        self.assertTrue(kkt.pb_ae_ind in [0, 1, 2, 3])
+        self.assertTrue(kkt.pb_re_ind in [0, 1, 2, 3])
+
+        # Are the KKT "quality" values valid?
+        self.assertTrue(kkt.pe_quality in ['H', 'M', 'L', '?'])
+        self.assertTrue(kkt.pb_quality in ['H', 'M', 'L', '?'])
+
+
 class TwoDimensionalTest(unittest.TestCase):
     def setUp(self):
         self.lp = LPX()
