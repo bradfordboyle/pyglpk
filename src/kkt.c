@@ -184,9 +184,9 @@ static PyGetSetDef KKT_getset[] = {
    "Character representing the quality of primal feasibility.\n"
    "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."},
 
-  {"de_ae_row", (getter)KKT_de_ae_col, (setter)NULL,
+  {"de_ae_col", (getter)KKT_de_ae_col, (setter)NULL,
    "Index of the column with the largest absolute error."},
-  {"de_re_row", (getter)KKT_de_re_col, (setter)NULL,
+  {"de_re_col", (getter)KKT_de_re_col, (setter)NULL,
    "Index of the column with the largest relative error."},
   {"de_quality", (getter)KKT_de_quality, (setter)NULL,
    "Character representing the quality of the primal solution.\n"
