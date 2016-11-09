@@ -143,7 +143,7 @@ class SimpleSolverTest(unittest.TestCase):
 class SimpleIntegerSolverTest(unittest.TestCase):
     """A simple suite of tests for this problem.
 
-    max (x+y) subject to
+    max (2*x+y) subject to
     0.5*x + y <= 1
     0 <= x <= 1
     0 <= y <= 1
@@ -159,7 +159,7 @@ class SimpleIntegerSolverTest(unittest.TestCase):
         for c in lp.cols:
             c.bounds = 0,1
             c.kind = int
-        lp.obj[:] = [1,1]
+        lp.obj[:] = [2,1]
         lp.obj.maximize = True
         lp.rows[0].matrix = [0.5, 1.0]
         lp.rows[0].bounds = None, 1
