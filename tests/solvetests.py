@@ -77,8 +77,8 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertTrue(kkt.pb_re_ind in [0, 1, 2, 3])
 
         # Dual equality constraints (one for each column)
-        self.assertTrue(kkt.de_ae_col in [0, 1, 2])
-        self.assertTrue(kkt.de_re_col in [0, 1, 2])
+        self.assertTrue(kkt.de_ae_row in [0, 1, 2])
+        self.assertTrue(kkt.de_re_row in [0, 1, 2])
 
         # Dual bound constraints (one for each variable)
         self.assertTrue(kkt.db_ae_ind in [0, 1, 2, 3])
@@ -126,8 +126,8 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertTrue(kkt.pb_re_ind in [0, 1, 2, 3])
 
         # Dual equality constraints (one for each column)
-        self.assertTrue(kkt.de_ae_col in [0, 1, 2])
-        self.assertTrue(kkt.de_re_col in [0, 1, 2])
+        self.assertTrue(kkt.de_ae_row in [0, 1, 2])
+        self.assertTrue(kkt.de_re_row in [0, 1, 2])
 
         # Dual bound constraints (one for each variable)
         self.assertTrue(kkt.db_ae_ind in [0, 1, 2, 3])
