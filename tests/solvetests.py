@@ -59,8 +59,8 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertAlmostEqual(kkt.db_ae_max, 0.0)
         self.assertAlmostEqual(kkt.db_re_max, 0.0)
 
-        # Are the row/column/variable vertices valid?
-        # In the test LP, there is:
+        # Are the row/column/variable indices valid?
+        # In the test LP, there are:
         # - 1 row
         # - 2 columns
         # - 3 variables (rows + columns)
@@ -108,8 +108,8 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertAlmostEqual(kkt.db_ae_max, 0.0)
         self.assertAlmostEqual(kkt.db_re_max, 0.0)
 
-        # Are the row/column/variable vertices valid?
-        # In the test LP, there is:
+        # Are the row/column/variable indices valid?
+        # In the test LP, there are:
         # - 1 row
         # - 2 columns
         # - 3 variables (rows + columns)
@@ -177,15 +177,15 @@ class SimpleIntegerSolverTest(unittest.TestCase):
         self.lp.integer(presolve=True)
         kkt = self.lp.kktint()
 
-        # The test LP has an optimal solution.
+        # The test IP has an optimal solution.
         # The primal KKT conditions should be (approximately) satisfied.
         self.assertAlmostEqual(kkt.pe_ae_max, 0.0)
         self.assertAlmostEqual(kkt.pe_re_max, 0.0)
         self.assertAlmostEqual(kkt.pb_ae_max, 0.0)
         self.assertAlmostEqual(kkt.pb_re_max, 0.0)
 
-        # Are the row/column/variable vertices valid?
-        # In the test LP, there is:
+        # Are the row/column/variable indices valid?
+        # In the test IP, there are:
         # - 1 row
         # - 2 columns
         # - 3 variables (rows + columns)
