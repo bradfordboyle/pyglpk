@@ -34,7 +34,7 @@ static void KKT_dealloc(KKTObject *self) {
 KKTObject *KKT_New(void) {
   KKTObject *k = (KKTObject*)PyObject_New(KKTObject, &KKTType);
   if (k==NULL) return k;
-  bzero((void*)(&(k->kkt)), sizeof(pyglpk_kkt_t));
+  memset(&k->kkt, 0, sizeof(pyglpk_kkt_t));
   k->weakreflist = NULL;
   return k;
 }
