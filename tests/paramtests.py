@@ -501,6 +501,61 @@ class IntegerControlParametersTestCase(Runner, unittest.TestCase):
         self.runValueErrorTest("pp_tech", [
             LPX.PP_NONE, LPX.PP_ROOT, LPX.PP_ALL])
 
+    def testSimpleRoundingHeuristic(self):
+        """Test the sr_heur parameter."""
+        if env.version<(4,57): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(sr_heur=p)
+
+    def testSimpleRoundingHeuristicTypeErrors(self):
+        """Test whether illegal values for sr_heur throw exceptions."""
+        if env.version<(4,57): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(sr_heur=%r)"%p)
+
+    def testFeasibilityPumpHeuristic(self):
+        """Test the fp_heur parameter."""
+        if env.version<(4,37): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(fp_heur=p)
+
+    def testFeasibilityPumpHeuristicTypeErrors(self):
+        """Test whether illegal values for fp_heur throw exceptions."""
+        if env.version<(4,37): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(fp_heur=%r)"%p)
+
+    def testProximitySearchHeuristic(self):
+        """Test the ps_heur parameter."""
+        if env.version<(4,51): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(ps_heur=p)
+
+    def testProximitySearchHeuristicTypeErrors(self):
+        """Test whether illegal values for ps_heur throw exceptions."""
+        if env.version<(4,51): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(ps_heur=%r)"%p)
+
+    def testProximitySearchHeuristicTimeLimit(self):
+        """Test the ps_tm_lim parameter."""
+        if env.version<(4,51): return
+        for p in (0,100,200,1000):
+            self.lp.integer(ps_heur=True,ps_tm_lim=p)
+
+    def testProximitySearchHeuristicTimeLimitValueErrors(self):
+        """Test whether illegal values for ps_tm_lim throw exceptions."""
+        if env.version<(4,51): return
+        for p in (-1, -100, -200, -1000000):
+            self.assertRaises(ValueError, self.runner,
+                              "self.lp.integer(ps_heur=True,ps_tm_lim=%d)"%p)
+
     def testGomorysMixedCuts(self):
         """Test the gmi_cuts option."""
         if env.version<(4,24) or env.version==(4,33): return
@@ -527,6 +582,34 @@ class IntegerControlParametersTestCase(Runner, unittest.TestCase):
             self.assertRaises(TypeError, self.runner,
                               "self.lp.integer(mir_cuts=%r)"%p)
 
+    def testMixedCoverCuts(self):
+        """Test the cov_cuts option."""
+        if env.version<(4,32) or env.version==(4,33): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(cov_cuts=p)
+
+    def testMixedCoverCutsTypeErrors(self):
+        """Test whether illegal types for cov_cuts throw exceptions."""
+        if env.version<(4,32) or env.version==(4,33): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(cov_cuts=%r)"%p)
+
+    def testCliqueCuts(self):
+        """Test the clq_cuts option."""
+        if env.version<(4,32) or env.version==(4,33): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(clq_cuts=p)
+
+    def testCliqueCutsTypeErrors(self):
+        """Test whether illegal types for clq_cuts throw exceptions."""
+        if env.version<(4,32) or env.version==(4,33): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(clq_cuts=%r)"%p)
+
     def testToleranceIntegerFeasible(self):
         """Test the tol_int option."""
         if env.version==(4,33): return
@@ -552,6 +635,19 @@ class IntegerControlParametersTestCase(Runner, unittest.TestCase):
         for p in (-1, -1e6, 0, 1, 1e1, 1e5):
             self.assertRaises(ValueError, self.runner,
                               "self.lp.integer(tol_obj=%g)"%p)
+
+    def testMIPGapTolerance(self):
+        """Test the mip_gap option."""
+        if env.version==(4,33): return
+        legals = 0, .01, .10, .50, 2
+        for p in legals:
+            self.lp.integer(mip_gap=p)
+
+    def testMIPGapToleranceValueErrors(self):
+        """Test whether illegal values for tol_obj throw exceptions."""
+        for p in (-2, -1, -.50, -.10, -.01):
+            self.assertRaises(ValueError, self.runner,
+                              "self.lp.integer(mip_gap=%g)"%p)
 
     def testTimeLimit(self):
         """Test the tm_lim parameter."""
@@ -588,6 +684,34 @@ class IntegerControlParametersTestCase(Runner, unittest.TestCase):
         for p in (-1, -100, -200, -1000000):
             self.assertRaises(ValueError, self.runner,
                               "self.lp.integer(out_dly=%d)"%p)
+
+    def testPresolver(self):
+        """Test the presolve option."""
+        if env.version<(4,32) or env.version==(4,33): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(presolve=p)
+
+    def testPresolverTypeErrors(self):
+        """Test whether illegal types for presolve throw exceptions."""
+        if env.version<(4,32) or env.version==(4,33): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(presolve=%r)"%p)
+
+    def testBinarization(self):
+        """Test the binarize option."""
+        if env.version<(4,32) or env.version==(4,33): return
+        legals=True, False
+        for p in legals:
+            self.lp.integer(presolve=True,binarize=p)
+
+    def testBinarizationTypeErrors(self):
+        """Test whether illegal types for binarize throw exceptions."""
+        if env.version<(4,32) or env.version==(4,33): return
+        for p in ("foo", {"bar":"biz"}, set("baz"), complex(2,3)):
+            self.assertRaises(TypeError, self.runner,
+                              "self.lp.integer(presolve=True,binarize=%r)"%p)
 
 # Integer control parameters did not exist prior to GLPK 4.20.  This
 # is the simplest way to avoid the tests.
