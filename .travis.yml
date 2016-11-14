@@ -16,7 +16,7 @@ before_install:
   - wget http://ftp.gnu.org/gnu/glpk/glpk-${GLPK_VERSION}.tar.gz
   - tar vxfz glpk-${GLPK_VERSION}.tar.gz
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
-  - pip install --user cpp-coveralls
+  - pip install cpp-coveralls
 
 script:
   - make coverage
