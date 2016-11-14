@@ -4,7 +4,7 @@ MODNAME := glpk
 ARCHIVE := py$(MODNAME)-$(VERSION)
 CURDIR := $(shell pwd)
 
-.PHONY : all test install clean cleaner archive syncto syncfrom valgrinder docs
+.PHONY : all test install clean cleaner archive syncto syncfrom valgrinder docs coverage
 
 glpk.so: all
 
@@ -19,9 +19,13 @@ test:
 install:
 	$(PYTHON) setup.py install
 
+coverage:
+	CFLAGS="-coverage" $(PYTHON) setup.py build_ext --inplace
+	$(PYTHON) tests/test_glpk.py
+
 clean:
-	rm -rf build
-	rm -f glpk.so
+	@rm -rf build
+	@rm -f glpk.so
 
 cleaner: clean
 	find . -name "*~" -delete
