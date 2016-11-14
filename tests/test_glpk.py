@@ -5,7 +5,8 @@ from testutils import *
 errors, failures, total = 0, 0, 0
 
 test_names = ['name', 'obj', 'vector', 'matrix',
-              'param', 'memory', 'solve', 'env']
+              'param', 'memory', 'solve', 'env',
+              'readwrite']
 
 # Run all of the checks.
 for name_of_test in test_names:

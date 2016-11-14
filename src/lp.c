@@ -139,8 +139,8 @@ static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 		model_size = PyTuple_Size(model_obj);
 		if (model_size < -1)
 			return -1;
-		if (model_size >  3) {
-			PyErr_SetString(PyExc_ValueError, "model tuple must have length<=3");
+		if (model_size < 1 || model_size >  3) {
+			PyErr_SetString(PyExc_ValueError, "model tuple must have 1<=length<=3");
 			return -1;
 		}
 		for (i = 0; i < model_size; i++) {
