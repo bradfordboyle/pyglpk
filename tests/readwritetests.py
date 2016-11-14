@@ -46,14 +46,14 @@ class WriteTests(unittest.TestCase):
         # try to read a non-existing file
         with self.assertRaises(RuntimeError) as cm:
             lp = LPX(mps='not a real file')
-        self.assertIn('MPS reader failed', cm.exception)
+        self.assertIn('MPS reader failed', str(cm.exception))
 
         # try to write to a non-existing path
         with self.assertRaises(RuntimeError) as cm:
             lp.write(mps='not/a/real/file')
         self.assertIn(
             "writer for 'mps' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testFreeMps(self):
@@ -68,14 +68,14 @@ class WriteTests(unittest.TestCase):
         # try to read a non-existing file
         with self.assertRaises(RuntimeError) as cm:
             lp = LPX(freemps='not a real file')
-        self.assertIn('Free MPS reader failed', cm.exception)
+        self.assertIn('Free MPS reader failed', str(cm.exception))
 
         # try to write to a non-existing path
         with self.assertRaises(RuntimeError) as cm:
             lp.write(freemps='not/a/real/file')
         self.assertIn(
             "writer for 'freemps' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testCpxLp(self):
@@ -90,14 +90,14 @@ class WriteTests(unittest.TestCase):
         # try to read a non-existing file
         with self.assertRaises(RuntimeError) as cm:
             lp = LPX(cpxlp='not a real file')
-        self.assertIn('CPLEX LP reader failed', cm.exception)
+        self.assertIn('CPLEX LP reader failed', str(cm.exception))
 
         # try to write to a non-existing path
         with self.assertRaises(RuntimeError) as cm:
             lp.write(cpxlp='not/a/real/file')
         self.assertIn(
             "writer for 'cpxlp' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testGlp(self):
@@ -112,14 +112,14 @@ class WriteTests(unittest.TestCase):
         # try to read a non-existing file
         with self.assertRaises(RuntimeError) as cm:
             lp = LPX(glp='not a real file')
-        self.assertIn('GLPK LP/MIP reader failed', cm.exception)
+        self.assertIn('GLPK LP/MIP reader failed', str(cm.exception))
 
         # try to write to a non-existing path
         with self.assertRaises(RuntimeError) as cm:
             lp.write(glp='not/a/real/file')
         self.assertIn(
             "writer for 'glp' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testGmp(self):
@@ -133,7 +133,7 @@ class WriteTests(unittest.TestCase):
         subject to
         row: .5*x + y <= 1;
         end;
-        ''')
+        '''.encode('utf-8'))
         self.f.flush()
         lp = LPX(gmp=self.f.name)
         # TODO: why is this two?
@@ -145,16 +145,16 @@ class WriteTests(unittest.TestCase):
         # try to read a non-existing file
         with self.assertRaises(RuntimeError) as cm:
             lp = LPX(gmp='not a real file')
-        self.assertIn('GMP model reader failed', cm.exception)
+        self.assertIn('GMP model reader failed', str(cm.exception))
 
         # try to write to a non-existing path
         with self.assertRaises(ValueError) as cm:
             lp = LPX(gmp=())
-        self.assertIn('model tuple must have 1<=length<=3', cm.exception)
+        self.assertIn('model tuple must have 1<=length<=3', str(cm.exception))
 
         with self.assertRaises(TypeError) as cm:
             lp = LPX(gmp={})
-        self.assertIn('model arg must be string or tuple', cm.exception)
+        self.assertIn('model arg must be string or tuple', str(cm.exception))
 
     def testWriteSol(self):
         """Test writing basic solution."""
@@ -166,7 +166,7 @@ class WriteTests(unittest.TestCase):
             self.lp.write(sol='not/a/real/file')
         self.assertIn(
             "writer for 'sol' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testWriteSensBnds(self):
@@ -179,7 +179,7 @@ class WriteTests(unittest.TestCase):
             self.lp.write(sens_bnds='not/a/real/file')
         self.assertIn(
             "writer for 'sens_bnds' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testWriteIps(self):
@@ -192,7 +192,7 @@ class WriteTests(unittest.TestCase):
             self.lp.write(ips='not/a/real/file')
         self.assertIn(
             "writer for 'ips' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
 
     def testWriteMip(self):
@@ -206,5 +206,5 @@ class WriteTests(unittest.TestCase):
             self.lp.write(mip='not/a/real/file')
         self.assertIn(
             "writer for 'mip' failed to write to 'not/a/real/file'",
-            cm.exception
+            str(cm.exception)
         )
