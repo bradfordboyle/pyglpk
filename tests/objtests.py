@@ -69,6 +69,12 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
         self.lp = LPX()
         self.lp.cols.add(5)
 
+    def testObjectiveIterator(self):
+        obj_iter = iter(self.lp.obj)
+        self.assertEqual(len(obj_iter), 5)
+        next(obj_iter)
+        self.assertEqual(len(obj_iter), 4)
+
     def testInitialCoefficients(self):
         """Test that the initial coefficients are 0."""
         for i in range(len(self.lp.cols)):
@@ -88,6 +94,8 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
         """Tests setting a tuple of coefficients to many coefficients."""
         self.lp.obj[0, -1, 3] = 3.14159, -20, 8
         self.assertEqual(self.lp.obj[:], [3.14159, 0.0, 0.0, 8.0, -20])
+        self.assertEqual(self.lp.obj[0, -1, 3], [3.14159, -20, 8])
+        self.assertEqual(self.lp.obj[0, None], [3.14159, self.lp.obj.shift])
 
     def testSetTupleIndexToSingleCoefficient(self):
         """Tests setting a tuple of coefficients to a single coefficient."""
@@ -134,4 +142,3 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
         self.assertRaises(ValueError, self.runner, 'self.lp.obj[1,2,3] = 4,5')
         # Tuple indexing for good measure.
         self.assertRaises(ValueError, self.runner, 'self.lp.obj[-2:] = 1,4,5')
-
