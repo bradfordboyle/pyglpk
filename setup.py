@@ -80,7 +80,7 @@ of the GNU Linear Programming Kit.
 """
 
 setup(name='glpk',
-      version='0.4.3',
+      version='0.5.0-SNAPSHOT',
       description='PyGLPK, a Python module encapsulating GLPK.',
       long_description=ld,
       author='Thomas Finley',

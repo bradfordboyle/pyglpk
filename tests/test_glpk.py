@@ -6,7 +6,7 @@ errors, failures, total = 0, 0, 0
 
 test_names = ['name', 'obj', 'vector', 'matrix',
               'param', 'memory', 'solve', 'env',
-              'readwrite']
+              'readwrite', 'basic']
 
 # Run all of the checks.
 for name_of_test in test_names:

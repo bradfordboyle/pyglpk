@@ -549,7 +549,8 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             def default(self, tree):
                 reasons.add(tree.reason)
         assign = self.solve_sat(callback=Callback())
-        
+        self.assertTrue(self.verify(self.expression, assign))
+
         # We should have some items.
         self.assertNotEqual(len(reasons), 0)
         # The reasons should not include anything other than those
@@ -569,6 +570,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             def bingo (self, tree): testobj.assertEqual(tree.reason, 'bingo')
             def default(self,tree): testobj.fail('should not reach default')
         assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
 
     def testCallbackTerminate(self):
         """Tests that termination actually stops the solver."""
@@ -599,6 +601,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 testobj.assertEqual(tree.num_active, len(list(tree)))
                 self.last_total = tree.num_total
         assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
 
     def testTreeSelectCallable(self):
         """Test that Tree.select is callable within select, not elsewhere."""
@@ -617,6 +620,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 else:
                     testobj.fail('Was able to call without error!')
         assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
 
     def testSelectCurrNodeNone(self):
         """Test that there is no current node in the select callback."""
@@ -627,6 +631,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             def select(self, tree):
                 testobj.assertEqual(tree.curr_node, None)
         assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
 
     def testTreeIterator(self):
         """Test the tree iterator."""
@@ -640,7 +645,10 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                     n = n.__next__
                 actives = [n.subproblem for n in tree]
                 testobj.assertEqual(actives, explicit_actives)
-                
+        # FIXME: TreeNode is not an iterator
+        # assign = self.solve_sat(callback=Callback())
+        # self.assertTrue(self.verify(self.expression, assign))
+
 
 # Callbacks did not exist prior to 4.20 anyway.
 if env.version<(4,20): del MIPCallbackTest
