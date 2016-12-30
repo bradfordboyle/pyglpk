@@ -166,7 +166,10 @@ class SimpleIntegerSolverTest(unittest.TestCase):
 
     def testInteger(self):
         """Tests solving the simple problem with integer."""
-        self.lp.integer(presolve=True)
+        class Callback:
+            def default(self, tree):
+                pass
+        self.lp.integer(presolve=True, callback=Callback())
         self.assertAlmostEqual(self.lp.cols['x'].value, 1.0)
         self.assertAlmostEqual(self.lp.cols['y'].value, 0.0)
 
@@ -402,6 +405,8 @@ class SatisfiabilityMIPTest(unittest.TestCase):
         solution = self.solve_sat(exp)
         self.assertEqual(solution, None)
 
+
+@unittest.skipIf(env.version < (4, 20), "callbacks did't exist prior to 4.20")
 class MIPCallbackTest(Runner, unittest.TestCase):
     # This CNF expression is complicated enough to the point where
     # when run through our SAT solver, the resulting search tree will
@@ -642,13 +647,225 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 n = tree.first_node
                 while n:
                     explicit_actives.append(n.subproblem)
-                    n = n.__next__
+                    n = n.next
                 actives = [n.subproblem for n in tree]
                 testobj.assertEqual(actives, explicit_actives)
-        # FIXME: TreeNode is not an iterator
-        # assign = self.solve_sat(callback=Callback())
-        # self.assertTrue(self.verify(self.expression, assign))
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
 
+    def testTreeNodeRichCompare(self):
+        testobj = self
 
-# Callbacks did not exist prior to 4.20 anyway.
-if env.version<(4,20): del MIPCallbackTest
+        class Callback:
+            def default(self, tree):
+                n = tree.first_node
+                testobj.assertFalse(n == 1)
+                testobj.assertFalse(n != 1)
+                testobj.assertEqual(NotImplemented, n.__lt__(1))
+
+                testobj.assertTrue(n == n)
+                testobj.assertFalse(n != n)
+                testobj.assertFalse(n < n)
+                testobj.assertFalse(n > n)
+                testobj.assertTrue(n <= n)
+                testobj.assertTrue(n >= n)
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
+
+    def testTreeNodeAttrs(self):
+        testobj = self
+        tree_node_fmt_str = "<glpk.TreeNode, active subprob {0:d} of glpk.Tree 0x{1:02x}"
+
+        class Callback:
+            def default(self, tree):
+                n = tree.first_node
+                testobj.assertTrue(n.active)
+                testobj.assertGreaterEqual(n.level, 0)
+                if n.level == 0:
+                    testobj.assertTrue(n.up is None)
+                else:
+                    testobj.assertFalse(n.up is None)
+
+                best = tree.best_node
+                testobj.assertGreaterEqual(n.bound, best.bound)
+
+                testobj.assertIn(
+                    tree_node_fmt_str.format(n.subproblem, id(tree)),
+                    str(n)
+                )
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
+
+    def testTreeSelect(self):
+        testobj = self
+
+        class Callback:
+            def select(self, tree):
+                testobj.assertTrue(tree.select(tree.first_node) is None)
+                
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
+
+    def testTreeBranch(self):
+        testobj = self
+
+        class Callback:
+            def default(self, tree):
+                if tree.reason != 'branch':
+                    with testobj.assertRaises(RuntimeError) as cm:
+                        tree.can_branch(1)
+                    testobj.assertIn(
+                        "function may only be called during branch phase",
+                        str(cm.exception)
+                    )
+                    with testobj.assertRaises(RuntimeError) as cm:
+                        tree.branch_upon(1)
+                    testobj.assertIn(
+                        "function may only be called during branch phase",
+                        str(cm.exception)
+                    )
+
+            def branch(self, tree):
+                # FIXME: this fails when we pass in 0
+                testobj.assertEqual(type(tree.can_branch(1)), bool)
+
+                with testobj.assertRaises(IndexError) as cm:
+                    # FIXME: this should be zero
+                    tree.can_branch(-1)
+                testobj.assertIn(
+                    "index -1 out of bound for 60 columns",
+                    str(cm.exception)
+                )
+
+                with testobj.assertRaises(IndexError) as cm:
+                    # FIXME: this should be zero
+                    tree.can_branch(61)
+                testobj.assertIn(
+                    "index 61 out of bound for 60 columns",
+                    str(cm.exception)
+                )
+
+                with testobj.assertRaises(TypeError) as cm:
+                    tree.branch_upon({})
+                testobj.assertIn(
+                    "an integer is required",
+                    str(cm.exception)
+                )
+
+                with testobj.assertRaises(TypeError) as cm:
+                    tree.branch_upon(1, {})
+                if sys.version_info > (3,):
+                    err_msg = "must be a byte string of length 1, not dict"
+                else:
+                    err_msg = "must be char, not dict"
+                testobj.assertIn(
+                    err_msg,
+                    str(cm.exception)
+                )
+
+                with testobj.assertRaises(IndexError) as cm:
+                    # FIXME: This should be zero
+                    tree.branch_upon(-1)
+                testobj.assertIn(
+                    "index -1 out of bound for 60 columns",
+                    str(cm.exception)
+                )
+                with testobj.assertRaises(IndexError) as cm:
+                    # FIXME: This should be zero
+                    tree.branch_upon(61)
+                testobj.assertIn(
+                    "index 61 out of bound for 60 columns",
+                    str(cm.exception)
+                )
+                # find a column that we can't branch on and then try to
+                # branch on it
+                idx = next(i for i in range(1, 61) if not tree.can_branch(i))
+                testobj.assertFalse(idx is None)
+                with testobj.assertRaises(RuntimeError) as cm:
+                    tree.branch_upon(idx)
+                testobj.assertIn(
+                    "cannot branch upon this column",
+                    str(cm.exception)
+                )
+
+                if tree.can_branch(1):
+                    with testobj.assertRaises(ValueError) as cm:
+                        tree.branch_upon(1, b'x')
+                    testobj.assertIn(
+                        "select argument must be D, U, or N",
+                        str(cm.exception)
+                    )
+                    # FIXME: `branch_upon` is currently broken
+                    # tree.branch_upon(1)
+                    # tree.branch_upon(1, 'D')
+                    # tree.branch_upon(1, 'U')
+                    # tree.branch_upon(1, 'N')
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
+
+    def testTreeHeuristic(self):
+        testobj = self
+
+        class Callback:
+            def default(self, tree):
+                if tree.reason != 'heur':
+                    with testobj.assertRaises(RuntimeError) as cm:
+                        tree.heuristic(1)
+                    testobj.assertIn(
+                        "function may only be called during heur phase",
+                        str(cm.exception)
+                    )
+
+            def heur(self, tree):
+                with testobj.assertRaises(TypeError) as cm:
+                    tree.heuristic(1)
+                testobj.assertIn(
+                    "'int' object is not iterable",
+                    str(cm.exception)
+                )
+                # FIXME: this iterator has only 1 object
+                with testobj.assertRaises(ValueError) as cm:
+                    tree.heuristic([1])
+                testobj.assertIn(
+                    "iterator had only 2 objects, but 60 required",
+                    str(cm.exception)
+                )
+                with testobj.assertRaises(TypeError) as cm:
+                    tree.heuristic(['a'])
+                testobj.assertIn(
+                    "iterator must return floats",
+                    str(cm.exception)
+                )
+
+                assignment = [
+                    0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+                    1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+                    0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0
+                ]
+                accepted = tree.heuristic(assignment)
+                testobj.assertEqual(type(accepted), bool)
+                testobj.assertTrue(accepted)
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
+
+    def testTreeGap(self):
+        testobj = self
+        self.old_gap = float('inf')
+
+        class Callback:
+            def default(self, tree):
+                new_gap = tree.gap
+                testobj.assertEqual(type(new_gap), float)
+                testobj.assertGreaterEqual(new_gap, 0.0)
+                testobj.assertLessEqual(new_gap, testobj.old_gap)
+                testobj.old_gap = new_gap
+
+        assign = self.solve_sat(callback=Callback())
+        self.assertTrue(self.verify(self.expression, assign))
