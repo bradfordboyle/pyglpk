@@ -420,8 +420,14 @@ static PyObject *Tree_branchupon(TreeObject *self, PyObject *args) {
     return NULL;
   }
   switch (select) {
-  case 'D': case 'U': case 'N':
-    glp_ios_branch_upon(TREE, j, select);
+  case 'D':
+    glp_ios_branch_upon(TREE, j, GLP_DN_BRNCH);
+    Py_RETURN_NONE;
+  case 'U':
+    glp_ios_branch_upon(TREE, j, GLP_UP_BRNCH);
+    Py_RETURN_NONE;
+  case 'N':
+    glp_ios_branch_upon(TREE, j, GLP_NO_BRNCH);
     Py_RETURN_NONE;
   default:
     PyErr_SetString(PyExc_ValueError, "select argument must be D, U, or N");
