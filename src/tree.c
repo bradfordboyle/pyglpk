@@ -389,7 +389,7 @@ static PyObject *Tree_canbranch(TreeObject *self, PyObject *args) {
     return NULL;
   }
   int numcols = glp_get_num_cols(LP);
-  if (j<0 || j>=numcols) {
+  if (j<1 || j>numcols) {
     PyErr_Format(PyExc_IndexError, "index %d out of bound for %d columns",
 		 j, numcols);
     return NULL;
@@ -410,7 +410,7 @@ static PyObject *Tree_branchupon(TreeObject *self, PyObject *args) {
     return NULL;
   }
   int numcols = glp_get_num_cols(LP);
-  if (j<0 || j>=numcols) {
+  if (j<1 || j>numcols) {
     PyErr_Format(PyExc_IndexError, "index %d out of bound for %d columns",
 		 j, numcols);
     return NULL;

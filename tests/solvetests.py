@@ -729,19 +729,16 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                     )
 
             def branch(self, tree):
-                # FIXME: this fails when we pass in 0
                 testobj.assertEqual(type(tree.can_branch(1)), bool)
 
                 with testobj.assertRaises(IndexError) as cm:
-                    # FIXME: this should be zero
-                    tree.can_branch(-1)
+                    tree.can_branch(0)
                 testobj.assertIn(
-                    "index -1 out of bound for 60 columns",
+                    "index 0 out of bound for 60 columns",
                     str(cm.exception)
                 )
 
                 with testobj.assertRaises(IndexError) as cm:
-                    # FIXME: this should be zero
                     tree.can_branch(61)
                 testobj.assertIn(
                     "index 61 out of bound for 60 columns",
@@ -767,14 +764,12 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 )
 
                 with testobj.assertRaises(IndexError) as cm:
-                    # FIXME: This should be zero
-                    tree.branch_upon(-1)
+                    tree.branch_upon(0)
                 testobj.assertIn(
-                    "index -1 out of bound for 60 columns",
+                    "index 0 out of bound for 60 columns",
                     str(cm.exception)
                 )
                 with testobj.assertRaises(IndexError) as cm:
-                    # FIXME: This should be zero
                     tree.branch_upon(61)
                 testobj.assertIn(
                     "index 61 out of bound for 60 columns",
@@ -782,14 +777,16 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 )
                 # find a column that we can't branch on and then try to
                 # branch on it
-                idx = next(i for i in range(1, 61) if not tree.can_branch(i))
-                testobj.assertFalse(idx is None)
-                with testobj.assertRaises(RuntimeError) as cm:
-                    tree.branch_upon(idx)
-                testobj.assertIn(
-                    "cannot branch upon this column",
-                    str(cm.exception)
-                )
+                try:
+                    idx = next(i for i in range(1, 61) if not tree.can_branch(i))
+                    with testobj.assertRaises(RuntimeError) as cm:
+                        tree.branch_upon(idx)
+                    testobj.assertIn(
+                        "cannot branch upon this column",
+                        str(cm.exception)
+                    )
+                except StopIteration:
+                    pass
 
                 if tree.can_branch(1):
                     with testobj.assertRaises(ValueError) as cm:
