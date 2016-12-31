@@ -1,6 +1,8 @@
 """Tests for the solver itself."""
 
 from testutils import *
+from itertools import cycle
+
 
 class SimpleSolverTest(unittest.TestCase):
     """A simple suite of tests for this problem.
@@ -711,6 +713,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
 
     def testTreeBranch(self):
         testobj = self
+        self.select_flags = cycle([None, b'D', b'U', b'N'])
 
         class Callback:
             def default(self, tree):
@@ -788,18 +791,19 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 except StopIteration:
                     pass
 
-                if tree.can_branch(1):
-                    with testobj.assertRaises(ValueError) as cm:
-                        tree.branch_upon(1, b'x')
-                    testobj.assertIn(
-                        "select argument must be D, U, or N",
-                        str(cm.exception)
-                    )
-                    # FIXME: `branch_upon` is currently broken
-                    # tree.branch_upon(1)
-                    # tree.branch_upon(1, 'D')
-                    # tree.branch_upon(1, 'U')
-                    # tree.branch_upon(1, 'N')
+                branch_idx = next(i for i in range(1, 61) if tree.can_branch(i))
+                with testobj.assertRaises(ValueError) as cm:
+                    tree.branch_upon(branch_idx, b'x')
+                testobj.assertIn(
+                    "select argument must be D, U, or N",
+                    str(cm.exception)
+                )
+                
+                select_flag = next(testobj.select_flags)
+                if select_flag is None:
+                    tree.branch_upon(branch_idx)
+                else:
+                    tree.branch_upon(branch_idx, select_flag)
 
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
