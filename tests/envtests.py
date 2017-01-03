@@ -141,3 +141,30 @@ class TerminalTest(unittest.TestCase):
                     self.assertTrue(self.char_counts[w] > old_counts[w])
                 else:
                     self.assertEqual(self.char_counts[w], old_counts[w])
+
+    def testErrorInTermHook(self):
+        """Test that errors in the terminal hook are ignored."""
+        env.term_on = True
+
+        def error_hook(s):
+            1.0 / 0.0
+        env.term_hook = error_hook
+        self.lp.simplex(msg_lev=LPX.MSG_ALL)
+        self.assertEqual(self.lp.status, 'opt')
+
+    def testGetTermOn(self):
+        """Test getting/setting term_on."""
+        env.term_on = True
+        self.assertTrue(env.term_on)
+        with self.assertRaises(TypeError) as cm:
+            env.term_on = 'foo'
+        self.assertIn('term_on must be set with bool', str(cm.exception))
+
+    def testGetTermHook(self):
+        """Test getting the terminal hook."""
+        self.assertTrue(env.term_hook is None)
+
+        def noop_hook(s):
+            pass
+        env.term_hook = noop_hook
+        self.assertEqual(noop_hook, env.term_hook)

@@ -1,9 +1,27 @@
 """Tests for basic functionality"""
 
+import tempfile
 import sys
 import unittest
 
 from glpk import LPX
+
+MODEL = '''
+var x >= 0, <= 1;
+var y >= 0, <= 1;
+
+param a;
+param b;
+
+maximize sum: x + y;
+s.t. foo: a * x + y <= 1;
+
+end;
+'''
+
+DATA = '''
+param b := 0.5;
+'''
 
 
 class BarColTests(unittest.TestCase):
@@ -181,3 +199,160 @@ class BarColTests(unittest.TestCase):
             "MIP values require mixed integer problem",
             str(cm.exception)
         )
+
+    def testBarSetMatrix(self):
+        with self.assertRaises(ValueError) as cm:
+            self.lp.cols[0].matrix = [(1, 2, 3)]
+        self.assertIn(
+            'vector entry tuple has length 3; 2 is required',
+            str(cm.exception)
+        )
+
+
+class LpxTests(unittest.TestCase):
+
+    def testInit(self):
+        with self.assertRaises(TypeError) as cm:
+            lp = LPX(gmp='', mps='')
+        self.assertIn(
+            'cannot specify multiple data sources',
+            str(cm.exception)
+        )
+
+        with self.assertRaises(RuntimeError) as cm:
+            lp = LPX(gmp=('', None, ''))
+        self.assertIn(
+            'GMP model reader failed',
+            str(cm.exception)
+        )
+
+        model = tempfile.NamedTemporaryFile(mode='w')
+        model.write(MODEL)
+        model.flush()
+
+        data = tempfile.NamedTemporaryFile(mode='w')
+        data.write(DATA)
+        data.flush()
+
+        with self.assertRaises(RuntimeError) as cm:
+            lp = LPX(gmp=(model.name, ''))
+        self.assertIn(
+            'GMP data reader failed',
+            str(cm.exception)
+        )
+
+        with self.assertRaises(RuntimeError) as cm:
+            lp = LPX(gmp=(model.name, data.name))
+        self.assertIn(
+            'GMP generator failed',
+            str(cm.exception)
+        )
+
+    def testLpxStr(self):
+        lp = LPX()
+        self.assertIn(
+            '<glpk.LPX 0-by-0 at 0x{0:02x}>'.format(id(lp)),
+            str(lp)
+        )
+
+    def testLpxErase(self):
+        lp = LPX()
+        lp.cols.add(2)
+        lp.rows.add(2)
+        self.assertEqual(len(lp.cols), 2)
+        self.assertEqual(len(lp.rows), 2)
+        lp.erase()
+        self.assertEqual(len(lp.cols), 0)
+        self.assertEqual(len(lp.rows), 0)
+
+    def testLpxSetMatrix(self):
+        lp = LPX()
+        with self.assertRaises(ValueError) as cm:
+            lp.matrix = [(1, 2, 3, 4)]
+        self.assertIn(
+            'matrix entry tuple has length 4; 3 is required',
+            str(cm.exception)
+        )
+
+    def testLpxInteger(self):
+        lp = LPX()
+
+        with self.assertRaises(RuntimeError) as cm:
+            lp.integer()
+        self.assertIn(
+            'integer solver without presolve requires existing optimal basic '
+            'solution',
+            str(cm.exception)
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            lp.integer(ps_tm_lim=-1, presolve=True)
+        self.assertIn('ps_tm_lim must be nonnegative', str(cm.exception))
+
+        with self.assertRaises(ValueError) as cm:
+            lp.integer(mip_gap=-1, presolve=True)
+        self.assertIn('mip_gap must be non-negative', str(cm.exception))
+
+    def testLpxKkt(self):
+        lp = LPX()
+
+        with self.assertRaises(RuntimeError) as cm:
+            lp.kkt()
+        self.assertIn(
+            'cannot get KKT when primal or dual basic solution undefined',
+            str(cm.exception)
+        )
+
+    def testLpxName(self):
+        lp = LPX()
+        with self.assertRaises(ValueError) as cm:
+            lp.name = 'a' * 256
+        self.assertIn('name may be at most 255 chars', str(cm.exception))
+
+    def testLpxStatus(self):
+        lp = LPX()
+        self.assertEqual('undef', lp.status_s)
+
+    # TODO: how to write a test where the ray returned is a row?
+    def testLpxRay(self):
+        lp = LPX()
+        self.assertTrue(lp.ray is None)
+        lp.cols.add(2)
+        x1, x2 = lp.cols[0:2]
+        lp.obj[:] = [-1.0, 1.0]
+        lp.rows.add(2)
+        r1, r2 = lp.rows[0:2]
+        r1.matrix = [1.0, -1.0]
+        r1.bounds = (-3, None)
+        r2.matrix = [-1.0, 2.0]
+        r2.bounds = (-2.0, None)
+        x1.bounds = None
+        x2.bounds = None
+        lp.simplex()
+
+        self.assertEqual(lp.status, 'unbnd')
+        self.assertTrue(lp.ray.iscol)
+
+
+class ObjectiveTests(unittest.TestCase):
+
+    def testObjectiveShift(self):
+        lp = LPX()
+        with self.assertRaises(TypeError) as cm:
+            del(lp.obj.shift)
+        self.assertIn('deletion not supported', str(cm.exception))
+
+    def testObjectiveAssignment(self):
+        lp = LPX()
+        with self.assertRaises(TypeError) as cm:
+            del(lp.obj[0])
+        self.assertIn(
+            "objective function doesn't support item deletion",
+            str(cm.exception)
+        )
+
+    def testObjectiveName(self):
+        lp = LPX()
+        with self.assertRaises(ValueError) as cm:
+            lp.obj.name = 'a' * 256
+        self.assertIn('name may be at most 255 chars', str(cm.exception))

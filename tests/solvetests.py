@@ -30,6 +30,7 @@ class SimpleSolverTest(unittest.TestCase):
         self.lp.simplex()
         self.assertAlmostEqual(self.lp.cols['x'].value, 1.0)
         self.assertAlmostEqual(self.lp.cols['y'].value, 0.5)
+        self.assertAlmostEqual(self.lp.obj.value_s, 1.5)
 
     def testExact(self):
         """Tests solving the simple problem with exact."""
@@ -141,6 +142,20 @@ class SimpleSolverTest(unittest.TestCase):
         self.assertTrue(kkt.de_quality in ['H', 'M', 'L', '?'])
         self.assertTrue(kkt.db_quality in ['H', 'M', 'L', '?'])
 
+    def testAdvBasis(self):
+        # adding for coverage
+        # TODO: how to test this?
+        self.lp.adv_basis()
+        self.assertTrue(self.lp.simplex() is None)
+        self.assertEqual('opt', self.lp.status)
+
+    def testCpxBasis(self):
+        # adding for coverage
+        # TODO: how to test this?
+        self.lp.cpx_basis()
+        self.assertTrue(self.lp.simplex() is None)
+        self.assertEqual('opt', self.lp.status)
+
 
 class SimpleIntegerSolverTest(unittest.TestCase):
     """A simple suite of tests for this problem.
@@ -174,6 +189,7 @@ class SimpleIntegerSolverTest(unittest.TestCase):
         self.lp.integer(presolve=True, callback=Callback())
         self.assertAlmostEqual(self.lp.cols['x'].value, 1.0)
         self.assertAlmostEqual(self.lp.cols['y'].value, 0.0)
+        self.assertAlmostEqual(self.lp.obj.value, 2.0)
 
     def testIntegerKKT(self):
         """Tests the KKT check with solution from integer solver."""
@@ -209,6 +225,16 @@ class SimpleIntegerSolverTest(unittest.TestCase):
         # Are the KKT "quality" values valid?
         self.assertTrue(kkt.pe_quality in ['H', 'M', 'L', '?'])
         self.assertTrue(kkt.pb_quality in ['H', 'M', 'L', '?'])
+
+    def testIntOpt(self):
+        """Test solving a simple integer program w/ intopt."""
+        # FIXME: documentation claims that this method does not require an
+        # existing LP relaxation
+        self.lp.simplex()
+        self.lp.intopt()
+        self.assertEqual(self.lp.status, 'opt')
+        self.assertAlmostEqual(self.lp.cols['x'].value, 1.0)
+        self.assertAlmostEqual(self.lp.cols['y'].value, 0.0)
 
 
 class TwoDimensionalTest(unittest.TestCase):
