@@ -384,11 +384,6 @@ static int Obj_ass_subscript(ObjObject *self,PyObject *item,PyObject *value) {
   return 0;
 }
 
-static int Obj_ass_item(ObjObject *self, int index, PyObject *v) {
-  printf("obj ass item\n");
-  return 0;
-}
-
 /****************** GET-SET-ERS ***************/
 
 static PyObject* Obj_getname(ObjObject *self, void *closure) {
@@ -463,7 +458,7 @@ static PySequenceMethods Obj_as_sequence = {
   0,					/* sq_repeat */
   0,					/* sq_item */
   0, //(intintargfunc)svector_slice,	/* sq_slice */
-  (ssizeobjargproc)Obj_ass_item,	/* sq_ass_item */
+  0,					/* sq_ass_item */
   0,					/* sq_ass_slice */
   0, //(objobjproc)svcontains,		/* sq_contains */
 };

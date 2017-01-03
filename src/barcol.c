@@ -208,8 +208,7 @@ static PyObject* BarCol_richcompare(BarColObject *self, PyObject *w, int op) {
 /********** ABSTRACT PROTOCOL FUNCTIONS *******/
 
 int BarCol_Size(BarColObject* self) {
-  if (self->size < 0)
-    self->size = (BarCol_Rows(self) ? glp_get_num_rows : glp_get_num_cols)(LP);
+  self->size = (BarCol_Rows(self) ? glp_get_num_rows : glp_get_num_cols)(LP);
   return self->size;
 }
 
@@ -429,11 +428,6 @@ static int BarCol_ass_subscript(BarColObject *self, PyObject *item,
   return 0;
 }
 
-static int BarCol_ass_item(BarColObject *self, int index, PyObject *v) {
-  printf("bc ass item\n");
-  return 0;
-}
-
 static PyObject* BarCol_Str(BarColObject *self) {
   // Returns a string representation of this object.
   return PyString_FromFormat
@@ -461,7 +455,7 @@ static PySequenceMethods BarCol_as_sequence = {
   0,					/* sq_repeat */
   (ssizeargfunc)BarCol_Bar,		/* sq_item */
   0, //(intintargfunc)svector_slice,	/* sq_slice */
-  (ssizeobjargproc)BarCol_ass_item,	/* sq_ass_item */
+  0,					/* sq_ass_item */
   0,					/* sq_ass_slice */
   (objobjproc)BarCol_contains,		/* sq_contains */
 };
