@@ -45,13 +45,10 @@ html/glpk.html: glpk.so
 	pydoc -w glpk
 	mv glpk.html $@
 
-README.txt: html/readme.html
-	links -dump $< > $@
-
 RELEASE.txt: html/release.html
 	links -dump $< > $@
 
-docs: html/glpk.html README.txt RELEASE.txt
+docs: html/glpk.html RELEASE.txt
 
 # Functions for remote synchronization of this project, mostly for
 # backup purposes.
