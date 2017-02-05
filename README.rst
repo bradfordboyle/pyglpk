@@ -4,6 +4,9 @@ pyglpk
     :target: https://travis-ci.org/bradfordboyle/pyglpk
 .. image:: https://coveralls.io/repos/github/bradfordboyle/pyglpk/badge.svg?branch=v0.5.0-dev
     :target: https://coveralls.io/github/bradfordboyle/pyglpk?branch=v0.5.0-dev
+.. image:: https://readthedocs.org/projects/pyglpk/badge/
+    :target: http://pyglpk.readthedocs.io/en/update-docs/
+    :alt: Documentation Status
 
 
 Updated fork of T. Finley's PyGLPK module

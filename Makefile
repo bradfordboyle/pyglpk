@@ -41,14 +41,8 @@ archive: $(ARCHIVE).tar.bz2
 
 # Make the documents.
 
-html/glpk.html: glpk.so
-	pydoc -w glpk
-	mv glpk.html $@
-
-RELEASE.txt: html/release.html
-	links -dump $< > $@
-
-docs: html/glpk.html RELEASE.txt
+docs: install
+	make -C docs singlehtml
 
 # Functions for remote synchronization of this project, mostly for
 # backup purposes.
