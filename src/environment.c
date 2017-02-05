@@ -10,11 +10,11 @@ the Free Software Foundation; either version 3 of the License, or
 
 PyGLPK is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
+along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include "2to3.h"
@@ -221,37 +221,65 @@ int Environment_InitType(PyObject *module)
 	return util_add_type(module, &EnvironmentType);
 }
 
+PyDoc_STRVAR(version_doc,
+"Tuple holding the major version and minor version of the GLPKthat this\n"
+"PyGLPK module was built upon. For example, if built against GLPK 4.31,\n"
+"version==(4,31)."
+);
+
 static PyMemberDef Environment_members[] = {
 	{"version", T_OBJECT_EX, offsetof(EnvironmentObject, version), READONLY,
-		"Tuple holding the major version and minor version of the GLPK\n"
-		"that this PyGLPK module was built upon. For example, if built\n"
-		"against GLPK 4.31, version==(4,31)."},
+		version_doc},
 	{NULL}
 };
 
+PyDoc_STRVAR(mem_limit_doc,
+"The memory limit in megabytes. None if no limit is set."
+);
+
+PyDoc_STRVAR(blocks_doc,
+"The number of currently allocated memory blocks."
+);
+
+PyDoc_STRVAR(blocks_peak_doc,
+"The peak value of the blocks attribute."
+);
+
+PyDoc_STRVAR(bytes_doc,
+"The number of currently allocated memory bytes."
+);
+
+PyDoc_STRVAR(bytes_peak_doc, "The peak value of the bytes attribute.");
+
+PyDoc_STRVAR(term_on_doc,
+"Whether or not terminal output for the underlying GLPK procedures is on or\n"
+"off."
+);
+
+PyDoc_STRVAR(term_hook_doc,
+"Function to intercept all terminal output. This should be a callable object\n"
+"that accepts a single string argument, or None to indicate that no hook is\n"
+"set (e.g., all output goes to the terminal, default behavior). Note that\n"
+"when the function is called, there is no guarantee that the input string\n"
+"will be a full line, or even non-empty. All exceptions thrown by the\n"
+"function will go ignored and unreported."
+);
+
 static PyGetSetDef Environment_getset[] = {
 	{"mem_limit", (getter)Environment_getmemlimit, (setter)Environment_setmemlimit,
-		"The memory limit in megabytes. None if no limit is set.", NULL},
+		mem_limit_doc, NULL},
 	{"blocks", (getter)Environment_getblocks, (setter)NULL,
-		"The number of currently allocated memory blocks.", NULL},
+		blocks_doc, NULL},
 	{"blocks_peak", (getter)Environment_getblocks_peak, (setter)NULL,
-		"The peak value of the blocks attribute.", NULL},
+		blocks_peak_doc, NULL},
 	{"bytes", (getter)Environment_getbytes, (setter)NULL,
-		"The number of currently allocated memory bytes.", NULL},
+		bytes_doc, NULL},
 	{"bytes_peak", (getter)Environment_getbytes_peak, (setter)NULL,
-		"The peak value of the bytes attribute.", NULL},
-
+		bytes_peak_doc, NULL},
 	{"term_on", (getter)Environment_gettermon, (setter)Environment_settermon,
-		"Whether or not terminal output for the underlying GLPK\n"
-		"procedures is on or off.", NULL},
+		term_on_doc, NULL},
 	{"term_hook",(getter)Environment_gettermhook,(setter)Environment_settermhook,
-		"Function to intercept all terminal output. This should be a\n"
-		"callable object that accepts a single string argument, or None\n"
-		"to indicate that no hook is set (e.g., all output goes to the\n"
-		"terminal, default behavior).  Note that when the function is\n"
-		"called, there is no guarantee that the input string will be a\n"
-		"full line, or even non-empty.  All exceptions thrown by the\n"
-		"function will go ignored and unreported." , NULL},
+		term_hook_doc, NULL},
 	{NULL}
 };
 
@@ -263,6 +291,14 @@ static PyMethodDef Environment_methods[] = {
 	 */
 	{NULL}
 };
+
+PyDoc_STRVAR(env_doc,
+"This represents the PyGLPK environment. Through this, one may control the\n"
+"global behavior of the GLPK. One instance of this exists, named "
+ENVIRONMENT_INSTANCE_NAME " in the\n"
+"glpk module."
+);
+
 PyTypeObject EnvironmentType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"glpk.Environment",			/* tp_name */
@@ -284,9 +320,7 @@ PyTypeObject EnvironmentType = {
 	0,					/* tp_setattro*/
 	0,					/* tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-	"This represents the PyGLPK environment.  Through this, one may control\n"
-	"the global behavior of the GLPK.  One instance of this exists, named\n"
-	ENVIRONMENT_INSTANCE_NAME " in the glpk module.", /* tp_doc */
+	env_doc,			/* tp_doc */
 	(traverseproc)Environment_traverse,	/* tp_traverse */
 	(inquiry)Environment_clear,		/* tp_clear */
 	0,					/* tp_richcompare */

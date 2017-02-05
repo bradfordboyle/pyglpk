@@ -21,7 +21,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #define _LP_H
 
 #include <Python.h>
-#include "glpk.h"
+#include <glpk.h>
 
 #define LPX_Check(op) PyObject_TypeCheck(op, &LPXType)
 

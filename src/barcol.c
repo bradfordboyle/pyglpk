@@ -10,11 +10,11 @@ the Free Software Foundation; either version 3 of the License, or
 
 PyGLPK is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
+along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include "2to3.h"
@@ -76,6 +76,13 @@ static PySequenceMethods bciter_as_sequence = {
   0, /* sq_concat */
 };
 
+PyDoc_STRVAR(barcoliter_doc,
+"Bar collection iterator objects\n"
+"\n"
+"Created for iterating over the rows and columns contained with a bar\n"
+"collection."
+);
+
 PyTypeObject BarColIterType = {
   PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.BarCollectionIter",		/* tp_name */
@@ -97,8 +104,7 @@ PyTypeObject BarColIterType = {
   0,					/* tp_setattro */
   0,					/* tp_as_buffer */
   Py_TPFLAGS_DEFAULT,			/* tp_flags */
-  "Bar collection iterator objects.  Created for iterating over the\n"
-  "rows and columns contained with a bar collection.",	/* tp_doc */
+  barcoliter_doc,	/* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */
   0,					/* tp_richcompare */
@@ -328,7 +334,7 @@ static int PySet_Size(PyObject*s) { return PyDict_Size(s); }
 static int BarCol_ass_subscript(BarColObject *self, PyObject *item,
 				PyObject *value) {
   if (value == NULL) {
-    // We're deleting.  Woo hoo.
+    // We're deleting. Woo hoo.
     int size = BarCol_Size(self);
     Py_ssize_t numtodel, i;
     int *indtodel;
@@ -474,11 +480,40 @@ static PyGetSetDef BarCol_getset[] = {
   {NULL}
 };
 
+PyDoc_STRVAR(add_doc,
+"add(n)\n"
+"\n"
+"Add n more rows (constraints) or columns (struct variables). Returns the\n"
+"index of the first added entry."
+);
+
+PyDoc_STRVAR(barcol_doc,
+"Bar collection objects\n"
+"\n"
+"An instance is used to index into either the rows and columns of a linear\n"
+"program. They exist as the 'rows' and 'cols' attributes of LPX instances.\n"
+"\n"
+"One accesses particular rows or columns by indexing the appropriate bar\n"
+"collection object, or iterating over it. Valid indices include particular\n"
+"row and column names (a user defined string) or numbers (counting from 0),\n"
+"a slice specifying a range of numeric elements, or a series of individual\n"
+"indices. For example, for an LPX instance lp, we may have::\n"
+"\n"
+"    lp.rows[0]          # the first row\n"
+"    lp.rows[-1]         # the last row\n"
+"    lp.cols[:3]         # the first three columns\n"
+"    lp.cols[1,'name',5] # column 1, a column named 'name', and column 5\n"
+"\n"
+"One may also query the length of this sequence to get the number of rows or\n"
+"columns, and del to get rid of rows or columns, e.g.::\n"
+"\n"
+"    len(lp.cols)        # the number of columns in the problem\n"
+"    del lp.rows['arow'] # deletes a row named 'arow'\n"
+"    del lp.rows[-2:]    # deletes the last two rows\n\n"
+);
+
 static PyMethodDef BarCol_methods[] = {
-  {"add", (PyCFunction)BarCol_add, METH_VARARGS,
-   "add(n)\n\n"
-   "Add n more rows (constraints) or columns (struct variables).\n"
-   "Returns the index of the first added entry."},
+  {"add", (PyCFunction)BarCol_add, METH_VARARGS, add_doc},
   {NULL}
 };
 
@@ -503,25 +538,7 @@ PyTypeObject BarColType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  "Bar collection objects.  An instance is used to index into either\n"
-  "the rows and columns of a linear program.  They exist as the 'rows'\n"
-  "and 'cols' attributes of LPX instances.\n\n"
-  "One accesses particular rows or columns by indexing the appropriate\n"
-  "bar collection object, or iterating over it.  Valid indices include\n"
-  "particular row and column names (a user defined string) or numbers\n"
-  "(counting from 0), a slice specifying a range of numeric elements,\n"
-  "or a series of individual indices.  For example, for an LPX instance\n"
-  "lp, we may have:\n\n"
-  "lp.rows[0]          --> the first row\n"
-  "lp.rows[-1]         --> the last row\n"
-  "lp.cols[:3]         --> the first three columns\n"
-  "lp.cols[1,'name',5] --> column 1, a column named 'name', and column 5\n\n"
-  "One may also query the length of this sequence to get the number of\n"
-  "rows or columns, and del to get rid of rows or columns, e.g.:\n\n"
-  "len(lp.cols)        --> the number of columns in the problem\n"
-  "del lp.rows['arow'] --> deletes a row named 'arow'\n"
-  "del lp.rows[-2:]    --> deletes the last two rows\n\n",
-	/* tp_doc */
+  barcol_doc,	/* tp_doc */
   (traverseproc)BarCol_traverse,	/* tp_traverse */
   (inquiry)BarCol_clear,		/* tp_clear */
 #if PY_MAJOR_VERSION >= 3

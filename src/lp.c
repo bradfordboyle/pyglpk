@@ -10,11 +10,11 @@ the Free Software Foundation; either version 3 of the License, or
 
 PyGLPK is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
+along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include <Python.h>
@@ -1066,317 +1066,637 @@ int LPX_InitType(PyObject *module)
 	return 0;
 }
 
+PyDoc_STRVAR(rows_doc, "Row collection. See the help on class BarCollection.");
+
+PyDoc_STRVAR(cols_doc,
+"Column collection. See the help on class BarCollection."
+);
+
+PyDoc_STRVAR(params_doc,
+"Control parameter collection. See the help on class Params."
+);
+
 static PyMemberDef LPX_members[] = {
-	{"rows", T_OBJECT_EX, offsetof(LPXObject, rows), READONLY,
-		"Row collection. See the help on class BarCollection."},
-	{"cols", T_OBJECT_EX, offsetof(LPXObject, cols), READONLY,
-		"Column collection. See the help on class BarCollection."},
+	{"rows", T_OBJECT_EX, offsetof(LPXObject, rows), READONLY, rows_doc},
+	{"cols", T_OBJECT_EX, offsetof(LPXObject, cols), READONLY, cols_doc},
 #ifdef USEPARAMS
-	{"params", T_OBJECT_EX, offsetof(LPXObject, params), READONLY,
-		"Control parameter collection. See the help on class Params."},
+	{"params", T_OBJECT_EX, offsetof(LPXObject, params), READONLY, params_doc},
 #endif
 	{NULL}
 };
+
+PyDoc_STRVAR(name_doc, "Problem name, or None if unset.");
+
+PyDoc_STRVAR(obj_doc, "Objective function object.");
+
+PyDoc_STRVAR(nnz_doc, "Number of non-zero constraint coefficients.");
+
+PyDoc_STRVAR(matrix_doc,
+"The constraint matrix as a list of three element (row index, column index,\n"
+"value) tuples across all non-zero elements of the constraint matrix."
+);
+
+PyDoc_STRVAR(status_doc,
+"The status of solution of the last solver.\n"
+"\n"
+"This takes the form of a string with these possible values:\n"
+"\n"
+"opt\n"
+"  The solution is optimal.\n"
+"undef\n"
+"  The solution is undefined.\n"
+"feas\n"
+"  The solution is feasible, but not necessarily optimal.\n"
+"infeas\n"
+"  The solution is infeasible.\n"
+"nofeas\n"
+" The problem has no feasible solution.\n"
+"unbnd\n"
+"  The problem has an unbounded solution."
+);
+
+PyDoc_STRVAR(status_s_doc, "The status of the simplex solver's solution.");
+
+PyDoc_STRVAR(status_i_doc,
+"The status of the interior point solver's solution."
+);
+
+PyDoc_STRVAR(status_m_doc, "The status of the MIP solver's solution.");
+
+PyDoc_STRVAR(status_primal_doc,
+"The status of the primal solution of the simplex solver.\n"
+"\n"
+"Possible values are 'undef', 'feas', 'infeas', 'nofeas' in similar meaning\n"
+"to the .status attribute."
+);
+
+PyDoc_STRVAR(status_dual_doc,
+"The status of the dual solution of the simplex solver.\n"
+"\n"
+"Possible values are 'undef', 'feas', 'infeas', 'nofeas' in similar meaning\n"
+"to the .status attribute."
+);
+
+PyDoc_STRVAR(ray_doc,
+"A non-basic row or column the simplex solver has identified as causing\n"
+"primal unboundness, or None if no such variable has been identified."
+);
+
+PyDoc_STRVAR(kind_doc,
+"Either the type 'float' if this is a pure linear programming (LP) problem,\n"
+"or the type 'int' if this is a mixed integer programming (MIP) problem."
+);
+
+PyDoc_STRVAR(nint_doc,
+"The number of integer column variables. Always 0 if this is not a mixed\n"
+"integer problem."
+);
+
+PyDoc_STRVAR(nbin_doc,
+"The number of binary column variables, i.e., integer with 0 to 1 bounds.\n"
+"Always 0 if this is not a mixed integer problem."
+);
 
 static PyGetSetDef LPX_getset[] = {
-	{"name", (getter)LPX_getname, (setter)LPX_setname,
-		"Problem name, or None if unset.", NULL},
-	{"obj", (getter)LPX_getobj, (setter)NULL,
-		"Objective function object.", NULL},
-	{"nnz", (getter)LPX_getnumnonzero, (setter)NULL,
-		"Number of non-zero constraint coefficients.", NULL},
-	{"matrix", (getter)LPX_getmatrix, (setter)LPX_setmatrix,
-		"The constraint matrix as a list of three element (row index,\n"
-		"column index, value) tuples across all non-zero elements of\n"
-		"the constraint matrix.", NULL},
+	{"name", (getter)LPX_getname, (setter)LPX_setname, name_doc, NULL},
+	{"obj", (getter)LPX_getobj, (setter)NULL, obj_doc, NULL},
+	{"nnz", (getter)LPX_getnumnonzero, (setter)NULL, nnz_doc, NULL},
+	{"matrix", (getter)LPX_getmatrix, (setter)LPX_setmatrix, matrix_doc, NULL},
 	// Solution status retrieval.
-	{"status", (getter)LPX_getstatus, (setter)NULL,
-		"The status of solution of the last solver.  This takes the\n"
-		"form of a string with these possible values.\n\n"
-		"opt    -- The solution is optimal.\n"
-		"undef  -- The solution is undefined.\n"
-		"feas   -- The solution is feasible, but not necessarily optimal.\n"
-		"infeas -- The solution is infeasible.\n"
-		"nofeas -- The problem has no feasible solution.\n"
-		"unbnd  -- The problem has an unbounded solution.", NULL},
-	{"status_s", (getter)LPX_getspecstatus, (setter)NULL,
-		"The status of the simplex solver's solution.", (void*)glp_get_status},
-	{"status_i", (getter)LPX_getspecstatus, (setter)NULL,
-		"The status of the interior point solver's solution.",
-		(void*)glp_ipt_status},
-	{"status_m", (getter)LPX_getspecstatus, (setter)NULL,
-		"The status of the MIP solver's solution.", (void*)glp_mip_status},
+	{"status", (getter)LPX_getstatus, (setter)NULL, status_doc, NULL},
+	{"status_s", (getter)LPX_getspecstatus, (setter)NULL, status_s_doc,
+	(void*)glp_get_status},
+	{"status_i", (getter)LPX_getspecstatus, (setter)NULL, status_i_doc,
+	(void*)glp_ipt_status},
+	{"status_m", (getter)LPX_getspecstatus, (setter)NULL, status_m_doc,
+	(void*)glp_mip_status},
 	{"status_primal", (getter)LPX_getspecstatus, (setter)NULL,
-		"The status of the primal solution of the simplex solver.\n"
-		"Possible values are 'undef', 'feas', 'infeas', 'nofeas' in\n"
-		"similar meaning to the .status attribute.",
-		(void*)glp_get_prim_stat},
-	{"status_dual", (getter)LPX_getspecstatus, (setter)NULL,
-		"The status of the dual solution of the simplex solver.\n"
-		"Possible values are 'undef', 'feas', 'infeas', 'nofeas' in\n"
-		"similar meaning to the .status attribute.",
-		(void*)glp_get_dual_stat},
+	status_primal_doc, (void*)glp_get_prim_stat},
+	{"status_dual", (getter)LPX_getspecstatus, (setter)NULL, status_dual_doc,
+	(void*)glp_get_dual_stat},
 	// Ray info.
-	{"ray", (getter)LPX_getray, (setter)NULL,
-		"A non-basic row or column the simplex solver has identified\n"
-		"as causing primal unboundness, or None if no such variable\n"
-		"has been identified.", NULL},
+	{"ray", (getter)LPX_getray, (setter)NULL, ray_doc, NULL},
 	// Setting for MIP.
-	{"kind", (getter)LPX_getkind, NULL,//(setter)LPX_setkind,
-		"Either the type 'float' if this is a pure linear programming\n"
-		"(LP) problem, or the type 'int' if this is a mixed integer\n"
-		"programming (MIP) problem.", NULL},
-	{"nint", (getter)LPX_getnumint, (setter)NULL,
-		"The number of integer column variables.  Always 0 if this is\n"
-		"not a mixed integer problem.", NULL},
-	{"nbin", (getter)LPX_getnumbin, (setter)NULL,
-		"The number of binary column variables, i.e., integer with 0\n"
-		"to 1 bounds.  Always 0 if this is not a mixed integer problem.", NULL},
+	{"kind", (getter)LPX_getkind, NULL, kind_doc, NULL},
+	{"nint", (getter)LPX_getnumint, (setter)NULL, nint_doc, NULL},
+	{"nbin", (getter)LPX_getnumbin, (setter)NULL, nbin_doc, NULL},
 	{NULL}
 };
+
+PyDoc_STRVAR(erase_doc,
+"erase()\n"
+"\n"
+"Erase the content of this problem, restoring it to the state it was in when\n"
+"it was first created.");
+
+PyDoc_STRVAR(scale_doc,
+"scale([flags=LPX.SF_AUTO])\n"
+"\n"
+"Perform automatic scaling of the problem data, in order to improve\n"
+"conditioning. The behavior is controlled by various flags, which can be\n"
+"bitwise ORed to combine effects. Note that this only affects the internal\n"
+"state of the LP representation. These flags are members of the LPX class:\n"
+"\n"
+"SF_GM\n"
+"  perform geometric mean scaling\n"
+"SF_EQ\n"
+"  perform equilibration scaling\n"
+"SF_2N\n"
+"  round scale factors to the nearest power of two\n"
+"SF_SKIP\n"
+"  skip scaling, if the problem is well scaled\n"
+"SF_AUTO\n"
+"  choose scaling options automatically"
+);
+
+PyDoc_STRVAR(unscale_doc,
+"unscale()\n"
+"\n"
+"This unscales the problem data, essentially setting all scale factors to 1."
+);
+
+PyDoc_STRVAR(std_basis_doc,
+"std_basis()\n"
+"\n"
+"Construct the standard trivial inital basis for this LP."
+);
+
+PyDoc_STRVAR(adv_basis_doc,
+"adv_basis()\n"
+"\n"
+"Construct an advanced initial basis, triangular with as few variables as\n"
+"possible fixed."
+);
+
+PyDoc_STRVAR(cpx_basis_doc,
+"cpx_basis()\n"
+"\n"
+"Construct an advanced Bixby basis. This basis construction method is\n"
+"described in:\n"
+"Robert E. Bixby. Implementing the Simplex Method: The Initial Basis. ORSA\n"
+"Journal on Computing, Vol. 4, No. 3, 1992, pp. 267-84."
+);
+
+PyDoc_STRVAR(simplex_doc,
+"simplex([keyword arguments])\n"
+"\n"
+"Attempt to solve the problem using a simplex method.\n"
+"\n"
+"This procedure has a great number of optional keyword arguments to control\n"
+"the functioning of the solver. We list these here, including descriptions\n"
+"of their legal values.\n"
+"\n"
+"msg_lev\n"
+"  Controls the message level of terminal output.\n"
+"\n"
+"  LPX.MSG_OFF\n"
+"    no output (default)\n"
+"  LPX.MSG_ERR\n"
+"    error and warning messages\n"
+"  LPX.MSG_ON\n"
+"    normal output\n"
+"  LPX.MSG_ALL\n"
+"    full informational output\n"
+"\n"
+"meth\n"
+"  Simplex method option\n"
+"\n"
+"  LPX.PRIMAL\n"
+"    use two phase primal simplex (default)\n"
+"  LPX.DUAL\n"
+"    use two phase dual simplex\n"
+"  LPX.DUALP\n"
+"    use two phase dual simplex, primal if that fails\n"
+"\n"
+"pricing\n"
+"  Pricing technique\n"
+"\n"
+"  LPX.PT_STD\n"
+"    standard textbook technique\n"
+"  LPX.PT_PSE\n"
+"    projected steepest edge (default)\n"
+"\n"
+"r_test\n"
+"  Ratio test technique\n"
+"\n"
+"  LPX.RT_STD\n"
+"    standard textbook technique\n"
+"  LPX.RT_HAR\n"
+"    Harris' two-pass ratio test (default)\n"
+"\n"
+"tol_bnd\n"
+"  Tolerance used to check if the basic solution is primal feasible.\n"
+"  (default 1e-7)\n"
+"\n"
+"tol_dj\n"
+"  Tolerance used to check if the basic solution is dual feasible. (default\n"
+"  1e-7)\n"
+"\n"
+"tol_piv\n"
+"  Tolerance used to choose pivotal elements of the simplex table. (default\n"
+"  1e-10)\n"
+"\n"
+"obj_ll\n"
+"  Lower limit of the objective function. The solver terminates upon\n"
+"  reaching this level. This is used only in dual simplex optimization.\n"
+"  (default is min float)\n"
+"\n"
+"obj_ul\n"
+"  Upper limit of the objective function. The solver terminates upon\n"
+"  reaching this level. This is used only in dual simplex optimization.\n"
+"  (default is max float)\n"
+"\n"
+"it_lim\n"
+"  Simplex iteration limit. (default is max int)\n"
+"\n"
+"tm_lim\n"
+"  Search time limit in milliseconds. (default is max int)\n"
+"\n"
+"out_frq\n"
+"  Terminal output frequency in iterations. (default 200)\n"
+"\n"
+"out_dly\n"
+"  Terminal output delay in milliseconds. (default 0)\n"
+"\n"
+"presolve\n"
+"  Use the LP presolver. (default False)\n"
+"\n"
+"This returns None if the problem was successfully solved. Alternately, on\n"
+"failure it will return one of the following strings to indicate failure\n"
+"type.\n"
+"\n"
+"fault\n"
+"  There are no rows or columns, or the initial basis is invalid, or the\n"
+"  initial basis matrix is singular or ill-conditioned.\n"
+"objll\n"
+"  The objective reached its lower limit.\n"
+"objul\n"
+"  The objective reached its upper limit.\n"
+"itlim\n"
+"  Iteration limited exceeded.\n"
+"tmlim\n"
+"  Time limit exceeded.\n"
+"sing\n"
+"  The basis matrix became singular or ill-conditioned.\n"
+"nopfs\n"
+"  No primal feasible solution. (Presolver only.)\n"
+"nodfs\n"
+"  No dual feasible solution. (Presolver only.)\n"
+);
+
+PyDoc_STRVAR(exact_doc,
+"exact()\n"
+"\n"
+"Attempt to solve the problem using an exact simplex method.\n"
+"\n"
+"This returns None if the problem was successfully solved. Alternately, on\n"
+"failure it will return one of the following strings to indicate failure\n"
+"type:\n"
+"\n"
+"fault\n"
+"  There are no rows or columns, or the initial basis is invalid, or the\n"
+"  initial basis matrix is singular or ill-conditioned.\n"
+"itlim\n"
+"  Iteration limited exceeded.\n"
+"tmlim\n"
+"  Time limit exceeded."
+);
+
+PyDoc_STRVAR(interior_doc,
+"interior()\n"
+"\n"
+"Attempt to solve the problem using an interior-point method.\n"
+"\n"
+"This returns None if the problem was successfully solved. Alternately, on\n"
+"failure it will return one of the following strings to indicate failure\n"
+"type:\n"
+"\n"
+"fault\n"
+"  There are no rows or columns.\n"
+"nofeas\n"
+"  The problem has no feasible (primal/dual) solution.\n"
+"noconv\n"
+"  Very slow convergence or divergence.\n"
+"itlim\n"
+"  Iteration limited exceeded.\n"
+"instab\n"
+"  Numerical instability when solving Newtonian system."
+);
+
+PyDoc_STRVAR(integer_doc,
+"integer()\n"
+"\n"
+"MIP solver based on branch-and-bound.\n"
+"\n"
+"This procedure has a great number of optional keyword arguments to control\n"
+"the functioning of the solver. We list these here, including descriptions\n"
+"of their legal values:\n"
+"\n"
+"msg_lev\n"
+"  Controls the message level of terminal output.\n"
+"\n"
+"  LPX.MSG_OFF\n"
+"    no output (default)\n"
+"  LPX.MSG_ERR\n"
+"    error and warning messages\n"
+"  LPX.MSG_ON\n"
+"    normal output\n"
+"  LPX.MSG_ALL\n"
+"    full informational output\n"
+"\n"
+"br_tech\n"
+"  Branching technique option.\n"
+"\n"
+"  LPX.BR_FFV\n"
+"    first fractional variable\n"
+"  LPX.BR_LFV\n"
+"    last fractional variable\n"
+"  LPX.BR_MFV\n"
+"    most fractional variable\n"
+"  LPX.BR_DTH\n"
+"    heuristic by Driebeck and Tomlin (default)\n"
+"  LPX.BR_PCH\n"
+"    hybrid pseudo-cost heuristic\n"
+"\n"
+"bt_tech\n"
+"  Backtracking technique option.\n"
+"\n"
+"  LPX.BT_DFS\n"
+"    depth first search\n"
+"  LPX.BT_BFS\n"
+"    breadth first search\n"
+"  LPX.BT_BLB\n"
+"    best local bound (default)\n"
+"  LPX.BT_BPH\n"
+"    best projection heuristic\n"
+"\n"
+"pp_tech\n"
+"  Preprocessing technique option.\n"
+"\n"
+"  LPX.PP_NONE\n"
+"    disable preprocessing\n"
+"  LPX.PP_ROOT\n"
+"    perform preprocessing only on the root level\n"
+"  LPX.PP_ALL\n"
+"    perform preprocessing on all levels (default)\n"
+"\n"
+#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
+"sr_heur\n"
+"  Simple rounding heuristic (default True)\n"
+"\n"
+#endif
+"fp_heur\n"
+"  Feasibility pump heurisic (default False)\n"
+"\n"
+"ps_heur\n"
+"  Proximity search heuristic (default False)\n"
+"\n"
+"ps_tm_lim\n"
+"  Proximity search time limit in milliseconds (default 60000)\n"
+"\n"
+"gmi_cuts\n"
+"  Use Gomory's mixed integer cuts (default False)\n"
+"\n"
+"mir_cuts\n"
+"  Use mixed integer rounding cuts (default False)\n"
+"\n"
+"cov_cuts\n"
+"  Use mixed cover cuts (default False)\n"
+"\n"
+"clq_cuts\n"
+"  Use clique cuts (default False)\n"
+"\n"
+"tol_int\n"
+"  Tolerance used to check if the optimal solution to the current LP\n"
+"  relaxation is integer feasible.\n"
+"\n"
+"tol_obj\n"
+"  Tolerance used to check if the objective value in the optimal solution to\n"
+"  the current LP is not better than the best known integer feasible\n"
+"  solution.\n"
+"\n"
+"mip_gap\n"
+"  elative mip gap tolerance (default 0.0)\n"
+"\n"
+"tm_lim\n"
+"  Search time limit in milliseconds. (default is max int)\n"
+"\n"
+"out_frq\n"
+"  Terminal output frequency in milliseconds. (default 5000)\n"
+"\n"
+"out_dly\n"
+"  Terminal output delay in milliseconds. (default 10000)\n"
+"\n"
+"presolve\n"
+"  MIP presolver (default False)\n"
+"\n"
+"binarize\n"
+"  Binarization option, used only if presolver is enabled (default False)\n"
+"\n"
+"callback\n"
+"  A callback object the user may use to monitor and control the solver.\n"
+"  During certain portions of the optimization, the solver will call methods\n"
+"  of callback object. (default None)\n"
+"\n"
+"The last parameter, callback, is worth its own discussion. During the \n"
+"branch-and-cut algorithm of the MIP solver, at various points callback\n"
+"hooks are invoked which allow the user code to influence the proceeding of\n"
+"the MIP solver. The user code may influence the solver in the hook by\n"
+"modifying and operating on a Tree instance passed to the hook. These hooks\n"
+"have various codes, which we list here:\n"
+"\n"
+"select\n"
+"  request for subproblem selection\n"
+"\n"
+"prepro\n"
+"  request for preprocessing\n"
+"\n"
+"rowgen\n"
+"  request for row generation\n"
+"\n"
+"heur\n"
+"  request for heuristic solution\n"
+"\n"
+"cutgen\n"
+"  request for cut generation\n"
+"\n"
+"branch\n"
+"  request for branching\n"
+"\n"
+"bingo\n"
+"  better integer solution found\n"
+"\n"
+"During the invocation of a hook with a particular code, the callback object\n"
+"will have a method of the same name as the hook code called, with the Tree\n"
+"instance. For instance, for the 'cutgen' hook, it is equivalent to::\n"
+"\n"
+"    callback.cutgen(tree)\n"
+"\n"
+"being called with tree as the Tree instance. If the method does not exist,\n"
+"then instead the method 'default' is called with the same signature. If\n"
+"neither the named hook method nor the default method exist, then the hook\n"
+"is ignored.\n"
+"\n"
+"This method requires a mixed-integer problem where an optimal solution to\n"
+"an LP relaxation (either through simplex() or exact()) has already been\n"
+"found. Alternately, try intopt().\n"
+"\n"
+"This returns None if the problem was successfully solved. Alternately, on\n"
+"failure it will return one of the following strings to indicate failure\n"
+"type.\n"
+"\n"
+"fault\n"
+"  There are no rows or columns, or it is not a MIP problem, or integer\n"
+"  variables have non-int bounds.\n"
+"nopfs\n"
+"  No primal feasible solution.\n"
+"nodfs\n"
+"  Relaxation has no dual feasible solution.\n"
+"itlim\n"
+"  Iteration limited exceeded.\n"
+"tmlim\n"
+"  Time limit exceeded.\n"
+"sing\n"
+"  Error occurred solving an LP relaxation subproblem."
+);
+
+PyDoc_STRVAR(intopt_doc,
+"intopt()\n"
+"\n"
+"More advanced MIP branch-and-bound solver than integer(). This variant does\n"
+"not require an existing LP relaxation.\n"
+"\n"
+"This returns None if the problem was successfully solved. Alternately, on\n"
+"failure it will return one of the following strings to indicate failure\n"
+"type.\n"
+"\n"
+"fault\n"
+"  There are no rows or columns, or it is not a MIP problem, or integer\n"
+"  variables have non-int bounds.\n"
+"\n"
+"nopfs\n"
+"  No primal feasible solution.\n"
+"\n"
+"nodfs\n"
+"  Relaxation has no dual feasible solution.\n"
+"\n"
+"itlim\n"
+"  Iteration limited exceeded.\n"
+"\n"
+"tmlim\n"
+"  Time limit exceeded.\n"
+"\n"
+"sing\n"
+"  Error occurred solving an LP relaxation subproblem."
+);
+
+PyDoc_STRVAR(kkt_doc,
+"kkt([scaled=False])\n"
+"\n"
+"Return an object encapsulating the results of a check on the\n"
+"Karush-Kuhn-Tucker optimality conditions for a basic (simplex) solution. If\n"
+"the argument 'scaled' is true, return results of checking the internal\n"
+"scaled instance of the LP instead."
+);
+
+PyDoc_STRVAR(kktint_doc,
+"kktint()\n"
+"\n"
+"Similar to kkt(), except analyzes solution quality of an mixed-integer\n"
+"solution. Note that only the primal components of the KKT object will have\n"
+"meaningful values."
+);
+
+PyDoc_STRVAR(write_doc,
+"write(format=filename)\n"
+"\n"
+"Output data about the linear program into a file with a given format. What\n"
+"data is written, and how it is written, depends on which of the format\n"
+"keywords are used. Note that one may specify multiple format and filename\n"
+"pairs to write multiple types and formats of data in one call to this\n"
+"function.\n"
+"\n"
+"mps\n"
+"  For problem data in the fixed MPS format.\n"
+"\n"
+"bas\n"
+"  The current LP basis in fixed MPS format.\n"
+"\n"
+"freemps\n"
+"  Problem data in the free MPS format.\n"
+"\n"
+"cpxlp\n"
+"  Problem data in the CPLEX LP format.\n"
+"\n"
+"glp\n"
+"  Problem data in the GNU LP format.\n"
+"\n"
+"sol\n"
+"  Basic solution in printable format.\n"
+"\n"
+"sens_bnds\n"
+"  Bounds sensitivity information.\n"
+"\n"
+"ips\n"
+"  Interior-point solution in printable format.\n"
+"\n"
+"mip\n"
+"  MIP solution in printable format."
+);
 
 static PyMethodDef LPX_methods[] = {
-	{"erase", (PyCFunction)LPX_Erase, METH_NOARGS,
-		"erase()\n\n"
-		"Erase the content of this problem, restoring it to the state\n"
-		"it was in when it was first created."},
-	{"scale", (PyCFunction)LPX_Scale, METH_VARARGS,
-		"scale([flags=LPX.SF_AUTO])\n\n"
-		"Perform automatic scaling of the problem data, in order to.\n"
-		"improve conditioning.  The behavior is controlled by various\n"
-		"flags, which can be bitwise ORed to combine effects.  Note\n"
-		"that this only affects the internal state of the LP\n"
-		"representation.  These flags are members of the LPX class:\n\n"
-		"SF_GM   -- perform geometric mean scaling\n"
-		"SF_EQ   -- perform equilibration scaling\n"
-		"SF_2N   -- round scale factors to the nearest power of two\n"
-		"SF_SKIP -- skip scaling, if the problem is well scaled\n"
-		"SF_AUTO -- choose scaling options automatically"},
-	{"unscale", (PyCFunction)LPX_Unscale, METH_NOARGS,
-		"unscale()\n\n"
-		"This unscales the problem data, essentially setting all\n"
-		"scale factors to 1."},
+	{"erase", (PyCFunction)LPX_Erase, METH_NOARGS, erase_doc},
+	{"scale", (PyCFunction)LPX_Scale, METH_VARARGS, scale_doc},
+	{"unscale", (PyCFunction)LPX_Unscale, METH_NOARGS, unscale_doc},
 	// Basis construction techniques for simplex solvers.
-	{"std_basis", (PyCFunction)LPX_basis_std, METH_NOARGS,
-		"std_basis()\n\n"
-		"Construct the standard trivial inital basis for this LP."},
-	{"adv_basis", (PyCFunction)LPX_basis_adv, METH_NOARGS,
-		"adv_basis()\n\n"
-		"Construct an advanced initial basis, triangular with as few\n"
-		"variables as possible fixed."},
-	{"cpx_basis", (PyCFunction)LPX_basis_cpx, METH_NOARGS,
-		"cpx_basis()\n\n"
-		"Construct an advanced Bixby basis.\n\n"
-		"This basis construction method is described in:\n"
-		"Robert E. Bixby. Implementing the Simplex Method: The Initial\n"
-		"Basis.  ORSA Journal on Computing, Vol. 4, No. 3, 1992,\n"
-		"pp. 267-84."},
+	{"std_basis", (PyCFunction)LPX_basis_std, METH_NOARGS, std_basis_doc},
+	{"adv_basis", (PyCFunction)LPX_basis_adv, METH_NOARGS, adv_basis_doc},
+	{"cpx_basis", (PyCFunction)LPX_basis_cpx, METH_NOARGS, cpx_basis_doc},
 	// Solver routines.
 	{"simplex", (PyCFunction)LPX_solver_simplex, METH_VARARGS|METH_KEYWORDS,
-		"simplex([keyword arguments])\n\n"
-		"Attempt to solve the problem using a simplex method.\n\n"
-		"This procedure has a great number of optional keyword arguments\n"
-		"to control the functioning of the solver.  We list these here,\n"
-		"including descriptions of their legal values.\n\n"
-		"msg_lev : Controls the message level of terminal output.\n"
-		"  LPX.MSG_OFF -- no output (default)\n"
-		"  LPX.MSG_ERR -- error and warning messages\n"
-		"  LPX.MSG_ON  -- normal output\n"
-		"  LPX.MSG_ALL -- full informational output\n"
-		"meth    : Simplex method option\n"
-		"  LPX.PRIMAL  -- use two phase primal simplex (default)\n"
-		"  LPX.DUAL    -- use two phase dual simplex\n"
-		"  LPX.DUALP   -- use two phase dual simplex, primal if that fails\n"
-		"pricing : Pricing technique\n"
-		"  LPX.PT_STD  -- standard textbook technique\n"
-		"  LPX.PT_PSE  -- projected steepest edge (default)\n"
-		"r_test  : Ratio test technique\n"
-		"  LPX.RT_STD  -- standard textbook technique\n"
-		"  LPX.RT_HAR  -- Harris' two-pass ratio test (default)\n"
-		"tol_bnd : Tolerance used to check if the basic solution is primal\n"
-		"  feasible. (default 1e-7)\n"
-		"tol_dj  : Tolerance used to check if the basic solution is dual\n"
-		"  feasible. (default 1e-7)\n"
-		"tol_piv : Tolerance used to choose pivotal elements of the simplex\n"
-		"  table. (default 1e-10)\n"
-		"obj_ll  : Lower limit of the objective function.  The solver\n"
-		"  terminates upon reaching this level.  This is used only in\n"
-		"  dual simplex optimization. (default is min float)\n"
-		"obj_ul  : Upper limit of the objective function.  The solver\n"
-		"  terminates upon reaching this level.  This is used only in\n"
-		"  dual simplex optimization. (default is max float)\n"
-		"it_lim  : Simplex iteration limit. (default is max int)\n"
-		"tm_lim  : Search time limit in milliseconds. (default is max int)\n"
-		"out_frq : Terminal output frequency in iterations. (default 200)\n"
-		"out_dly : Terminal output delay in milliseconds. (default 0)\n"
-		"presolve: Use the LP presolver. (default False)\n\n"
-		"This returns None if the problem was successfully solved.\n"
-		"Alternately, on failure it will return one of the following\n"
-		"strings to indicate failure type.\n\n"
-		"fault   -- There are no rows or columns, or the initial basis\n"
-		"           is invalid, or the initial basis matrix is singular\n"
-		"           or ill-conditioned.\n"
-		"objll   -- The objective reached its lower limit.\n"
-		"objul   -- The objective reached its upper limit.\n"
-		"itlim   -- Iteration limited exceeded.\n"
-		"tmlim   -- Time limit exceeded.\n"
-		"sing    -- The basis matrix became singular or ill-conditioned.\n"
-		"nopfs   -- No primal feasible solution. (Presolver only.)\n"
-		"nodfs   -- No dual feasible solution. (Presolver only.)\n" },
-	{"exact", (PyCFunction)LPX_solver_exact, METH_NOARGS,
-		"exact()\n\n"
-		"Attempt to solve the problem using an exact simplex method.\n\n"
-		"This returns None if the problem was successfully solved.\n"
-		"Alternately, on failure it will return one of the following\n"
-		"strings to indicate failure type.\n\n"
-		"fault   -- There are no rows or columns, or the initial basis\n"
-		"           is invalid, or the initial basis matrix is singular\n"
-		"           or ill-conditioned.\n"
-		"itlim   -- Iteration limited exceeded.\n"
-		"tmlim   -- Time limit exceeded." },
-	{"interior", (PyCFunction)LPX_solver_interior, METH_NOARGS,
-		"interior()\n\n"
-		"Attempt to solve the problem using an interior-point method.\n\n"
-		"This returns None if the problem was successfully solved.\n"
-		"Alternately, on failure it will return one of the following\n"
-		"strings to indicate failure type.\n\n"
-		"fault   -- There are no rows or columns.\n"
-		"nofeas  -- The problem has no feasible (primal/dual) solution.\n"
-		"noconv  -- Very slow convergence or divergence.\n"
-		"itlim   -- Iteration limited exceeded.\n"
-		"instab  -- Numerical instability when solving Newtonian system." },
+	simplex_doc},
+	{"exact", (PyCFunction)LPX_solver_exact, METH_NOARGS, exact_doc},
+	{"interior", (PyCFunction)LPX_solver_interior, METH_NOARGS, interior_doc},
 	{"integer", (PyCFunction)LPX_solver_integer, METH_VARARGS|METH_KEYWORDS,
-		"integer()\n\n"
-		"MIP solver based on branch-and-bound.\n\n"
-		"This procedure has a great number of optional keyword arguments\n"
-		"to control the functioning of the solver.  We list these here,\n"
-		"including descriptions of their legal values.\n\n"
-		"msg_lev : Controls the message level of terminal output.\n"
-		"  LPX.MSG_OFF -- no output (default)\n"
-		"  LPX.MSG_ERR -- error and warning messages\n"
-		"  LPX.MSG_ON  -- normal output\n"
-		"  LPX.MSG_ALL -- full informational output\n"
-		"br_tech : Branching technique option.\n"
-		"  LPX.BR_FFV  -- first fractional variable\n"
-		"  LPX.BR_LFV  -- last fractional variable\n"
-		"  LPX.BR_MFV  -- most fractional variable\n"
-		"  LPX.BR_DTH  -- heuristic by Driebeck and Tomlin (default)\n"
-		"  LPX.BR_PCH  -- hybrid pseudo-cost heuristic\n"
-		"bt_tech : Backtracking technique option.\n"
-		"  LPX.BT_DFS  -- depth first search\n"
-		"  LPX.BT_BFS  -- breadth first search\n"
-		"  LPX.BT_BLB  -- best local bound (default)\n"
-		"  LPX.BT_BPH  -- best projection heuristic\n"
-		"pp_tech : Preprocessing technique option.\n"
-		"  LPX.PP_NONE -- disable preprocessing\n"
-		"  LPX.PP_ROOT -- perform preprocessing only on the root level\n"
-		"  LPX.PP_ALL  -- perform preprocessing on all levels (default)\n"
-#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
-		"sr_heur: Simple rounding heuristic (default True)\n"
-#endif
-		"fp_heur: Feasibility pump heurisic (default False)\n"
-		"ps_heur: Proximity search heuristic (default False)\n"
-		"ps_tm_lim: Proximity search time limit in milliseconds (default 60000)\n"
-		"gmi_cuts: Use Gomory's mixed integer cuts (default False)\n"
-		"mir_cuts: Use mixed integer rounding cuts (default False)\n"
-		"cov_cuts: Use mixed cover cuts (default False)\n"
-		"clq_cuts: Use clique cuts (default False)\n"
-		"tol_int : Tolerance used to check if the optimal solution to the\n"
-		"  current LP relaxation is integer feasible.\n"
-		"tol_obj : Tolerance used to check if the objective value in the\n"
-		"  optimal solution to the current LP is not better than the best\n"
-		"  known integer feasible solution.\n"
-        "mip_gap: Relative mip gap tolerance (default 0.0)\n"
-		"tm_lim  : Search time limit in milliseconds. (default is max int)\n"
-		"out_frq : Terminal output frequency in milliseconds. (default 5000)\n"
-		"out_dly : Terminal output delay in milliseconds. (default 10000)\n"
-        "presolve: MIP presolver (default False)\n"
-        "binarize: Binarization option, used only if presolver is enabled\n"
-        "  (default False)\n"
-		"callback: A callback object the user may use to monitor and control\n"
-		"  the solver.  During certain portions of the optimization, the\n"
-		"  solver will call methods of callback object. (default None)\n\n"
-
-		"The last parameter, callback, is worth its own discussion.  During\n"
-		"the branch-and-cut algorithm of the MIP solver, at various points\n"
-		"callback hooks are invoked which allow the user code to influence\n"
-		"the proceeding of the MIP solver.  The user code may influence the\n"
-		"solver in the hook by modifying and operating on a Tree instance\n"
-		"passed to the hook.  These hooks have various codes, which we list\n"
-		"here.\n"
-		"    select - request for subproblem selection\n"
-		"    prepro - request for preprocessing\n"
-		"    rowgen - request for row generation\n"
-		"    heur   - request for heuristic solution\n"
-		"    cutgen - request for cut generation\n"
-		"    branch - request for branching\n"
-		"    bingo  - better integer solution found\n"
-		"During the invocation of a hook with a particular code, the\n"
-		"callback object will have a method of the same name as the hook\n"
-		"code called, with the Tree instance.  For instance, for the\n"
-		"'cutgen' hook, it is equivalent to\n"
-		"    callback.cutgen(tree)\n"
-		"being called with tree as the Tree instance.  If the method does\n"
-		"not exist, then instead the method 'default' is called with the\n"
-		"same signature.  If neither the named hook method nor the default\n"
-		"method exist, then the hook is ignored.\n\n"
-		"This method requires a mixed-integer problem where an optimal\n"
-		"solution to an LP relaxation (either through simplex() or\n"
-		"exact()) has already been found.  Alternately, try intopt().\n\n"
-		"This returns None if the problem was successfully solved.\n"
-		"Alternately, on failure it will return one of the following\n"
-		"strings to indicate failure type.\n\n"
-		"fault   -- There are no rows or columns, or it is not a MIP\n"
-		"           problem, or integer variables have non-int bounds.\n"
-		"nopfs   -- No primal feasible solution.\n"
-		"nodfs   -- Relaxation has no dual feasible solution.\n"
-		"itlim   -- Iteration limited exceeded.\n"
-		"tmlim   -- Time limit exceeded.\n"
-		"sing    -- Error occurred solving an LP relaxation subproblem." },
-	{"intopt", (PyCFunction)LPX_solver_intopt, METH_NOARGS,
-		"intopt()\n\n"
-		"More advanced MIP branch-and-bound solver than integer(). This\n"
-		"variant does not require an existing LP relaxation.\n\n"
-		"This returns None if the problem was successfully solved.\n"
-		"Alternately, on failure it will return one of the following\n"
-		"strings to indicate failure type.\n\n"
-		"fault   -- There are no rows or columns, or it is not a MIP\n"
-		"           problem, or integer variables have non-int bounds.\n"
-		"nopfs   -- No primal feasible solution.\n"
-		"nodfs   -- Relaxation has no dual feasible solution.\n"
-		"itlim   -- Iteration limited exceeded.\n"
-		"tmlim   -- Time limit exceeded.\n"
-		"sing    -- Error occurred solving an LP relaxation subproblem." },
-	{"kkt", (PyCFunction)LPX_kkt, METH_VARARGS,
-		"kkt([scaled=False])\n\n"
-		"Return an object encapsulating the results of a check on the\n"
-		"Karush-Kuhn-Tucker optimality conditions for a basic (simplex)\n"
-		"solution.  If the argument 'scaled' is true, return results \n"
-		"of checking the internal scaled instance of the LP instead."},
-	{"kktint", (PyCFunction)LPX_kktint, METH_NOARGS,
-		"kktint()\n\n"
-		"Similar to kkt(), except analyzes solution quality of an\n"
-		"mixed-integer solution.  Note that only the primal components\n"
-		"of the KKT object will have meaningful values."},
+	integer_doc},
+	{"intopt", (PyCFunction)LPX_solver_intopt, METH_NOARGS, intopt_doc},
+	{"kkt", (PyCFunction)LPX_kkt, METH_VARARGS, kkt_doc},
+	{"kktint", (PyCFunction)LPX_kktint, METH_NOARGS, kktint_doc},
 	// Data writing
-	{"write", (PyCFunction)LPX_write, METH_VARARGS | METH_KEYWORDS,
-		"write(format=filename)\n\n"
-		"Output data about the linear program into a file with a given\n"
-		"format.  What data is written, and how it is written, depends\n"
-		"on which of the format keywords are used.  Note that one may\n"
-		"specify multiple format and filename pairs to write multiple\n"
-		"types and formats of data in one call to this function.\n\n"
-		"mps       -- For problem data in the fixed MPS format.\n"
-		"bas       -- The current LP basis in fixed MPS format.\n"
-		"freemps   -- Problem data in the free MPS format.\n"
-		"cpxlp     -- Problem data in the CPLEX LP format.\n"
-		"glp       -- Problem data in the GNU LP format.\n"
-		"sol       -- Basic solution in printable format.\n"
-		"sens_bnds -- Bounds sensitivity information.\n"
-		"ips       -- Interior-point solution in printable format.\n"
-		"mip       -- MIP solution in printable format."},
+	{"write", (PyCFunction)LPX_write, METH_VARARGS | METH_KEYWORDS, write_doc},
 	{NULL}
 };
+
+PyDoc_STRVAR(lpx_doc,
+"LPX() -> empty linear program\n"
+"LPX(gmp=filename) -> linear program with data read from a GNU MathProg file\n"
+"    containing model and data\n"
+"LPX(mps=filename) -> linear program with data read from a datafile in fixed\n"
+"    MPS format\n"
+"LPX(freemps=filename) -> linear program with data read from a datafile in\n"
+"    free MPS format\n"
+"LPX(cpxlp=filename) -> linear program with data read from a datafile in\n"
+"    fixed CPLEX LP format\n"
+"LPX(glp=filename) -> linear program with data read from a datafile in GNU\n"
+"    LP format\n"
+"LPX(gmp=(model_filename[, data_filename[, output_filename]]) -> linear\n"
+"    program from GNU MathProg input files. The first element is a path to\n"
+"    model second, the second to the data section. If the second element is\n"
+"    omitted or is None then the model file is presumed to also hold the\n"
+"    data. The third element holds the output data file to write display\n"
+"    statements to. If omitted or None, the output is instead put through\n"
+"    to standard output.\n"
+"\n"
+"This represents a linear program object. It holds data and offers methods\n"
+"relevant to the whole of the linear program. There are many members in this\n"
+"class, but the most important are:\n"
+"obj -> represents the objective function\n"
+"rows -> a collection over which one can access rows\n"
+"cols -> same, but for columns\n"
+#ifdef USEPARAMS
+"params -> holds control parameters and statistics\n"
+#endif
+);
 
 PyTypeObject LPXType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
@@ -1399,37 +1719,7 @@ PyTypeObject LPXType = {
 	0,					/* tp_setattro*/
 	0,					/* tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-	"LPX()                 --> Empty linear program.\n"
-		"LPX(gmp=filename)     --> Linear program with data read from a\n"
-		"    GNU MathProg file containing model and data.\n"
-		"LPX(mps=filename)     --> Linear program with data read from a\n"
-		"    datafile in fixed MPS format.\n"
-		"LPX(freemps=filename) --> Linear program with data read from a\n"
-		"    datafile in free MPS format.\n"
-		"LPX(cpxlp=filename)   --> Linear program with data read from a\n"
-		"    datafile in fixed CPLEX LP format.\n"
-		"LPX(glp=filename)     --> Linear program with data read from a\n"
-		"    datafile in GNU LP format.\n"
-		"LPX(gmp=(model_filename,[data_filename,[output_filename]])-->\n"
-		"    Linear program from GNU MathProg input files.  The first\n"
-		"    element is a path to the model second, the second to the\n"
-		"    data section.  If the second element is omitted or is None\n"
-		"    then the model file is presumed to also hold the data.\n"
-		"    The third elment holds the output data file to write\n"
-		"    display statements to.  If omitted or None, the output\n"
-		"    is instead put through to standard output.\n"
-		"\n"
-		"This represents a linear program object.  It holds data and\n"
-		"offers methods relevant to the whole of the linear program.\n"
-		"There are many members in this class, but the most important\n"
-		"are:\n"
-		"  obj     Represents the objective function.\n"
-		"  rows    A collection over which one can access rows.\n"
-		"  cols    Same, but for columns.\n"
-#ifdef USEPARAMS
-		"  params  Holds control parameters and statistics."
-#endif
-		, /* tp_doc */
+	lpx_doc, /* tp_doc */
 	(traverseproc)LPX_traverse,		/* tp_traverse */
 	(inquiry)LPX_clear,			/* tp_clear */
 	0,					/* tp_richcompare */

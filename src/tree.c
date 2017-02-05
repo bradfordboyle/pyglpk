@@ -24,7 +24,6 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include <string.h>
 
-;
 #define TREE (self->py_tree->tree)
 #define CHECKTREE							\
   if (!TREE) {								\
@@ -150,37 +149,56 @@ static PyObject* TreeNode_Str(TreeNodeObject *self) {
      self->subproblem, TreeType.tp_name, self->py_tree);
 }
 
+PyDoc_STRVAR(subproblem_doc,
+"The reference number of the subproblem corresponding to this node."
+);
+
 static PyMemberDef TreeNode_members[] = {
   {"subproblem", T_INT, offsetof(TreeNodeObject, subproblem), READONLY,
-   "The reference number of the subproblem corresponding to this node."},
+   subproblem_doc},
   {NULL}
 };
 
+PyDoc_STRVAR(next_doc,
+"The next active subproblem node, None if there is no next active\n"
+"subproblem, or if this is not an active subproblem."
+);
+
+PyDoc_STRVAR(prev_doc,
+"The previous active subproblem node, None if there is no previous active\n"
+"subproblem, or if this is not an active subproblem."
+);
+
+PyDoc_STRVAR(up_doc, "The parent subproblem node, None if this is the root." );
+
+PyDoc_STRVAR(level_doc,
+"The level of the node in the tree, with 0 if this is the root."
+);
+
+PyDoc_STRVAR(bound_doc, "The local bound for this node's subproblem." );
+
+PyDoc_STRVAR(active_doc, "Whether this node represents an active subproblem.");
+
 static PyGetSetDef TreeNode_getset[] = {
-  {"next", (getter)TreeNode_getothernode, (setter)NULL,
-   "The next active subproblem node, None if there is no next active\n"
-   "subproblem, or if this is not an active subproblem.", glp_ios_next_node},
-  {"prev", (getter)TreeNode_getothernode, (setter)NULL,
-   "The previous active subproblem node, None if there is no previous\n"
-   "active subproblem, or if this is not an active subproblem.",
+  {"next", (getter)TreeNode_getothernode, (setter)NULL, next_doc,
+  glp_ios_next_node},
+  {"prev", (getter)TreeNode_getothernode, (setter)NULL, prev_doc,
    glp_ios_prev_node},
-  {"up", (getter)TreeNode_getupnode, (setter)NULL,
-   "The parent subproblem node, None if this is the root.", NULL},
-  {"level", (getter)TreeNode_getlevel, (setter)NULL,
-   "The level of the node in the tree, with 0 if this is the root.", NULL},
-  {"bound", (getter)TreeNode_getbound, (setter)NULL,
-   "The local bound for this node's subproblem.", NULL},
-  {"active", (getter)TreeNode_getactive, (setter)NULL,
-   "Whether this node represents an active subproblem.", NULL},
+  {"up", (getter)TreeNode_getupnode, (setter)NULL, up_doc, NULL},
+  {"level", (getter)TreeNode_getlevel, (setter)NULL, level_doc, NULL},
+  {"bound", (getter)TreeNode_getbound, (setter)NULL, bound_doc, NULL},
+  {"active", (getter)TreeNode_getactive, (setter)NULL, active_doc, NULL},
   {NULL}
 };
 
 static PyMethodDef TreeNode_methods[] = {
-  /*{"terminate", (PyCFunction)TreeNode_terminate, METH_NOARGS,
-   "terminate()\n\n"
-   "Prematurely terminate the MIP solver's search."},*/
   {NULL}
 };
+
+PyDoc_STRVAR(tree_node_doc,
+"Represent specific subproblem instances in the search Tree object used by\n"
+"the MIP solver."
+);
 
 PyTypeObject TreeNodeType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -203,9 +221,7 @@ PyTypeObject TreeNodeType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  "TreeNode instances represent specific subproblem instances in the\n"
-  "search Tree object used by the MIP solver.",
-					/* tp_doc */
+  tree_node_doc,	/* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */
   (richcmpfunc)TreeNode_richcompare,	/* tp_richcompare */
@@ -257,6 +273,12 @@ static PyObject *TreeIter_next(TreeIterObject *self) {
   return (PyObject*)TreeNode_New(self->py_tree, subproblem, 1);
 }
 
+PyDoc_STRVAR(tree_iter_doc,
+"Tree iterator objects.\n"
+"\n"
+"Created for iterating over the active subproblems of the search tree."
+);
+
 PyTypeObject TreeIterType = {
   PyVarObject_HEAD_INIT(NULL, 0)
   "glpk.TreeIter",			/* tp_name */
@@ -278,8 +300,7 @@ PyTypeObject TreeIterType = {
   0,					/* tp_setattro */
   0,					/* tp_as_buffer */
   Py_TPFLAGS_DEFAULT,			/* tp_flags */
-  "Tree iterator objects.  Created for iterating over the\n"
-  "active subproblems of the search tree.",	/* tp_doc */
+  tree_iter_doc,	/* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */
   0,					/* tp_richcompare */
@@ -545,81 +566,144 @@ int Tree_InitType(PyObject *module) {
   return 0;
 }
 
+PyDoc_STRVAR(lp_doc,
+"Problem object used by the MIP solver."
+);
+
 static PyMemberDef Tree_members[] = {
-  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), READONLY,
-   "Problem object used by the MIP solver."},
+  {"lp", T_OBJECT_EX, offsetof(TreeObject, py_lp), READONLY, lp_doc},
   {NULL}
 };
+
+PyDoc_STRVAR(reason_doc,
+"A string with the reason the callback function has been called."
+);
+
+PyDoc_STRVAR(num_active_doc,
+"The number of active nodes."
+);
+
+PyDoc_STRVAR(num_all_doc,
+"The number of all nodes, both active and inactive."
+);
+
+PyDoc_STRVAR(num_total_doc,
+"The total number of nodes, including those already removed."
+);
+
+PyDoc_STRVAR(curr_node_doc,
+"The node of the current active subproblem. If there is no current active\n"
+"subproblem in the tree, this will return None."
+);
+
+PyDoc_STRVAR(best_node_doc,
+"The node of the current active subproblem with best local bound. If the\n"
+"tree is empty, this is None."
+);
+
+PyDoc_STRVAR(first_node_doc,
+"The node of the first active subproblem. If there is no current active\n"
+"subproblem in the tree, this is None."
+);
+
+PyDoc_STRVAR(last_node_doc,
+"The node of the last active subproblem. If there is no current active\n"
+"subproblem in the tree, this is None."
+);
+
+PyDoc_STRVAR(gap_doc,
+"The relative MIP gap (duality gap), that is, the gap between the best MIP\n"
+"solution (best_mip) and best relaxed solution (best_bnd) given by this\n"
+"formula:\n"
+"\n"
+"      |best_mip - best_bnd|\n"
+"gap = ---------------------\n"
+"      |best_mip| + epsilon \n"
+"\n"
+);
 
 static PyGetSetDef Tree_getset[] = {
-  {"reason", (getter)Tree_getreason, (setter)NULL,
-   "A string with the reason the callback function has been called.", NULL},
-  {"num_active", (getter)Tree_getnumactive, (setter)NULL,
-   "The number of active nodes.", NULL},
-  {"num_all", (getter)Tree_getnumall, (setter)NULL,
-   "The number of all nodes, both active and inactive.", NULL},
-  {"num_total", (getter)Tree_getnumtotal, (setter)NULL,
-   "The total number of nodes, including those already removed.", NULL},
-  {"curr_node", (getter)Tree_gettreenode, (setter)NULL,
-   "The node of the current active subproblem.  If there is no current\n"
-   "active subproblem in the tree, this will return None.", glp_ios_curr_node},
-  {"best_node", (getter)Tree_gettreenode, (setter)NULL,
-   "The node of the current active subproblem with best local bound.\n"
-   "If the tree is empty, this is None.", glp_ios_best_node},
-  {"first_node", (getter)Tree_getfirstlastnode, (setter)NULL,
-   "The node of the first active subproblem.  If there is no current\n"
-   "active subproblem in the tree, this is None.", glp_ios_next_node},
-  {"last_node", (getter)Tree_getfirstlastnode, (setter)NULL,
-   "The node of the last active subproblem.  If there is no current\n"
-   "active subproblem in the tree, this is None.", glp_ios_prev_node},
-  {"gap", (getter)Tree_getgap, (setter)NULL,
-   "The relative MIP gap (duality gap), that is, the gap between the \n"
-   "best MIP solution (best_mip) and best relaxed solution (best_bnd)\n"
-   "given by this formula:\n"
-   "      |best_mip - best_bnd|\n"
-   "gap = ---------------------\n"
-   "      |best_mip|+epsilon", NULL},
+  {"reason", (getter)Tree_getreason, (setter)NULL, reason_doc, NULL},
+  {"num_active", (getter)Tree_getnumactive, (setter)NULL, num_active_doc,
+  NULL},
+  {"num_all", (getter)Tree_getnumall, (setter)NULL, num_all_doc, NULL},
+  {"num_total", (getter)Tree_getnumtotal, (setter)NULL, num_total_doc, NULL},
+  {"curr_node", (getter)Tree_gettreenode, (setter)NULL, curr_node_doc,
+  glp_ios_curr_node},
+  {"best_node", (getter)Tree_gettreenode, (setter)NULL, best_node_doc,
+  glp_ios_best_node},
+  {"first_node", (getter)Tree_getfirstlastnode, (setter)NULL,first_node_doc,
+  glp_ios_next_node},
+  {"last_node", (getter)Tree_getfirstlastnode, (setter)NULL, last_node_doc,
+  glp_ios_prev_node},
+  {"gap", (getter)Tree_getgap, (setter)NULL, gap_doc, NULL},
   {NULL}
 };
 
+PyDoc_STRVAR(terminate_doc,
+"terminate()\n"
+"\n"
+"Prematurely terminate the MIP solver's search."
+);
+
+PyDoc_STRVAR(select_doc,
+"select(node)\n"
+"\n"
+"Selects a tree node to continue search from. Note that this function should\n"
+"be called only when the reason member of the tree is 'select'."
+);
+
+PyDoc_STRVAR(can_branch_doc,
+"can_branch(col_index)\n"
+"\n"
+"Given the index of a column in the LP, this will return True if one can\n"
+"branch upon this column's varible, that is, continue the search with this\n"
+"column's variable set as an integer. Note that this function should be\n"
+"called only when the reason member of the tree is 'branch'."
+);
+
+PyDoc_STRVAR(branch_upon_doc,
+"branch_upon(col_index, select='N')\n"
+"\n"
+"Given the index of a column in the LP, this will add two new subproblems,\n"
+"down and up branches (in that order) to the active list, where the down and\n"
+"up branches are the problems with the column's variable set to the floor\n"
+"and ceil of the value, respectively. The select parameter controls which of\n"
+"the two branches is selected to next continue the search with 'D', 'U', and\n"
+"'N' corresponding to choosing the down, up, or letting GLPK select a\n"
+"branch, respectively."
+);
+
+PyDoc_STRVAR(heuristic_doc,
+"heuristic(values)\n"
+"\n"
+"Provide an integer feasible solution of the primal problem, where values is\n"
+"an iterable object yielding at least as many float values as there are\n"
+"columns in the problem. If the provided solution is better than the\n"
+"existing one, the solution is accepted and the problem updated. This\n"
+"function returns True or False depending on whether the solution was\n"
+"accepted or not. Note that this function should be called only when the\n"
+"reason member of the tree is 'heur'."
+);
+
 static PyMethodDef Tree_methods[] = {
-  {"terminate", (PyCFunction)Tree_terminate, METH_NOARGS,
-   "terminate()\n\n"
-   "Prematurely terminate the MIP solver's search."},
-  {"select", (PyCFunction)Tree_select, METH_VARARGS,
-   "select(node)\n\n"
-   "Selects a tree node to continue search from.  Note that this\n"
-   "function should be called only when the reason member of the\n"
-   "tree is 'select'."},
-  {"can_branch", (PyCFunction)Tree_canbranch, METH_VARARGS,
-   "can_branch(col_index)\n\n"
-   "Given the index of a column in the LP, this will return True\n"
-   "if one can branch upon this column's varible, that is,\n"
-   "continue the search with this column's variable set as an\n"
-   "integer.  Note that this function should be called only when\n"
-   "the reason member of the tree is 'branch'."},
-  {"branch_upon", (PyCFunction)Tree_branchupon, METH_VARARGS,
-   "branch_upon(col_index, select='N')\n\n"
-   "Given the index of a column in the LP, this will add two\n"
-   "new subproblems, down and up branches (in that order) to the\n"
-   "active list, where the down and up branches are the problems\n"
-   "with the column's variable set to the floor and ceil of the\n"
-   "value, respectively.  The select parameter controls which\n"
-   "of the two branches is selected to next continue the search\n"
-   "with 'D', 'U', and 'N' corresponding to choosing the down,\n"
-   "up, or letting GLPK select a branch, respectively."},
-  {"heuristic", (PyCFunction)Tree_heuristic, METH_O,
-   "heuristic(values)\n\n"
-   "Provide an integer feasible solution of the primal problem,\n"
-   "where values is an iterable object yielding at least as many\n"
-   "float values as there are columns in the problem.  If the\n"
-   "provided solution is better than the existing one, the\n"
-   "solution is accepted and the problem updated.  This function\n"
-   "returns True or False depending on whether the solution was\n"
-   "accepted or not.  Note that this function should be called\n"
-   "only when the reason member of the tree is 'heur'."},
+  {"terminate", (PyCFunction)Tree_terminate, METH_NOARGS, terminate_doc},
+  {"select", (PyCFunction)Tree_select, METH_VARARGS, select_doc},
+  {"can_branch", (PyCFunction)Tree_canbranch, METH_VARARGS, can_branch_doc},
+  {"branch_upon", (PyCFunction)Tree_branchupon, METH_VARARGS, branch_upon_doc},
+  {"heuristic", (PyCFunction)Tree_heuristic, METH_O, heuristic_doc},
   {NULL}
 };
+
+PyDoc_STRVAR(tree_doc,
+"Tree instances are passed to MIP solver callback function.\n"
+"\n"
+"They are used to indicate the state of the solver at some intermediate\n"
+"point in a call to LPX.integer(). There are nodes within the tree,\n"
+"instances of TreeNode, corresponding to subproblems within the search tree.\n"
+"The currently active subproblem is stored in the curr_node member of an\n"
+"instance."
+);
 
 PyTypeObject TreeType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -642,13 +726,7 @@ PyTypeObject TreeType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  "Tree instances are passed to MIP solver callback function.  They\n"
-  "are used to indicate the state of the solver at some intermediate\n"
-  "point in a call to LPX.integer().  There are nodes within the\n"
-  "tree, instances of TreeNode, corresponding to subproblems within\n"
-  "the search tree.  The currently active subproblem is stored in\n"
-  "the curr_node member of an instance.",
-					/* tp_doc */
+  tree_doc,		/* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */
   0,					/* tp_richcompare */
