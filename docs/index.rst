@@ -15,8 +15,9 @@ Welcome to pyglpk's documentation!
    download
    building-installing
    examples
-   reference
+   brief-reference
    object-documentation
+   glpk
    glpk-version-notes
    release-notes
    license

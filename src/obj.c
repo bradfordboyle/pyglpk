@@ -10,11 +10,11 @@ the Free Software Foundation; either version 3 of the License, or
 
 PyGLPK is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
+along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include "2to3.h"
@@ -160,7 +160,7 @@ static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
   BarColObject *bc = (BarColObject*) (self->py_lp->cols);
 
   if (PySlice_Check(item)) {
-    // It's a slice.  (Of zest!!)
+    // It's a slice. (Of zest!!)
     Py_ssize_t start, stop, step, subsize, i;
     PyObject *sublist = NULL;
 #if PY_MAJOR_VERSION >= 3
@@ -215,7 +215,7 @@ static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
   }
   
   if (Py_None == item) {
-    // They input none.  Bastards!
+    // They input none. Bastards!
     return PyFloat_FromDouble(glp_get_obj_coef(LP,0));
   }
   
@@ -227,7 +227,7 @@ static PyObject* Obj_subscript(ObjObject *self, PyObject *item) {
 
 // Take a PyObject and a pointer to a double, and modify the double so
 // that it is the float interpretation of the Python object and return
-// 0.  If this cannot be done, throw an exception and return -1.
+// 0. If this cannot be done, throw an exception and return -1.
 static int extract_double(PyObject *py_val, double *val) {
   if (!py_val) {
     PyErr_SetString(PyExc_TypeError, "deletion not supported");
@@ -473,25 +473,39 @@ static PyMemberDef Obj_members[] = {
   {NULL}
 };
 
+PyDoc_STRVAR(name_doc, "Objective name, or None if unset.");
+
+PyDoc_STRVAR(maximize_doc,
+"True or False depending on whether we are trying to maximize or minimize\n"
+"this objective function, respectively."
+);
+
+PyDoc_STRVAR(shift_doc, "The constant shift term of the objective function.");
+
+PyDoc_STRVAR(value_doc, "The current value of the objective function.");
+
+PyDoc_STRVAR(value_s_doc,
+"The current value of the simplex objective function."
+);
+
+PyDoc_STRVAR(value_i_doc,
+"The current value of the interior point objective function."
+);
+
+PyDoc_STRVAR(value_m_doc, "The current value of the MIP objective function.");
+
 static PyGetSetDef Obj_getset[] = {
-  {"name", (getter)Obj_getname, (setter)Obj_setname,
-   "Objective name, or None if unset.", NULL},
+  {"name", (getter)Obj_getname, (setter)Obj_setname, name_doc, NULL},
   {"maximize", (getter)Obj_getmaximize, (setter)Obj_setmaximize,
-   "True or False depending on whether we are trying to maximize\n"
-   "or minimize this objective function, respectively.", NULL},
-  {"shift", (getter)Obj_getshift, (setter)Obj_setshift,
-   "The constant shift term of the objective function.", NULL},
+   maximize_doc, NULL},
+  {"shift", (getter)Obj_getshift, (setter)Obj_setshift, shift_doc, NULL},
   // Objective function value getters...
-  {"value", (getter)Obj_getvalue, (setter)NULL,
-   "The current value of the objective function.", NULL},
-  {"value_s", (getter)Obj_getspecvalue, (setter)NULL,
-   "The current value of the simplex objective function.",
-   (void*)glp_get_obj_val},
-  {"value_i", (getter)Obj_getspecvalue, (setter)NULL,
-   "The current value of the interior point objective function.",
+  {"value", (getter)Obj_getvalue, (setter)NULL, value_doc, NULL},
+  {"value_s", (getter)Obj_getspecvalue, (setter)NULL, value_s_doc,
+  (void*)glp_get_obj_val},
+  {"value_i", (getter)Obj_getspecvalue, (setter)NULL, value_i_doc,
    (void*)glp_ipt_obj_val},
-  {"value_m", (getter)Obj_getspecvalue, (setter)NULL,
-   "The current value of the MIP objective function.",
+  {"value_m", (getter)Obj_getspecvalue, (setter)NULL, value_m_doc,
    (void*)glp_mip_obj_val},
   {NULL}
 };
@@ -499,6 +513,32 @@ static PyGetSetDef Obj_getset[] = {
 static PyMethodDef Obj_methods[] = {
   {NULL}
 };
+
+PyDoc_STRVAR(obj_doc,
+"Objective function objects for linear programs.\n"
+"\n"
+"An instance is used either to access objective function values for\n"
+"solutions, or to access or set objective function coefficients. The same\n"
+"indices valid for a BarCollection object over the columns (that is, column\n"
+"numeric indices, column names, slices, multiple values) are also valid for\n"
+"indexing into this object.\n"
+"The special index None is used to specify the shift term. If we have an LPX\n"
+"instance lp, we may have::\n"
+"\n"
+"    lp.obj[0]    # the first objective coefficient\n"
+"    lp.obj[None] # the shift term\n"
+"    lp.obj[-3:]  # the last three objective coefficients\n\n"
+"    lp.obj[1, 4] # the objective coefficients 1, 4\n"
+"\n"
+"When assigning objective coefficients, for single indices one may assign a\n"
+"single number. For multiple indices, one may assign a single number to make\n"
+"all indicated coefficients identical, or specify an iterable of equal\n"
+"length to set them all individiaully. For example::\n"
+"\n"
+"    lp.obj[0] = 2.5          # set the first objective coef to 2.5\n"
+"    lp.obj[-3:] = 1.0        # the last three obj coefs get 1.0\n"
+"    lp.obj[1, 4] = -2.0, 2.0 # obj coefs 1, 4 get -2.0, 2.0"
+);
 
 PyTypeObject ObjType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -521,26 +561,7 @@ PyTypeObject ObjType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  "Objective function objects for linear programs.  An instance is\n"
-  "used either to access objective function values for solutions,\n"
-  "or to access or set objective function coefficients.  The same\n"
-  "indices valid for a BarCollection object over the columns\n"
-  "(that is, column numeric indices, column names, slices,\n"
-  "multiple values) are also valid for indexing into this object.\n"
-  "The special index None is used to specify the shift term.  If\n"
-  "we have an LPX instance lp, we may have:\n\n"
-  "lp.obj[0]    --> the first objective coefficient\n"
-  "lp.obj[None] --> the shift term\n"
-  "lp.obj[-3:]  --> the last three objective coefficients\n\n"
-  "lp.obj[1,4]  --> the objective coefficients 1, 4\n"
-  "When assigning objective coefficients, for single indices one\n"
-  "may assign a single number.  For multiple indices, one may\n"
-  "assign a single number to make all indicated coefficients\n"
-  "identical, or specify an iterable of equal length to set them\n"
-  "all individiaully.  For example:\n\n"
-  "lp.obj[0]=2.5        --> set the first objective coef to 2.5\n"
-  "lp.obj[-3:]=1.0      --> the last three obj coefs get 1.0\n"
-  "lp.obj[1,4]=-2.0,2.0 --> obj coefs 1, 4 get -2.0, 2.0",
+  obj_doc,
   /* tp_doc */
   (traverseproc)Obj_traverse,		/* tp_traverse */
   (inquiry)Obj_clear,			/* tp_clear */

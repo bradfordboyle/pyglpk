@@ -144,61 +144,113 @@ int KKT_InitType(PyObject *module) {
   return util_add_type(module, &KKTType);
 }
 
+PyDoc_STRVAR(pa_ae_max_doc, "Largest absolute error.");
+
+PyDoc_STRVAR(pe_re_max_doc, "Largest relative error.");
+
+PyDoc_STRVAR(pb_ae_max_doc, "Largest absolute error.");
+
+PyDoc_STRVAR(pb_re_max_doc, "Largest relative error.");
+
+PyDoc_STRVAR(de_ae_max_doc, "Largest absolute error.");
+
+PyDoc_STRVAR(de_re_max_doc, "Largest relative error.");
+
+PyDoc_STRVAR(db_ae_max_doc, "Largest absolute error.");
+
+PyDoc_STRVAR(db_re_max_doc, "Largest relative error.");
+
 static PyMemberDef KKT_members[] = {
-  {"pe_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_ae_max),  READONLY,
-   "Largest absolute error."},
-  {"pe_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_re_max),  READONLY,
-   "Largest relative error."},
+  {"pe_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_ae_max), READONLY,
+   pa_ae_max_doc},
+  {"pe_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pe_re_max), READONLY,
+   pe_re_max_doc},
 
-  {"pb_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_ae_max),  READONLY,
-   "Largest absolute error."},
-  {"pb_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_re_max),  READONLY,
-   "Largest relative error."},
+  {"pb_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_ae_max), READONLY,
+   pb_ae_max_doc},
+  {"pb_re_max", T_DOUBLE, offsetof(KKTObject, kkt.pb_re_max), READONLY,
+   pb_re_max_doc},
 
-  {"de_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.de_ae_max),  READONLY,
-   "Largest absolute error."},
-  {"de_re_max", T_DOUBLE, offsetof(KKTObject, kkt.de_re_max),  READONLY,
-   "Largest relative error."},
+  {"de_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.de_ae_max), READONLY,
+   de_ae_max_doc},
+  {"de_re_max", T_DOUBLE, offsetof(KKTObject, kkt.de_re_max), READONLY,
+   de_re_max_doc},
 
-  {"db_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.db_ae_max),  READONLY,
-   "Largest absolute error."},
-  {"db_re_max", T_DOUBLE, offsetof(KKTObject, kkt.db_re_max),  READONLY,
-   "Largest relative error."},
+  {"db_ae_max", T_DOUBLE, offsetof(KKTObject, kkt.db_ae_max), READONLY,
+   db_ae_max_doc},
+  {"db_re_max", T_DOUBLE, offsetof(KKTObject, kkt.db_re_max), READONLY,
+   db_re_max_doc},
   {NULL}
 };
 
+PyDoc_STRVAR(pe_ae_row_doc,
+"Index of the row with the largest absolute error."
+);
+
+PyDoc_STRVAR(pe_re_row_doc,
+"Index of the row with the largest relative error."
+);
+
+PyDoc_STRVAR(pe_quality_doc,
+"Character representing the quality of the primal solution.\n"
+   "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."
+);
+
+PyDoc_STRVAR(pb_ae_ind_doc,
+"Index of the variable with the largest absolute error."
+);
+
+PyDoc_STRVAR(pb_re_ind_doc,
+"Index of the variable with the largest relative error."
+);
+
+PyDoc_STRVAR(pb_quality_doc,
+"Character representing the quality of primal feasibility.\n"
+"'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."
+);
+
+PyDoc_STRVAR(de_ae_row_doc,
+"Index of the column with the largest absolute error."
+);
+
+PyDoc_STRVAR(de_re_row_doc,
+"Index of the column with the largest relative error."
+);
+
+PyDoc_STRVAR(de_quality_doc,
+"Character representing the quality of the primal solution.\n"
+"'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."
+);
+
+PyDoc_STRVAR(db_ae_ind_doc,
+"Index of the variable with the largest absolute error."
+);
+
+PyDoc_STRVAR(db_re_ind_doc,
+"Index of the variable with the largest relative error."
+);
+
+PyDoc_STRVAR(db_quality_doc,
+"Character representing the quality of primal feasibility.\n"
+"'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."
+);
+
 static PyGetSetDef KKT_getset[] = {
-  {"pe_ae_row", (getter)KKT_pe_ae_row, (setter)NULL,
-   "Index of the row with the largest absolute error."},
-  {"pe_re_row", (getter)KKT_pe_re_row, (setter)NULL,
-   "Index of the row with the largest relative error."},
-  {"pe_quality", (getter)KKT_pe_quality, (setter)NULL,
-   "Character representing the quality of the primal solution.\n"
-   "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."},
+  {"pe_ae_row", (getter)KKT_pe_ae_row, (setter)NULL, pe_ae_row_doc},
+  {"pe_re_row", (getter)KKT_pe_re_row, (setter)NULL, pe_re_row_doc},
+  {"pe_quality", (getter)KKT_pe_quality, (setter)NULL, pe_quality_doc},
 
-  {"pb_ae_ind", (getter)KKT_pb_ae_ind, (setter)NULL,
-   "Index of the variable with the largest absolute error."},
-  {"pb_re_ind", (getter)KKT_pb_re_ind, (setter)NULL,
-   "Index of the variable with the largest relative error."},
-  {"pb_quality", (getter)KKT_pb_quality, (setter)NULL,
-   "Character representing the quality of primal feasibility.\n"
-   "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."},
+  {"pb_ae_ind", (getter)KKT_pb_ae_ind, (setter)NULL, pb_ae_ind_doc},
+  {"pb_re_ind", (getter)KKT_pb_re_ind, (setter)NULL, pb_re_ind_doc},
+  {"pb_quality", (getter)KKT_pb_quality, (setter)NULL, pb_quality_doc},
 
-  {"de_ae_row", (getter)KKT_de_ae_col, (setter)NULL,
-   "Index of the column with the largest absolute error."},
-  {"de_re_row", (getter)KKT_de_re_col, (setter)NULL,
-   "Index of the column with the largest relative error."},
-  {"de_quality", (getter)KKT_de_quality, (setter)NULL,
-   "Character representing the quality of the primal solution.\n"
-   "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."},
+  {"de_ae_row", (getter)KKT_de_ae_col, (setter)NULL, de_ae_row_doc},
+  {"de_re_row", (getter)KKT_de_re_col, (setter)NULL, de_re_row_doc},
+  {"de_quality", (getter)KKT_de_quality, (setter)NULL, de_quality_doc},
 
-  {"db_ae_ind", (getter)KKT_db_ae_ind, (setter)NULL,
-   "Index of the variable with the largest absolute error."},
-  {"db_re_ind", (getter)KKT_db_re_ind, (setter)NULL,
-   "Index of the variable with the largest relative error."},
-  {"db_quality", (getter)KKT_db_quality, (setter)NULL,
-   "Character representing the quality of primal feasibility.\n"
-   "'H', high, 'M', medium, 'L', low, or '?' wrong or infeasible."},
+  {"db_ae_ind", (getter)KKT_db_ae_ind, (setter)NULL, db_ae_ind_doc},
+  {"db_re_ind", (getter)KKT_db_re_ind, (setter)NULL, db_re_ind_doc},
+  {"db_quality", (getter)KKT_db_quality, (setter)NULL, db_quality_doc},
 
   {NULL}
 };
@@ -206,6 +258,19 @@ static PyGetSetDef KKT_getset[] = {
 static PyMethodDef KKT_methods[] = {
   {NULL}
 };
+
+PyDoc_STRVAR(kkt_doc,
+"Karush-Kuhn-Tucker conditions.\n"
+"\n"
+"This is returned from a check on quality of solutions. Four types of "
+"conditions are stored here:\n"
+"\n"
+"- KKT.PE conditions are attributes prefixed by 'pe' measuring error in the\n"
+"  primal solution.\n"
+"- KKT.PB conditions are attributes prefixed by 'pb' measuring error in\n"
+"  satisfying primal bound constraints, i.e., feasibility.\n"
+"- KKT.DE and KKT.DB are analogous, but for the dual."
+);
 
 PyTypeObject KKTType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -228,13 +293,7 @@ PyTypeObject KKTType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  "Karush-Kuhn-Tucker conditions.  This is returned from a check on\n"
-  "quality of solutions.  Four types of conditions are stored here:\n"
-  "- KKT.PE conditions are attributes prefixed by 'pe' measuring\n"
-  "  error in the primal solution.\n"
-  "- KKT.PB conditions are attributes prefixed by 'pb' measuring\n"
-  "  error in satisfying primal bound constraints, i.e., feasibility.\n"
-  "- KKT.DE and KKT.DB are analogous, but for the dual.",
+  kkt_doc,
 	/* tp_doc */
   0,					/* tp_traverse */
   0,					/* tp_clear */

@@ -339,12 +339,24 @@ static PyGetSetDef Params_getset[] = {
   {NULL}
 };
 
+PyDoc_STRVAR(reset_doc,
+"reset()\n"
+"\n"
+"Resets all control parameters to their default values."
+);
+
 static PyMethodDef Params_methods[] = {
-  {"reset", (PyCFunction)Params_reset, METH_NOARGS,
-   "reset()\n\n"
-   "Resets all control parameters to their default values."},
+  {"reset", (PyCFunction)Params_reset, METH_NOARGS, reset_doc},
   {NULL}
 };
+
+PyDoc_STRVAR(params_doc,
+"Parameter and statistics collection objects.\n"
+"\n"
+"An instance of this exists as the 'params' attribute of LPX instances. By\n"
+"changing parameters here, one may affect the behavior of the solvers, data\n"
+"readers, writers, verbosity, etc."
+);
 
 PyTypeObject ParamsType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -367,10 +379,7 @@ PyTypeObject ParamsType = {
   0,					/* tp_setattro*/
   0,					/* tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  "Parameter and statistics collection objects.  An instance of\n"
-  "this exists as the 'params' attribute of LPX instances.  By\n"
-  "changing parameters here, one may affect the behavior of\n"
-  "the solvers, data readers, writers, verbosity, etc.",
+  params_doc,
 	/* tp_doc */
   (traverseproc)Params_traverse,	/* tp_traverse */
   (inquiry)Params_clear,		/* tp_clear */

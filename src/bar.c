@@ -10,11 +10,11 @@ the Free Software Foundation; either version 3 of the License, or
 
 PyGLPK is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
+along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include "2to3.h"
@@ -277,7 +277,7 @@ static int Bar_setbounds(BarObject *self, PyObject *value, void *closure) {
     return -1;
   }
 
-  // Get the lower and upper object.  These references are borrowed.
+  // Get the lower and upper object. These references are borrowed.
   lo = PyTuple_GetItem(value, 0);
   uo = PyTuple_GetItem(value, 1);
 
@@ -527,83 +527,123 @@ int Bar_InitType(PyObject *module) {
   return 0;
 }
 
+PyDoc_STRVAR(index_doc,
+"The index of the row or column this object refers to."
+);
+
 static PyMemberDef Bar_members[] = {
-  {"index", T_INT, offsetof(BarObject, index), READONLY,
-   "The index of the row or column this object refers to."},
+  {"index", T_INT, offsetof(BarObject, index), READONLY, index_doc},
   {NULL}
 };
 
+PyDoc_STRVAR(name_doc, "Row/column symbolic name, or None if unset." );
+
+PyDoc_STRVAR(bounds_doc,
+"The lower and upper bounds, where None signifies unboundedness."
+);
+
+PyDoc_STRVAR(valid_doc,
+"Whether this row or column has a valid index in its LP."
+);
+
+PyDoc_STRVAR(matrix_doc,
+"Non-zero constraint coefficients in this row/column vector as a list of\n"
+"two-element (index, value) tuples."
+);
+
+PyDoc_STRVAR(nnz_doc,
+"Number of non-zero constraint elements in this row/column."
+);
+
+PyDoc_STRVAR(isrow_doc, "Whether this is a row." );
+
+PyDoc_STRVAR(iscol_doc, "Whether this is a column." );
+
+PyDoc_STRVAR(scale_doc,
+"The scale for the row or column. This is a factor which one may set to\n"
+"improve conditioning in the problem. Most users will want to use the\n"
+"LPX.scale() method rather than setting these directly. The resulting\n"
+"constraint matrix is such that the entry at row i and column j is\n"
+"(for the purpose of optimization) (ri)*(aij)*(sj) where ri and sj are the\n"
+"row and column scaling factors, and aij is the entry of the constraint\n"
+"matrix."
+);
+
+PyDoc_STRVAR(status_doc,
+"Row/column basis status\n"
+"\n"
+"This is a two character string with the following possible values:\n"
+"\n"
+"bs\n"
+"  This row/column is basic.\n"
+"nl\n"
+"  This row/column is non-basic.\n"
+"nu\n"
+"  This row/column is non-basic and set to the upper bound. On assignment,\n"
+"  if this row/column is not double bounded, this is equivalent to 'nl'.\n"
+"nf\n"
+"  This row/column is non-basic and free. On assignment this is equivalent\n"
+"  to 'nl'.\n"
+"ns\n"
+"  This row/column is non-basic and fixed. On assignment this is equivalent\n"
+"  to 'nl'."
+);
+
+PyDoc_STRVAR(value_doc, "The value of this variable by the last solver.");
+
+PyDoc_STRVAR(primal_doc,
+"The primal value of this variable by the last solver."
+);
+
+PyDoc_STRVAR(dual_doc, "The dual value of this variable by the last solver." );
+
+PyDoc_STRVAR(primal_s_doc,
+"The primal value of this variable by the simplex solver."
+);
+
+PyDoc_STRVAR(dual_s_doc,
+"The dual value of this variable by the simplex solver."
+);
+
+PyDoc_STRVAR(primal_i_doc,
+"The primal value of this variable by the interior-point solver."
+);
+
+PyDoc_STRVAR(dual_i_doc,
+"The dual value of this variable by the interior-point solver."
+);
+
+PyDoc_STRVAR(value_m_doc, "The value of this variable by the MIP solver." );
+
+PyDoc_STRVAR(kind_doc,
+"Either the type 'float' if this is a continuous variable, 'int' if this is\n"
+"an integer variable, or 'bool' if this is a binary variable."
+);
+
 static PyGetSetDef Bar_getset[] = {
-  {"name", (getter)Bar_getname, (setter)Bar_setname,
-   "Row/column symbolic name, or None if unset.", NULL},
-  {"bounds", (getter)Bar_getbounds, (setter)Bar_setbounds,
-   "The lower and upper bounds, where None signifies unboundedness.", NULL},
-  {"valid", (getter)Bar_getvalid, (setter)NULL,
-   "Whether this row or column has a valid index in its LP.", NULL},
-  {"matrix", (getter)Bar_getmatrix, (setter)Bar_setmatrix,
-   "Non-zero constraint coefficients in this row/column vector\n"
-   "as a list of two-element (index, value) tuples.",
-   NULL},
-  {"nnz", (getter)Bar_getnumnonzero, (setter)NULL,
-   "Number of non-zero constraint elements in this row/column.", NULL},
-  {"isrow", (getter)Bar_getisrow, (setter)NULL,
-   "Whether this is a row.", NULL},
-  {"iscol", (getter)Bar_getiscol, (setter)NULL,
-   "Whether this is a column.", NULL},
-
-  {"scale", (getter)Bar_getscale, (setter)Bar_setscale,
-   "The scale for the row or column.  This is a factor which one may\n"
-   "set to improve conditioning in the problem.  Most users will want\n"
-   "to use the LPX.scale() method rather than setting these directly.\n"
-   "The resulting constraint matrix is such that the entry at row i\n"
-   "and column j is (for the purpose of optimization) (ri)*(aij)*(sj)\n"
-   "where ri and sj are the row and column scaling factors, and aij\n"
-   "is the entry of the constraint matrix."
-   , NULL},
-
-  {"status", (getter)Bar_getstatus, (setter)Bar_setstatus,
-   "Row/column basis status.  This is a two character string with\n"
-   "the following possible values:\n\n"
-   "bs -- This row/column is basic.\n"
-   "nl -- This row/column is non-basic.\n"
-   "nu -- This row/column is non-basic and set to the upper bound.\n"
-   "      On assignment, if this row/column is not double bounded,\n"
-   "      this is equivalent to 'nl'.\n"
-   "nf -- This row/column is non-basic and free.\n"
-   "      On assignment this is equivalent to 'nl'.\n"
-   "ns -- This row/column is non-basic and fixed.\n"
-   "      On assignment this is equivalent to 'nl'.", NULL},
-
-  {"value", (getter)Bar_getvarval, (setter)NULL,
-   "The value of this variable by the last solver.", NULL},
-  {"primal", (getter)Bar_getvarval, (setter)NULL,
-   "The primal value of this variable by the last solver.", NULL},
-  {"dual", (getter)Bar_getvarval, (setter)NULL,
-   "The dual value of this variable by the last solver.", (void*)0x1},
-
-  {"primal_s", (getter)Bar_getspecvarval, (setter)NULL,
-   "The primal value of this variable by the simplex solver.",
-   (void*)(rowcol_primdual_funcptrs)},
-  {"dual_s", (getter)Bar_getspecvarval, (setter)NULL,
-   "The dual value of this variable by the simplex solver.",
+  {"name", (getter)Bar_getname, (setter)Bar_setname, name_doc, NULL},
+  {"bounds", (getter)Bar_getbounds, (setter)Bar_setbounds, bounds_doc, NULL},
+  {"valid", (getter)Bar_getvalid, (setter)NULL, valid_doc, NULL},
+  {"matrix", (getter)Bar_getmatrix, (setter)Bar_setmatrix, matrix_doc, NULL},
+  {"nnz", (getter)Bar_getnumnonzero, (setter)NULL, nnz_doc, NULL},
+  {"isrow", (getter)Bar_getisrow, (setter)NULL, isrow_doc, NULL},
+  {"iscol", (getter)Bar_getiscol, (setter)NULL, iscol_doc, NULL},
+  {"scale", (getter)Bar_getscale, (setter)Bar_setscale, scale_doc, NULL},
+  {"status", (getter)Bar_getstatus, (setter)Bar_setstatus, status_doc, NULL},
+  {"value", (getter)Bar_getvarval, (setter)NULL, value_doc, NULL},
+  {"primal", (getter)Bar_getvarval, (setter)NULL, primal_doc, NULL},
+  {"dual", (getter)Bar_getvarval, (setter)NULL, dual_doc, (void*)0x1},
+  {"primal_s", (getter)Bar_getspecvarval, (setter)NULL, primal_s_doc,
+  (void*)(rowcol_primdual_funcptrs)},
+  {"dual_s", (getter)Bar_getspecvarval, (setter)NULL, dual_s_doc,
    (void*)(rowcol_primdual_funcptrs+2)},
-
-  {"primal_i", (getter)Bar_getspecvarval, (setter)NULL,
-   "The primal value of this variable by the interior-point solver.",
+  {"primal_i", (getter)Bar_getspecvarval, (setter)NULL, primal_i_doc,
    (void*)(rowcol_primdual_funcptrs+4)},
-  {"dual_i", (getter)Bar_getspecvarval, (setter)NULL,
-   "The dual value of this variable by the interior-point solver.",
+  {"dual_i", (getter)Bar_getspecvarval, (setter)NULL, dual_i_doc,
    (void*)(rowcol_primdual_funcptrs+6)},
-
-  {"value_m", (getter)Bar_getspecvarvalm, (setter)NULL,
-   "The value of this variable by the MIP solver.",
+  {"value_m", (getter)Bar_getspecvarvalm, (setter)NULL, value_m_doc,
    (void*)(rowcol_primdual_funcptrs+8)},
-
-  {"kind", (getter)Bar_getkind, (setter)Bar_setkind,
-   "Either the type 'float' if this is a continuous variable, 'int'\n"
-   "if this is an integer variable, or 'bool' if this is a binary\n"
-   "variable.", NULL},
-
+  {"kind", (getter)Bar_getkind, (setter)Bar_setkind, kind_doc, NULL},
   {NULL}
 };
 
@@ -613,6 +653,12 @@ static PyMethodDef Bar_methods[] = {
    "Returns the index of the first added entry."},*/
   {NULL}
 };
+
+PyDoc_STRVAR(bar_doc,
+"Bar objects are used to refer to a particular row or column of a linear\n"
+"program. Rows and columns may be retrieved by indexing into the rows and\n"
+"cols sequences of LPX instances."
+);
 
 PyTypeObject BarType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -639,10 +685,7 @@ PyTypeObject BarType = {
 #else
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
 #endif
-  "Bar objects are used to refer to a particular row or column of\n"
-  "a linear program.  Rows and columns may be retrieved by\n"
-  "indexing into the rows and cols sequences of LPX instances.",
-  /* tp_doc */
+  bar_doc,			/* tp_doc */
   (traverseproc)Bar_traverse,		/* tp_traverse */
   (inquiry)Bar_clear,			/* tp_clear */
   (richcmpfunc)Bar_richcompare,		/* tp_richcompare */
