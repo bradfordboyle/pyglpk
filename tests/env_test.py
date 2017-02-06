@@ -5,10 +5,13 @@
 # GLPK library, and thus have some chance of affecting other tests,
 # and being affected by the workings of other tests.
 
-from testutils import *
-import random, math, gc
+import glpk
+import random
+import gc
+import unittest
 
-class MemoryTestCase(Runner, unittest.TestCase):
+
+class MemoryTestCase(unittest.TestCase):
     """Tests for the environment memory variables."""
     def setUp(self):
         pass
@@ -16,155 +19,164 @@ class MemoryTestCase(Runner, unittest.TestCase):
     def doNottestEmpty(self):
         """Test that there are currently 0 bytes allocated."""
         # This test doesn't really work for some reason.
-        gc.collect() # Ensure any leftover LPX objects are cleaned up.
-        self.assertEqual(env.blocks, 0)
-        self.assertEqual(env.bytes, 0)
+        gc.collect()  # Ensure any leftover LPX objects are cleaned up.
+        self.assertEqual(glpk.env.blocks, 0)
+        self.assertEqual(glpk.env.bytes, 0)
 
     def testPeakIsBound(self):
         """Tests that the peak is always greater than current."""
-        self.assertTrue(env.blocks <= env.blocks_peak)
-        self.assertTrue(env.bytes <= env.bytes_peak)
+        self.assertTrue(glpk.env.blocks <= glpk.env.blocks_peak)
+        self.assertTrue(glpk.env.bytes <= glpk.env.bytes_peak)
 
     def testIncrease(self):
         """Test that creating a new LPX increases the memory allocated."""
         gc.collect()
-        bytes_first = env.bytes
-        lp = LPX()
+        bytes_first = glpk.env.bytes
+        lp = glpk.LPX()
         lp.rows.add(2)
         lp.cols.add(2)
         lp.name = 'foo'
-        self.assertTrue(env.bytes > bytes_first)
+        self.assertTrue(glpk.env.bytes > bytes_first)
         del lp
         gc.collect()
-        self.assertEqual(env.bytes, bytes_first)
+        self.assertEqual(glpk.env.bytes, bytes_first)
 
+    @unittest.skipIf(glpk.env.version < (4, 19), 'TODO')
     def testMemLimitNegative(self):
         """Test that negative memory limits are not permitted."""
-        if env.version<(4,19): return
-        self.assertRaises(ValueError, self.runner, 'env.mem_limit=-1')
-        self.assertRaises(ValueError, self.runner, 'env.mem_limit=-500')
+        with self.assertRaises(ValueError):
+            glpk.env.mem_limit = -1
+        with self.assertRaises(ValueError):
+            glpk.env.mem_limit = -500
 
+    @unittest.skipIf(glpk.env.version < (4, 19), 'TODO')
     def testMemLimit(self):
         """Test setting the memory limit."""
-        if env.version<(4,19): return
-        limits = [5,0,10,None,2000]
-        self.assertEqual(env.mem_limit, None)
+        limits = [5, 0, 10, None, 2000]
+        self.assertEqual(glpk.env.mem_limit, None)
         for limit in limits:
-            env.mem_limit = limit
-            self.assertEqual(env.mem_limit, limit)
-        del env.mem_limit
-        self.assertEqual(env.mem_limit, None)
+            glpk.env.mem_limit = limit
+            self.assertEqual(glpk.env.mem_limit, limit)
+        del glpk.env.mem_limit
+        self.assertEqual(glpk.env.mem_limit, None)
 
+    @unittest.skipIf(glpk.env.version < (4, 19), 'TODO')
     def testMemLimitType(self):
         """Test that only integer memory limits are permitted."""
-        if env.version<(4,19): return
-        limits = ['hi!', 3.14159, complex(2,3), {'foo':'bar'}, (23,)]
+        limits = ['hi!', 3.14159, complex(2, 3), {'foo': 'bar'}, (23,)]
         for limit in limits:
-            self.assertRaises(TypeError, self.runner,
-                              'env.mem_limit=%r'%(limit,))
+            with self.assertRaises(TypeError):
+                glpk.env.mem_limit = limit
+
 
 class TerminalTest(unittest.TestCase):
     """Tests for the terminal output settings."""
     def setUp(self):
         # Store the term_on value.
-        self.term_on = env.term_on
+        self.term_on = glpk.env.term_on
         # One area where GLPK produces output is in its settings.
-        lp = self.lp = LPX()
+        lp = self.lp = glpk.LPX()
         lp.rows.add(1)
         lp.cols.add(2)
         lp.cols[0].name = 'x'
         lp.cols[1].name = 'y'
-        for c in lp.cols: c.bounds=0,1
-        lp.obj[:] = [1,1]
+        for c in lp.cols:
+            c.bounds = 0, 1
+        lp.obj[:] = [1, 1]
         lp.obj.maximize = True
         lp.rows[0].matrix = [0.5, 1.0]
         lp.rows[0].bounds = None, 1
 
     def tearDown(self):
         # Restore term_on to whatever value it had when we started.
-        env.term_on = self.term_on
-        del env.term_hook
+        glpk.env.term_on = self.term_on
+        del glpk.env.term_hook
 
     def testTerminalRedirect(self):
         """Test setting the hook function simply."""
-        env.term_on = True
+        glpk.env.term_on = True
         self.char_count = 0
+
         def count_hook(s):
             self.char_count += len(s)
-        env.term_hook = count_hook
-        self.lp.simplex(msg_lev=LPX.MSG_ALL)
+
+        glpk.env.term_hook = count_hook
+        self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
         self.assertTrue(self.char_count > 0)
 
     def testTerminalOnOff(self):
         """Test setting the terminal on and off."""
-        env.term_on = True
+        glpk.env.term_on = True
         self.char_count = 0
+
         def count_hook(s):
-            import sys
             self.char_count += len(s)
-        env.term_hook = count_hook
-        self.lp.simplex(msg_lev=LPX.MSG_ALL)
+
+        glpk.env.term_hook = count_hook
+        self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
         self.assertTrue(self.char_count > 0)
         # Now turn the terminal output off.
-        env.term_on = False
+        glpk.env.term_on = False
         oldcount = self.char_count
-        self.lp.simplex(msg_lev=LPX.MSG_ALL)
-        if env.version<(4,21) or env.version>(4,26):
+        self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
+        if glpk.env.version < (4, 21) or glpk.env.version > (4, 26):
             # GLPK versions 4.21 through 4.26 did not fully respect
             # the environment settings.
             self.assertEqual(oldcount, self.char_count)
         # Now turn the terminal output back on.
-        env.term_on = True
-        self.lp.simplex(msg_lev=LPX.MSG_ALL)
+        glpk.env.term_on = True
+        self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
         self.assertTrue(self.char_count > oldcount)
 
     def testMultipleTerminalDirect(self):
         """Test setting the hook function multiple times."""
-        env.term_on = True
+        glpk.env.term_on = True
         numhooks = 3
         self.char_counts = [0]*numhooks
+
         def makehook(which):
             def thehook(s):
-                self.char_counts[which]+=len(s)
+                self.char_counts[which] += len(s)
             return thehook
+
         self.hooks = [makehook(i) for i in range(numhooks)]
         # Randomly reset the hooks.
         rgen = random.Random(10)
         for trial in range(100):
             whichhook = rgen.randint(0, numhooks-1)
-            env.term_hook=self.hooks[whichhook]
+            glpk.env.term_hook = self.hooks[whichhook]
             old_counts = self.char_counts[:]
-            self.lp.simplex(msg_lev=LPX.MSG_ALL)
+            self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
             # Test that only the count associated with this hook has changed.
             for w in range(numhooks):
-                if w==whichhook:
+                if w == whichhook:
                     self.assertTrue(self.char_counts[w] > old_counts[w])
                 else:
                     self.assertEqual(self.char_counts[w], old_counts[w])
 
     def testErrorInTermHook(self):
         """Test that errors in the terminal hook are ignored."""
-        env.term_on = True
+        glpk.env.term_on = True
 
         def error_hook(s):
             1.0 / 0.0
-        env.term_hook = error_hook
-        self.lp.simplex(msg_lev=LPX.MSG_ALL)
+        glpk.env.term_hook = error_hook
+        self.lp.simplex(msg_lev=glpk.LPX.MSG_ALL)
         self.assertEqual(self.lp.status, 'opt')
 
     def testGetTermOn(self):
         """Test getting/setting term_on."""
-        env.term_on = True
-        self.assertTrue(env.term_on)
+        glpk.env.term_on = True
+        self.assertTrue(glpk.env.term_on)
         with self.assertRaises(TypeError) as cm:
-            env.term_on = 'foo'
+            glpk.env.term_on = 'foo'
         self.assertIn('term_on must be set with bool', str(cm.exception))
 
     def testGetTermHook(self):
         """Test getting the terminal hook."""
-        self.assertTrue(env.term_hook is None)
+        self.assertTrue(glpk.env.term_hook is None)
 
         def noop_hook(s):
             pass
-        env.term_hook = noop_hook
-        self.assertEqual(noop_hook, env.term_hook)
+        glpk.env.term_hook = noop_hook
+        self.assertEqual(noop_hook, glpk.env.term_hook)

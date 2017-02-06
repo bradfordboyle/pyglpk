@@ -1,7 +1,10 @@
 """Tests for proper memory deallocation of objects."""
 
-from testutils import *
-import weakref, gc
+import glpk
+import weakref
+import gc
+import unittest
+
 
 class GarbageCollectionTestCase(unittest.TestCase):
     """A garbage collection test case.
@@ -19,8 +22,11 @@ class GarbageCollectionTestCase(unittest.TestCase):
     def __init__(self, name=''):
         unittest.TestCase.__init__(self, name)
         oldfunc = getattr(self, name)
-        class tuplesubclass(list): pass
+
+        class tuplesubclass(list):
+            pass
         self.tuplesubclass = tuplesubclass
+
         # "Wrap" the test function function with this replacement.
         def replacement():
             self.weakrefs = []
@@ -31,9 +37,9 @@ class GarbageCollectionTestCase(unittest.TestCase):
                 ob = wr()
                 if ob is not None:
                     bad_objs.append(ob)
-            self.assertEqual(len(bad_objs), 0, # Run final check.
-                             'These objs not freed: %s'%bad_objs) 
-        replacement.__doc__ = oldfunc.__doc__    
+            self.assertEqual(len(bad_objs), 0,  # Run final check.
+                             'These objs not freed: %s' % bad_objs)
+        replacement.__doc__ = oldfunc.__doc__
         setattr(self, name, replacement)
 
     def reg(self, ob):
@@ -46,20 +52,19 @@ class GarbageCollectionTestCase(unittest.TestCase):
     def testLPCreation(self):
         """Test simple creation of a linear program."""
         reg = self.reg
-        lp = reg(LPX())
+        reg(glpk.LPX())
 
     def testLPDefinition(self):
         """Test creation of many objects."""
         reg = self.reg
-        lp = reg(LPX())
+        lp = reg(glpk.LPX())
         lp.name = 'some name'
         reg(lp.rows).add(2)
         reg(lp.cols).add(5)
-        reg(lp.rows[0]).matrix = [1,2,3,4,5]
+        reg(lp.rows[0]).matrix = [1, 2, 3, 4, 5]
         reg(lp.rows[1]).name = 'second row'
         for c in reg(iter(reg(lp.cols))):
-            reg(c).bounds = 1,2
-        n = reg(reg(lp.cols)[0]).name
-        reg(lp.obj)[:] = [6,7,8,9,10]
-        s = sum([v for v in reg(iter(reg(lp.obj)))])
-
+            reg(c).bounds = 1, 2
+        reg(reg(lp.cols)[0]).name
+        reg(lp.obj)[:] = [6, 7, 8, 9, 10]
+        sum([v for v in reg(iter(reg(lp.obj)))])
