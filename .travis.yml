@@ -4,6 +4,7 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
+  - "3.6"
 
 env:
   - GLPK_VERSION=4.55
@@ -11,19 +12,23 @@ env:
   - GLPK_VERSION=4.59
   - GLPK_VERSION=4.61
 
+branches:
+  only:
+    - master
+    - develop
+
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libgmp3-dev
   - wget http://ftp.gnu.org/gnu/glpk/glpk-${GLPK_VERSION}.tar.gz
   - tar vxfz glpk-${GLPK_VERSION}.tar.gz
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
-  - pip install cpp-coveralls
 
 install:
-  - CFLAGS="-coverage" python setup.py install
+  - pip install cpp-coveralls tox-travis
 
 script:
-  - pytest tests
+  - tox
 
 after_success:
   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
