@@ -213,14 +213,14 @@ class LpxTests(unittest.TestCase):
 
     def testInit(self):
         with self.assertRaises(TypeError) as cm:
-            lp = LPX(gmp='', mps='')
+            LPX(gmp='', mps='')
         self.assertIn(
             'cannot specify multiple data sources',
             str(cm.exception)
         )
 
         with self.assertRaises(RuntimeError) as cm:
-            lp = LPX(gmp=('', None, ''))
+            LPX(gmp=('', None, ''))
         self.assertIn(
             'GMP model reader failed',
             str(cm.exception)
@@ -235,14 +235,14 @@ class LpxTests(unittest.TestCase):
         data.flush()
 
         with self.assertRaises(RuntimeError) as cm:
-            lp = LPX(gmp=(model.name, ''))
+            LPX(gmp=(model.name, ''))
         self.assertIn(
             'GMP data reader failed',
             str(cm.exception)
         )
 
         with self.assertRaises(RuntimeError) as cm:
-            lp = LPX(gmp=(model.name, data.name))
+            LPX(gmp=(model.name, data.name))
         self.assertIn(
             'GMP generator failed',
             str(cm.exception)

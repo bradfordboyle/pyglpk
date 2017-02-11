@@ -1,6 +1,8 @@
 """Tests for the solver itself."""
 
-from testutils import *
+from glpk import env, LPX
+import sys
+import unittest
 from itertools import cycle
 
 
@@ -19,8 +21,9 @@ class SimpleSolverTest(unittest.TestCase):
         lp.cols.add(2)
         lp.cols[0].name = 'x'
         lp.cols[1].name = 'y'
-        for c in lp.cols: c.bounds=0,1
-        lp.obj[:] = [1,1]
+        for c in lp.cols:
+            c.bounds = 0, 1
+        lp.obj[:] = [1, 1]
         lp.obj.maximize = True
         lp.rows[0].matrix = [0.5, 1.0]
         lp.rows[0].bounds = None, 1
@@ -174,9 +177,9 @@ class SimpleIntegerSolverTest(unittest.TestCase):
         lp.cols[0].name = 'x'
         lp.cols[1].name = 'y'
         for c in lp.cols:
-            c.bounds = 0,1
+            c.bounds = 0, 1
             c.kind = int
-        lp.obj[:] = [2,1]
+        lp.obj[:] = [2, 1]
         lp.obj.maximize = True
         lp.rows[0].matrix = [0.5, 1.0]
         lp.rows[0].bounds = None, 1
@@ -246,9 +249,9 @@ class TwoDimensionalTest(unittest.TestCase):
         lp = self.lp
         # Set up the rules of the problem.
         lp.cols.add(2)
-        lp.obj[0,1] = 1
+        lp.obj[0, 1] = 1
         # Try very simple rules.
-        x1, x2 = lp.cols[0], lp.cols[1] # For convenience...
+        x1, x2 = lp.cols[0], lp.cols[1]  # For convenience...
         x1.name, x2.name = 'x1', 'x2'
         x1.bounds = None, 1
         x2.bounds = None, 2
@@ -260,7 +263,7 @@ class TwoDimensionalTest(unittest.TestCase):
         self.assertAlmostEqual(x2.primal, 2)
         # Now try pushing it into unbounded territory.
         lp.obj[0] = -1
-        self.assertEqual(None, lp.simplex()) # No error?
+        self.assertEqual(None, lp.simplex())  # No error?
         self.assertEqual('unbnd', lp.status)
         # Redefine the bounds so it is bounded again.
         x1.bounds = -1, None
@@ -291,10 +294,10 @@ class TwoDimensionalTest(unittest.TestCase):
         self.assertAlmostEqual(x1.primal, .25)
         self.assertAlmostEqual(x2.primal, 1.5)
         # Now go for the gusto.  Change column constraint, force infeasibility.
-        x2.bounds = 2, None # Instead of x2<=2, must now be >=2!  Tee hee.
+        x2.bounds = 2, None  # Instead of x2<=2, must now be >=2!  Tee hee.
         self.assertEqual(None, lp.simplex())
         self.assertEqual('nofeas', lp.status)
-        # By removing the first row constraint, we allow opt point (-1,4).
+        # By removing the first row constraint, we allow opt point (-1, 1).
         del lp.rows[0]
         lp.std_basis()
 
@@ -310,9 +313,9 @@ class TwoDimensionalTest(unittest.TestCase):
         lp = self.lp
         # Set up the rules of the problem.
         lp.cols.add(2)
-        lp.obj[0,1] = 1
+        lp.obj[0, 1] = 1
         # Try very simple rules.
-        x1, x2 = lp.cols[0], lp.cols[1] # For convenience...
+        x1, x2 = lp.cols[0], lp.cols[1]  # For convenience...
         x1.name, x2.name = 'x1', 'x2'
         x1.bounds = None, 1
         x2.bounds = None, 2
@@ -345,10 +348,10 @@ class TwoDimensionalTest(unittest.TestCase):
         self.assertAlmostEqual(x1.primal, .25)
         self.assertAlmostEqual(x2.primal, 1.5)
         # Now go for the gusto.  Change column constraint, force infeasibility.
-        x2.bounds = 3, None # Instead of x2<=2, must now be >=3!  Tee hee.
+        x2.bounds = 3, None  # Instead of x2<=2, must now be >=3!  Tee hee.
         self.assertEqual(None, lp.interior())
         self.assertEqual('nofeas', lp.status)
-        # By removing the first row constraint, we allow opt point (-1,4).
+        # By removing the first row constraint, we allow opt point (-1, 4).
         del lp.rows[0]
         lp.std_basis()
 
@@ -358,6 +361,7 @@ class TwoDimensionalTest(unittest.TestCase):
         self.assertAlmostEqual(lp.obj.value, 5)
         self.assertAlmostEqual(x1.primal, -1)
         self.assertAlmostEqual(x2.primal, 4)
+
 
 class SatisfiabilityMIPTest(unittest.TestCase):
     @classmethod
@@ -369,18 +373,22 @@ class SatisfiabilityMIPTest(unittest.TestCase):
         corresponds to the truth of variable i.
 
         If no satisfying assignment could be found, None is returned."""
-        if len(expression)==0: return []
+        if len(expression) == 0:
+            return []
         numvars = max(max(abs(v) for v in clause) for clause in expression)
         lp = LPX()
         lp.cols.add(2*numvars)
         for col in lp.cols:
             col.bounds = 0.0, 1.0
+
         def lit2col(lit):
-            if lit>0: return 2*lit-2
+            if lit > 0:
+                return 2*lit-2
             return 2*(-lit)-1
+
         for i in range(1, numvars+1):
-            lp.cols[lit2col( i)].name =  'x_%d'%i
-            lp.cols[lit2col(-i)].name = '!x_%d'%i
+            lp.cols[lit2col(i)].name = 'x_%d' % i
+            lp.cols[lit2col(-i)].name = '!x_%d' % i
             lp.rows.add(1)
             lp.rows[-1].matrix = [(lit2col(i), 1.0), (lit2col(-i), 1.0)]
             lp.rows[-1].bounds = 1.0
@@ -389,13 +397,17 @@ class SatisfiabilityMIPTest(unittest.TestCase):
             lp.rows[-1].matrix = [(lit2col(lit), 1.0) for lit in clause]
             lp.rows[-1].bounds = 1, None
         retval = lp.simplex()
-        if retval != None: return None
-        if lp.status != 'opt': return None
+        if retval is not None:
+            return None
+        if lp.status != 'opt':
+            return None
         for col in lp.cols:
             col.kind = int
         retval = lp.integer()
-        if retval != None: return None
-        if lp.status != 'opt': return None
+        if retval is not None:
+            return None
+        if lp.status != 'opt':
+            return None
         return [col.value > 0.99 for col in lp.cols[::2]]
 
     @classmethod
@@ -409,7 +421,7 @@ class SatisfiabilityMIPTest(unittest.TestCase):
             # literals must be true.
             lits_true = 0
             for lit in clause:
-                if (lit>0) == (assignment[abs(lit)-1]):
+                if (lit > 0) == (assignment[abs(lit)-1]):
                     lits_true += 1
             if lits_true == 0:
                 return False
@@ -429,13 +441,16 @@ class SatisfiabilityMIPTest(unittest.TestCase):
 
     def testInsolvableSat(self):
         """Test that an unsolvable satisfiability problem can't be solved."""
-        exp = [(1,2), (1,-2), (-1,2), (-1,-2)]
+        exp = [(1, 2), (1, -2), (-1, 2), (-1, -2)]
         solution = self.solve_sat(exp)
         self.assertEqual(solution, None)
 
 
-@unittest.skipIf(env.version < (4, 20), "callbacks did't exist prior to 4.20")
-class MIPCallbackTest(Runner, unittest.TestCase):
+@unittest.skipIf(
+    env.version < (4, 20),
+    "callbacks did't exist prior to 4.20"
+)
+class MIPCallbackTest(unittest.TestCase):
     # This CNF expression is complicated enough to the point where
     # when run through our SAT solver, the resulting search tree will
     # have a fair number of calls, and the callback shall be called a
@@ -473,9 +488,10 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         (17, 10, 11), (4, 20, 14), (22, -17, -27), (-12, 16, -3),
         (-25, -20, -10), (23, -16, -5), (3, 30, 15), (25, 28, 5),
         (-24, 22, 23), (13, -14, -30), (-21, -17, 28), (-2, -3, -17),
-        (-19, 16, 3), (-6, 26, 1), (9, 27, -18), (21, 17, 29), (30, 8, 7)]
+        (-19, 16, 3), (-6, 26, 1), (9, 27, -18), (21, 17, 29), (30, 8, 7)
+    ]
 
-    allreasons='select prepro rowgen heur cutgen branch bingo'.split()
+    allreasons = 'select prepro rowgen heur cutgen branch bingo'.split()
 
     @classmethod
     def solve_sat(self, expression=None, callback=None,
@@ -497,19 +513,24 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         kwargs is a dictionary of other optional keyword arguments and
         their values which is passed to the lp.integer solution
         procedure."""
-        if expression==None: expression=self.expression
-        if len(expression)==0: return []
+        if expression is None:
+            expression = self.expression
+        if len(expression) == 0:
+            return []
         numvars = max(max(abs(v) for v in clause) for clause in expression)
         lp = LPX()
         lp.cols.add(2*numvars)
         for col in lp.cols:
             col.bounds = 0.0, 1.0
+
         def lit2col(lit):
-            if lit>0: return 2*lit-2
+            if lit > 0:
+                return 2*lit-2
             return 2*(-lit)-1
+
         for i in range(1, numvars+1):
-            lp.cols[lit2col( i)].name =  'x_%d'%i
-            lp.cols[lit2col(-i)].name = '!x_%d'%i
+            lp.cols[lit2col(i)].name = 'x_%d' % i
+            lp.cols[lit2col(-i)].name = '!x_%d' % i
             lp.rows.add(1)
             lp.rows[-1].matrix = [(lit2col(i), 1.0), (lit2col(-i), 1.0)]
             lp.rows[-1].bounds = 1.0
@@ -518,16 +539,21 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             lp.rows[-1].matrix = [(lit2col(lit), 1.0) for lit in clause]
             lp.rows[-1].bounds = 1, None
         retval = lp.simplex()
-        if retval != None: return None
-        if lp.status != 'opt': return None
+        if retval is not None:
+            return None
+        if lp.status != 'opt':
+            return None
         for col in lp.cols:
             col.kind = int
         retval = lp.integer(callback=callback, **kwargs)
-        if return_processor: return_processor(retval, lp)
-        if retval != None: return None
-        if lp.status != 'opt': return None
+        if return_processor:
+            return_processor(retval, lp)
+        if retval is not None:
+            return None
+        if lp.status != 'opt':
+            return None
         return [col.value > 0.99 for col in lp.cols[::2]]
-    
+
     @classmethod
     def verify(self, expression, assignment):
         """Get the truth of an expression given a variable truth assignment.
@@ -539,7 +565,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
             # literals must be true.
             lits_true = 0
             for lit in clause:
-                if (lit>0) == (assignment[abs(lit)-1]):
+                if (lit > 0) == (assignment[abs(lit)-1]):
                     lits_true += 1
             if lits_true == 0:
                 return False
@@ -557,30 +583,35 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         class Callback:
             default = "Hi, I'm a string!"
         self.Callback = Callback
-        self.assertRaises(TypeError, self.runner,
-                          'self.solve_sat(callback=self.Callback())')
+        with self.assertRaises(TypeError):
+            self.solve_sat(callback=self.Callback())
 
     def testBadCallback(self):
         """Tests that errors in the callback are propagated properly."""
         testobj = self
+
         class Callback:
             def __init__(self):
                 self.stopped = False
+
             def default(self, tree):
                 # We should not be here if we have already made an error.
                 testobj.assertFalse(self.stopped)
                 self.stopped = True
-                a = 1 / 0
+                1 / 0
+
         self.Callback = Callback
-        self.assertRaises(ZeroDivisionError, self.runner,
-                          'self.solve_sat(callback=self.Callback())')
+        with self.assertRaises(ZeroDivisionError):
+            self.solve_sat(callback=self.Callback())
 
     def testCallbackReasons(self):
         """Tests that there are no invalid Tree.reason codes."""
         reasons = set()
+
         class Callback:
             def default(self, tree):
                 reasons.add(tree.reason)
+
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
 
@@ -593,58 +624,76 @@ class MIPCallbackTest(Runner, unittest.TestCase):
     def testCallbackMatchsReasons(self):
         """Ensure that callback methods and reasons are properly matched."""
         testobj = self
+
         class Callback:
             def select(self, tree): testobj.assertEqual(tree.reason, 'select')
+
             def prepro(self, tree): testobj.assertEqual(tree.reason, 'prepro')
+
             def branch(self, tree): testobj.assertEqual(tree.reason, 'branch')
+
             def rowgen(self, tree): testobj.assertEqual(tree.reason, 'rowgen')
-            def heur  (self, tree): testobj.assertEqual(tree.reason, 'heur')
+
+            def heur(self, tree): testobj.assertEqual(tree.reason, 'heur')
+
             def cutgen(self, tree): testobj.assertEqual(tree.reason, 'cutgen')
-            def bingo (self, tree): testobj.assertEqual(tree.reason, 'bingo')
-            def default(self,tree): testobj.fail('should not reach default')
+
+            def bingo(self, tree): testobj.assertEqual(tree.reason, 'bingo')
+
+            def default(self, tree): testobj.fail('should not reach default')
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
 
     def testCallbackTerminate(self):
         """Tests that termination actually stops the solver."""
         testobj = self
+
         class Callback:
             def __init__(self):
                 self.stopped = False
+
             def default(self, tree):
                 # We should not be here if we have terminated.
                 testobj.assertFalse(self.stopped)
                 self.stopped = True
                 tree.terminate()
+
         def rp(retval, lp):
             self.assertEqual(retval, 'stop')
+
         assign = self.solve_sat(callback=Callback(), return_processor=rp)
         self.assertEqual(assign, None)
 
     def testNodeCountsConsistent(self):
         """Tests that the tree node counts are consistent."""
         testobj = self
+
         class Callback:
             def __init__(self):
-                self.last_total=0
+                self.last_total = 0
+
             def default(self, tree):
                 testobj.assertTrue(tree.num_active <= tree.num_all)
                 testobj.assertTrue(tree.num_all <= tree.num_total)
                 testobj.assertTrue(self.last_total <= tree.num_total)
                 testobj.assertEqual(tree.num_active, len(list(tree)))
                 self.last_total = tree.num_total
+
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
 
+    @unittest.skipIf(env.version < (4, 21), "TODO")
     def testTreeSelectCallable(self):
         """Test that Tree.select is callable within select, not elsewhere."""
-        if env.version<(4,21): return
         testobj = self
+
         class Callback:
             def __init__(self):
-                self.last_total=0
+                self.last_total = 0
+
             def select(self, tree):
                 tree.select(tree.best_node)
+
             def default(self, tree):
                 try:
                     tree.select(tree.best_node)
@@ -652,15 +701,18 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                     return
                 else:
                     testobj.fail('Was able to call without error!')
+
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
 
     def testSelectCurrNodeNone(self):
         """Test that there is no current node in the select callback."""
         testobj = self
+
         class Callback:
             def __init__(self):
-                self.last_total=0
+                self.last_total = 0
+
             def select(self, tree):
                 testobj.assertEqual(tree.curr_node, None)
         assign = self.solve_sat(callback=Callback())
@@ -669,6 +721,7 @@ class MIPCallbackTest(Runner, unittest.TestCase):
     def testTreeIterator(self):
         """Test the tree iterator."""
         testobj = self
+
         class Callback:
             def default(self, tree):
                 explicit_actives = []
@@ -676,8 +729,9 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 while n:
                     explicit_actives.append(n.subproblem)
                     n = n.next
-                actives = [n.subproblem for n in tree]
+                actives = [node.subproblem for node in tree]
                 testobj.assertEqual(actives, explicit_actives)
+
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
 
@@ -703,7 +757,8 @@ class MIPCallbackTest(Runner, unittest.TestCase):
 
     def testTreeNodeAttrs(self):
         testobj = self
-        tree_node_fmt_str = "<glpk.TreeNode, active subprob {0:d} of glpk.Tree 0x{1:02x}"
+        tree_node_fmt_str = \
+            "<glpk.TreeNode, active subprob {0:d} of glpk.Tree 0x{1:02x}"
 
         class Callback:
             def default(self, tree):
@@ -732,7 +787,6 @@ class MIPCallbackTest(Runner, unittest.TestCase):
         class Callback:
             def select(self, tree):
                 testobj.assertTrue(tree.select(tree.first_node) is None)
-                
 
         assign = self.solve_sat(callback=Callback())
         self.assertTrue(self.verify(self.expression, assign))
@@ -807,7 +861,9 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 # find a column that we can't branch on and then try to
                 # branch on it
                 try:
-                    idx = next(i for i in range(1, 61) if not tree.can_branch(i))
+                    idx = next(
+                        i for i in range(1, 61) if not tree.can_branch(i)
+                    )
                     with testobj.assertRaises(RuntimeError) as cm:
                         tree.branch_upon(idx)
                     testobj.assertIn(
@@ -817,14 +873,16 @@ class MIPCallbackTest(Runner, unittest.TestCase):
                 except StopIteration:
                     pass
 
-                branch_idx = next(i for i in range(1, 61) if tree.can_branch(i))
+                branch_idx = next(
+                    i for i in range(1, 61) if tree.can_branch(i)
+                )
                 with testobj.assertRaises(ValueError) as cm:
                     tree.branch_upon(branch_idx, b'x')
                 testobj.assertIn(
                     "select argument must be D, U, or N",
                     str(cm.exception)
                 )
-                
+
                 select_flag = next(testobj.select_flags)
                 if select_flag is None:
                     tree.branch_upon(branch_idx)

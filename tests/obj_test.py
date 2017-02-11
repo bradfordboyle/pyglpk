@@ -1,6 +1,8 @@
 """Tests for changing the objective function."""
 
-from testutils import *
+import glpk
+import unittest
+
 
 class ObjectiveDirectionTestCase(unittest.TestCase):
     """Tests whether setting this LP to max/min works.
@@ -10,7 +12,7 @@ class ObjectiveDirectionTestCase(unittest.TestCase):
     merely check that setting the problem to maximization or
     minimization has the desirable properties of persistence."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
 
     def testInitiallyTrueOrFalse(self):
         """Tests whether the objective is initially boolean."""
@@ -26,17 +28,15 @@ class ObjectiveDirectionTestCase(unittest.TestCase):
         self.lp.obj.maximize = False
         self.assertEqual(self.lp.obj.maximize, False)
 
-class ObjectiveShiftTestCase(Runner, unittest.TestCase):
+
+class ObjectiveShiftTestCase(unittest.TestCase):
     """Tests setting the objective's constant shift coefficient."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
 
     def testInitialShiftAttribute(self):
         """Tests that the initial shift lp.obj.shift is 0."""
         self.assertEqual(self.lp.obj.shift, 0.0)
-
-    def testInitialShiftAttribute(self):
-        """Tests that the initial shift lp.obj[None] is 0."""
         self.assertEqual(self.lp.obj[None], 0.0)
 
     def testSetShiftThroughAttribute(self):
@@ -58,15 +58,20 @@ class ObjectiveShiftTestCase(Runner, unittest.TestCase):
 
     def testBadTypeAssignment(self):
         """Tests assigning objects other than a float as shift."""
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj.shift = None')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[None] = "Foo"')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj.shift = [1]')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[None] = {1:2}')
+        with self.assertRaises(TypeError):
+            self.lp.obj.shift = None
+        with self.assertRaises(TypeError):
+            self.lp.obj[None] = "Foo"
+        with self.assertRaises(TypeError):
+            self.lp.obj.shift = [1]
+        with self.assertRaises(TypeError):
+            self.lp.obj[None] = {1: 2}
 
-class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
+
+class ObjectiveCoefficientTestCase(unittest.TestCase):
     """Tests setting and indexing objective function coefficients."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
         self.lp.cols.add(5)
 
     def testObjectiveIterator(self):
@@ -114,7 +119,8 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
 
     def testStringIndex(self):
         """Tests setting objective coefficients by col name."""
-        for c in self.lp.cols: c.name='x%i'%c.index
+        for c in self.lp.cols:
+            c.name = 'x%i' % c.index
         # Test single value assignment.
         self.lp.obj['x1'] = 3.1
         self.assertEqual(self.lp.obj['x1'], 3.1)
@@ -125,20 +131,28 @@ class ObjectiveCoefficientTestCase(Runner, unittest.TestCase):
 
     def testSetSingleCoefficientBadType(self):
         """Test setting a single coefficient with a bad type."""
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[1] = None')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[3] = [2]')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[-1] = {1:2}')
+        with self.assertRaises(TypeError):
+            self.lp.obj[1] = None
+        with self.assertRaises(TypeError):
+            self.lp.obj[3] = [2]
+        with self.assertRaises(TypeError):
+            self.lp.obj[-1] = {1: 2}
 
     def testSetMultipleCoefficientBadType(self):
         """Tests setting multiple coefficients with a bad type."""
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[0,1] = 2, None')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[-2:] = 2, [1]')
-        self.assertRaises(TypeError, self.runner, 'self.lp.obj[-2:] = self')
+        with self.assertRaises(TypeError):
+            self.lp.obj[0, 1] = 2, None
+        with self.assertRaises(TypeError):
+            self.lp.obj[-2:] = 2, [1]
+        with self.assertRaises(TypeError):
+            self.lp.obj[-2:] = self
 
     def testSetBadNumberOfCoefficientsToTuple(self):
         """Test a mismatch between assignees and assignments."""
-        self.assertRaises(ValueError, self.runner,
-                          'self.lp.obj[1,2,3] = 4,5,6,7')
-        self.assertRaises(ValueError, self.runner, 'self.lp.obj[1,2,3] = 4,5')
+        with self.assertRaises(ValueError):
+            self.lp.obj[1, 2, 3] = 4, 5, 6, 7
+        with self.assertRaises(ValueError):
+            self.lp.obj[1, 2, 3] = 4, 5
         # Tuple indexing for good measure.
-        self.assertRaises(ValueError, self.runner, 'self.lp.obj[-2:] = 1,4,5')
+        with self.assertRaises(ValueError):
+            self.lp.obj[-2:] = 1, 4, 5

@@ -1,6 +1,7 @@
 """Tests for naming objects with .name attributes."""
+import unittest
+import glpk
 
-from testutils import *
 
 class NameTestCase:
     """Constains test set methods for setting names.
@@ -44,30 +45,34 @@ class NameTestCase:
         def f(newName): self.nameable.name = newName
         self.assertRaises(TypeError, f, 4)
         self.assertRaises(TypeError, f, ['foo'])
-        self.assertRaises(TypeError, f, {'foo':'bar'})
+        self.assertRaises(TypeError, f, {'foo': 'bar'})
+
 
 class LPNameTestCase(unittest.TestCase, NameTestCase):
     """Naming tests for the linear program name."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
         self.nameable = self.lp
+
 
 class ObjectiveNameTestCase(unittest.TestCase, NameTestCase):
     """Naming tests for the objective function name."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
         self.nameable = self.lp.obj
+
 
 class RowNameTestCase(unittest.TestCase, NameTestCase):
     """Naming tests for a row name."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
         rnew = self.lp.rows.add(1)
         self.nameable = self.lp.rows[rnew]
+
 
 class ColumnNameTestCase(unittest.TestCase, NameTestCase):
     """Naming tests for a column name."""
     def setUp(self):
-        self.lp = LPX()
+        self.lp = glpk.LPX()
         cnew = self.lp.cols.add(1)
         self.nameable = self.lp.cols[cnew]

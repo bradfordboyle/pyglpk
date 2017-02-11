@@ -9,6 +9,7 @@ env:
   - GLPK_VERSION=4.55
   - GLPK_VERSION=4.57
   - GLPK_VERSION=4.59
+  - GLPK_VERSION=4.61
 
 before_install:
   - sudo apt-get update -qq
@@ -18,8 +19,11 @@ before_install:
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
   - pip install cpp-coveralls
 
+install:
+  - CFLAGS="-coverage" python setup.py install
+
 script:
-  - make coverage
+  - pytest tests
 
 after_success:
   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
