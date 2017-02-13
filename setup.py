@@ -1,11 +1,17 @@
 from distutils.core import setup, Extension
-import sys, os, os.path, re
+import os
+import re
+import sys
 
 useparams = False
 
+if 'TOXENV' in os.environ and 'SETUPPY_CFLAGS' in os.environ:
+    os.environ['CFLAGS'] = os.environ['SETUPPY_CFLAGS']
+
 sources = 'glpk 2to3 lp barcol bar obj util kkt tree environment'
 source_roots = sources.split()
-if useparams: source_roots.append('params')
+if useparams:
+    source_roots.append('params')
 
 # This build process will not work with anything prior to GLPK 4.16,
 # since there were many notable changes in GLPK including,
@@ -26,10 +32,10 @@ if m:
     minor_version = int(m.group(1))
     assert minor_version >= 16
     sys.argv = sys.argv[:-1]
-    libdirs.append(os.path.join('locals', '4.%d'%minor_version, 'lib'))
-    incdirs.append(os.path.join('locals', '4.%d'%minor_version, 'include'))
-    if minor_version<37:
-        libs = ['glpk.0.%d.0'%(minor_version-15)]
+    libdirs.append(os.path.join('locals', '4.%d' % minor_version, 'lib'))
+    incdirs.append(os.path.join('locals', '4.%d' % minor_version, 'include'))
+    if minor_version < 37:
+        libs = ['glpk.0.%d.0' % (minor_version-15)]
     else:
         libs = ['glpk.0']
     print (libdirs, incdirs)
@@ -50,9 +56,9 @@ else:
 # Perhaps set your libdir manually in case neither system defaults,
 # nor the cleverness does not work.
 
-#libs = ['glpk.something']
-#libdirs = ['/my/dirs/are/here/lib']
-#incdirs = ['/my/dirs/are/here/include']
+# libs = ['glpk.something']
+# libdirs = ['/my/dirs/are/here/lib']
+# incdirs = ['/my/dirs/are/here/include']
 
 # If the user did not define libraries themselves, set that up.  We
 # require both glpk and gmp.
@@ -65,38 +71,42 @@ except NameError:
 incdirs.append('src')
 
 macros = []
-if useparams: macros.append(('USEPARAMS', None))
+if useparams:
+    macros.append(('USEPARAMS', None))
 
 # Now, finally, define that module!
 module1 = Extension(
     'glpk',
-    sources = [os.path.join('src',r+'.c') for r in source_roots],
-    define_macros = macros,
-    library_dirs = libdirs, include_dirs = incdirs,
-    libraries = libs, extra_objects = extraobs)
+    sources=[os.path.join('src', r+'.c') for r in source_roots],
+    define_macros=macros,
+    library_dirs=libdirs, include_dirs=incdirs,
+    libraries=libs, extra_objects=extraobs)
 
 ld = """The PyGLPK module gives one access to the functionality
-of the GNU Linear Programming Kit.  
+of the GNU Linear Programming Kit.
 """
 
-setup(name='glpk',
-      version='0.5.0-SNAPSHOT',
-      description='PyGLPK, a Python module encapsulating GLPK.',
-      long_description=ld,
-      author='Thomas Finley',
-      author_email='tfinley@gmail.com',
-      url='http://tfinley.net/software/pyglpk/',
-      maintainer='Bradford D. Boyle',
-      maintainer_email='bradford.d.boyle@gmail.com',
-      license='GPL',
-      classifiers=[
-          'Development Status :: 3 - Alpha',
-          'Intended Audience :: Science/Research',
-          'License :: OSI Approved :: GNU General Public License (GPL)',
-          'Programming Language :: C',
-          'Programming Language :: Python',
-          'Operating System :: POSIX',
-          'Operating System :: MacOS :: MacOS X',
-          'Topic :: Scientific/Engineering :: Mathematics',
-          'Topic :: Software Development :: Libraries :: Python Modules' ],
-      ext_modules=[module1])
+setup(
+    name='glpk',
+    version='0.5.0-SNAPSHOT',
+    description='PyGLPK, a Python module encapsulating GLPK.',
+    long_description=ld,
+    author='Thomas Finley',
+    author_email='tfinley@gmail.com',
+    url='http://tfinley.net/software/pyglpk/',
+    maintainer='Bradford D. Boyle',
+    maintainer_email='bradford.d.boyle@gmail.com',
+    license='GPL',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Programming Language :: C',
+        'Programming Language :: Python',
+        'Operating System :: POSIX',
+        'Operating System :: MacOS :: MacOS X',
+        'Topic :: Scientific/Engineering :: Mathematics',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ],
+    ext_modules=[module1]
+)

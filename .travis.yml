@@ -1,32 +1,46 @@
 language: python
-
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
+python: '3.6'
 
 env:
-  - GLPK_VERSION=4.55
-  - GLPK_VERSION=4.57
-  - GLPK_VERSION=4.59
-  - GLPK_VERSION=4.61
+  - GLPK_VERSION=4.55 TOXENV=2.7-cover,extension-coveralls
+  - GLPK_VERSION=4.55 TOXENV=3.4-cover,extension-coveralls
+  - GLPK_VERSION=4.55 TOXENV=3.5-cover,extension-coveralls
+  - GLPK_VERSION=4.55 TOXENV=3.6-cover,extension-coveralls
+  - GLPK_VERSION=4.57 TOXENV=2.7-cover,extension-coveralls
+  - GLPK_VERSION=4.57 TOXENV=3.4-cover,extension-coveralls
+  - GLPK_VERSION=4.57 TOXENV=3.5-cover,extension-coveralls
+  - GLPK_VERSION=4.57 TOXENV=3.6-cover,extension-coveralls
+  - GLPK_VERSION=4.59 TOXENV=2.7-cover,extension-coveralls
+  - GLPK_VERSION=4.59 TOXENV=3.4-cover,extension-coveralls
+  - GLPK_VERSION=4.59 TOXENV=3.5-cover,extension-coveralls
+  - GLPK_VERSION=4.59 TOXENV=3.6-cover,extension-coveralls
+  - GLPK_VERSION=4.61 TOXENV=2.7-cover,extension-coveralls
+  - GLPK_VERSION=4.61 TOXENV=3.4-cover,extension-coveralls
+  - GLPK_VERSION=4.61 TOXENV=3.5-cover,extension-coveralls
+  - GLPK_VERSION=4.61 TOXENV=3.6-cover,extension-coveralls
+
+branches:
+  only:
+    - master
+    - develop
 
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libgmp3-dev
   - wget http://ftp.gnu.org/gnu/glpk/glpk-${GLPK_VERSION}.tar.gz
-  - tar vxfz glpk-${GLPK_VERSION}.tar.gz
+  - tar xzf glpk-${GLPK_VERSION}.tar.gz
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
-  - pip install cpp-coveralls
 
 install:
-  - CFLAGS="-coverage" python setup.py install
+  - pip install tox
 
 script:
-  - pytest tests
+  - tox -v
 
 after_success:
   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
 
 notifications:
-  email: false
+  email:
+    on_success: never
+    on_failure: always
