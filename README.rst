@@ -1,9 +1,9 @@
 pyglpk
 ======
-.. image:: https://travis-ci.org/bradfordboyle/pyglpk.svg?branch=v0.5.0-dev
+.. image:: https://travis-ci.org/bradfordboyle/pyglpk.svg?branch=master
     :target: https://travis-ci.org/bradfordboyle/pyglpk
-.. image:: https://coveralls.io/repos/github/bradfordboyle/pyglpk/badge.svg?branch=v0.5.0-dev
-    :target: https://coveralls.io/github/bradfordboyle/pyglpk?branch=v0.5.0-dev
+.. image:: https://coveralls.io/repos/github/bradfordboyle/pyglpk/badge.svg?branch=master
+    :target: https://coveralls.io/github/bradfordboyle/pyglpk?branch=master
 .. image:: https://readthedocs.org/projects/pyglpk/badge/
     :target: http://pyglpk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
