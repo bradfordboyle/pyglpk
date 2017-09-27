@@ -2,6 +2,7 @@ from distutils.core import setup, Extension
 import os
 import re
 import sys
+import versioneer
 
 useparams = False
 
@@ -70,7 +71,7 @@ except NameError:
 
 incdirs.append('src')
 
-macros = []
+macros = [('VERSION_NUMBER', '"{}"'.format(versioneer.get_version()))]
 if useparams:
     macros.append(('USEPARAMS', None))
 
@@ -88,7 +89,8 @@ of the GNU Linear Programming Kit.
 
 setup(
     name='glpk',
-    version='0.5.0-SNAPSHOT',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='PyGLPK, a Python module encapsulating GLPK.',
     long_description=ld,
     author='Thomas Finley',
