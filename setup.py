@@ -47,7 +47,7 @@ else:
     glpsol_path = os.popen('which glpsol').read().strip()
     # If we can't find it, just hope that the default libs are correct.
     if glpsol_path:
-        glpsol_path = os.path.abspath(glpsol_path)
+        glpsol_path = os.path.realpath(os.path.abspath(glpsol_path))
         head, tail = os.path.split(glpsol_path)
         head, tail = os.path.split(head)
         libdirs.append(os.path.join(head, 'lib'))
