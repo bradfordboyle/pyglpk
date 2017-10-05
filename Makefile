@@ -21,6 +21,7 @@ clean:
 	@rm -f glpk.so
 
 cleaner: clean
+	@rm -rf .tox
 	find . -name "*~" -delete
 	find . -name "*.pyc" -delete
 

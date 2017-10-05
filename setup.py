@@ -1,6 +1,5 @@
 from distutils.core import setup, Extension
 import os
-import re
 import sys
 import versioneer
 
@@ -18,70 +17,42 @@ if useparams:
 # since there were many notable changes in GLPK including,
 # importantly, something which actually contains the version number.
 
-libdirs, incdirs, extraobs = [], [], []
+pkgdirs = [] # incdirs and libdirs get these
+libs = ["glpk", "gmp"]
+defs = []
+incdirs = []
+libdirs = []
 
-# The glpver argument is one which is used only for the purposes of
-# PyGLPK development, and will be of no use or interest to the
-# standard practitioner.  In order to assure compatibility with the
-# many GLPK versions which exist, it is helpful to build against one
-# of many
+def append_env(L, e):
+    v = os.environ.get(e)
+    if v and os.path.exists(v):
+        L.append(v)
 
-# This is very dirty.
-m = re.match('glpver=(\d+)', sys.argv[-1])
-if m:
-    # We have defined that we want to build to a local GLPK version.
-    minor_version = int(m.group(1))
-    assert minor_version >= 16
-    sys.argv = sys.argv[:-1]
-    libdirs.append(os.path.join('locals', '4.%d' % minor_version, 'lib'))
-    incdirs.append(os.path.join('locals', '4.%d' % minor_version, 'include'))
-    if minor_version < 37:
-        libs = ['glpk.0.%d.0' % (minor_version-15)]
-    else:
-        libs = ['glpk.0']
-    print (libdirs, incdirs)
-else:
-    # Try to get which is the executable path, and infer additional
-    # library and include directories from there, based on a call to
-    # whatever glpsol we find.
-    glpsol_path = os.popen('which glpsol').read().strip()
-    # If we can't find it, just hope that the default libs are correct.
-    if glpsol_path:
-        glpsol_path = os.path.abspath(glpsol_path)
-        head, tail = os.path.split(glpsol_path)
-        head, tail = os.path.split(head)
-        libdirs.append(os.path.join(head, 'lib'))
-        incdirs.append(os.path.join(head, 'include'))
+append_env(pkgdirs, "GLPK")
 
-# USERS DO CUSTOM INSTRUCTIONS HERE
-# Perhaps set your libdir manually in case neither system defaults,
-# nor the cleverness does not work.
+# Hack up sys.argv
+unprocessed = []
+for arg in sys.argv[1:]:
+    if arg.startswith("--with-glpk="):
+        pkgdirs.append(arg.split("=", 1)[1])
+        continue
+    unprocessed.append(arg)
+sys.argv[1:] = unprocessed
 
-# libs = ['glpk.something']
-# libdirs = ['/my/dirs/are/here/lib']
-# incdirs = ['/my/dirs/are/here/include']
+for pkgdir in pkgdirs:
+    incdirs.append(os.path.join(pkgdir, "include"))
+    libdirs.append(os.path.join(pkgdir, "lib"))
 
-# If the user did not define libraries themselves, set that up.  We
-# require both glpk and gmp.
-try:
-    libs
-except NameError:
-    # The user nor test code did not set libs up yet.
-    libs = ['glpk', 'gmp']
-
-incdirs.append('src')
-
-macros = [('VERSION_NUMBER', '"{}"'.format(versioneer.get_version()))]
+defs.append(('VERSION_NUMBER', '"{}"'.format(versioneer.get_version())))
 if useparams:
-    macros.append(('USEPARAMS', None))
+    defs.append(('USEPARAMS', None))
 
 # Now, finally, define that module!
-module1 = Extension(
-    'glpk',
-    sources=[os.path.join('src', r+'.c') for r in source_roots],
-    define_macros=macros,
-    library_dirs=libdirs, include_dirs=incdirs,
-    libraries=libs, extra_objects=extraobs)
+pyglpk_ext = Extension(
+    'glpk', [os.path.join('src', r+'.c') for r in source_roots],
+    libraries=libs, include_dirs=incdirs,
+    library_dirs=libdirs, define_macros=defs,
+    runtime_library_dirs=libdirs)
 
 ld = """The PyGLPK module gives one access to the functionality
 of the GNU Linear Programming Kit.
@@ -110,5 +81,5 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    ext_modules=[module1]
+    ext_modules=[pyglpk_ext]
 )
