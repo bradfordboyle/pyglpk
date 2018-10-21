@@ -5,9 +5,6 @@ import versioneer
 
 useparams = False
 
-if 'TOXENV' in os.environ and 'SETUPPY_CFLAGS' in os.environ:
-    os.environ['CFLAGS'] = os.environ['SETUPPY_CFLAGS']
-
 sources = 'glpk 2to3 lp barcol bar obj util kkt tree environment'
 source_roots = sources.split()
 if useparams:
