@@ -1,24 +1,13 @@
 language: python
-dist: precise
-python: '3.6'
+python:
+  - "2.7"
+  - "3.6"
 
 env:
-  - GLPK_VERSION=4.55 TOXENV=2.7-cover,extension-coveralls
-  - GLPK_VERSION=4.55 TOXENV=3.4-cover,extension-coveralls
-  - GLPK_VERSION=4.55 TOXENV=3.5-cover,extension-coveralls
-  - GLPK_VERSION=4.55 TOXENV=3.6-cover,extension-coveralls
-  - GLPK_VERSION=4.57 TOXENV=2.7-cover,extension-coveralls
-  - GLPK_VERSION=4.57 TOXENV=3.4-cover,extension-coveralls
-  - GLPK_VERSION=4.57 TOXENV=3.5-cover,extension-coveralls
-  - GLPK_VERSION=4.57 TOXENV=3.6-cover,extension-coveralls
-  - GLPK_VERSION=4.59 TOXENV=2.7-cover,extension-coveralls
-  - GLPK_VERSION=4.59 TOXENV=3.4-cover,extension-coveralls
-  - GLPK_VERSION=4.59 TOXENV=3.5-cover,extension-coveralls
-  - GLPK_VERSION=4.59 TOXENV=3.6-cover,extension-coveralls
-  - GLPK_VERSION=4.61 TOXENV=2.7-cover,extension-coveralls
-  - GLPK_VERSION=4.61 TOXENV=3.4-cover,extension-coveralls
-  - GLPK_VERSION=4.61 TOXENV=3.5-cover,extension-coveralls
-  - GLPK_VERSION=4.61 TOXENV=3.6-cover,extension-coveralls
+  - GLPK_VERSION=4.57
+  - GLPK_VERSION=4.59
+  - GLPK_VERSION=4.61
+  - GLPK_VERSION=4.63
 
 branches:
   only:
@@ -32,7 +21,7 @@ before_install:
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
 
 install:
-  - pip install tox
+  - pip install tox-travis
 
 script:
   - tox -v
