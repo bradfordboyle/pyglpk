@@ -20,7 +20,7 @@ before_install:
   - pushd glpk-${GLPK_VERSION} && ./configure --prefix=/usr && make && sudo make install && popd
 
 install:
-  - pip install tox-travis
+  - pip install cpp-coveralls tox-travis
 
 script:
   - tox -v
