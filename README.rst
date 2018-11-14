@@ -7,6 +7,15 @@ pyglpk
 .. image:: https://readthedocs.org/projects/pyglpk/badge/
     :target: http://pyglpk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
+.. image:: https://img.shields.io/lgtm/alerts/g/bradfordboyle/pyglpk.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/bradfordboyle/pyglpk/alerts/
+    :alt: Total alerts
+.. image:: https://img.shields.io/lgtm/grade/cpp/g/bradfordboyle/pyglpk.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/bradfordboyle/pyglpk/context:cpp
+    :alt: Language grade: C/C++
+.. image:: https://img.shields.io/lgtm/grade/python/g/bradfordboyle/pyglpk.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/bradfordboyle/pyglpk/context:python
+    :alt: Language grade: Python
 
 
 Updated fork of T. Finley's PyGLPK module
