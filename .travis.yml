@@ -24,6 +24,14 @@ install:
 
 script:
   - tox -v
+  - pip install .
+  - python examples/correlation.py
+  - python examples/hamiltonian.py
+  - python examples/maxflow.py
+  - python examples/sat.py
+  - python examples/sat2.py
+  # skip this example for now
+  #- python examples/threads.py
 
 after_success:
   - coveralls --exclude-pattern 'glpk-*' --exclude tests --gcov-options '\-lp'

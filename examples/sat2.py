@@ -19,13 +19,13 @@ def solve_sat(expression):
         lp.rows[-1].matrix = [(lit2col(lit), 1.0) for lit in clause]
         lp.rows[-1].bounds = 1, None # At least one literal must be true.
     retval = lp.simplex()            # Try to solve the relaxed problem.
-    assert retval == None            # Should not fail in this fashion.
+    assert retval is None            # Should not fail in this fashion.
     if lp.status!='opt': return None # If no relaxed solution, no exact sol.
 
     for col in lp.cols:
         col.kind = int
     retval = lp.integer()            # Try to solve this integer problem.
-    assert retval == None            # Should not fail in this fashion.
+    assert retval is None            # Should not fail in this fashion.
     if lp.status != 'opt': return None
     return [col.value > 0.99 for col in lp.cols[::2]]
 

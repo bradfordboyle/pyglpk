@@ -24,7 +24,7 @@ def hamiltonian(edges):
     lp.rows[-1].matrix = [1.0]*len(lp.cols)
     lp.rows[-1].bounds = len(node2colnums)-1
 
-    assert lp.simplex() == None         # Should not fail this way.
+    assert lp.simplex() is None         # Should not fail this way.
     if lp.status != 'opt': return None  # If no relaxed sol., no exact sol.
 
     # Return the edges whose associated struct var has value 1.
@@ -84,10 +84,10 @@ def tsp(edges):
     lp.rows[-1].matrix = [1.0]*len(lp.cols)
     lp.rows[-1].bounds = len(node2colnums)
 
-    assert lp.simplex() == None         # Should not fail this way.
+    assert lp.simplex() is None         # Should not fail this way.
     if lp.status != 'opt': return None  # If no relaxed sol., no exact sol.
 
-    assert lp.integer() == None         # Should not fail this way.
+    assert lp.integer() is None         # Should not fail this way.
     if lp.status != 'opt': return None  # Count not find integer solution!
 
     # Return the edges whose associated struct var has value 1.

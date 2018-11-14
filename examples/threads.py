@@ -1,5 +1,4 @@
 import sat
-import random
 import sys
 import threading
 
