@@ -29,7 +29,7 @@ def maxflow(capgraph, s, t):
             mat.append((node2rnum[nfrom], colnum, -1.0))
         if nto in node2rnum:            # Flow to node increases its net flow
             mat.append((node2rnum[nto], colnum, 1.0))
-        
+
     lp.obj.maximize = True              # Want source s max flow maximized.
     lp.matrix = mat                     # Assign 0 net-flow constraint matrix.
 
@@ -38,9 +38,9 @@ def maxflow(capgraph, s, t):
     return [(nfrom, nto, col.value)     # Return edges with assigned flow.
             for col, (nfrom, nto, cap) in zip(lp.cols, capgraph)]
 
-capgraph = [ ('s','o',3), ('s','p',3), ('o','p',2), ('o','q',3), 
+capgraph = [ ('s','o',3), ('s','p',3), ('o','p',2), ('o','q',3),
              ('p','r',2), ('q','r',4), ('q','t',2), ('r','t',3) ]
-print maxflow(capgraph, 's', 't')
+print(maxflow(capgraph, 's', 't'))
 
 capgraph = [('s','a',4), ('s','b',1), ('a','b',2.5), ('a','t',1), ('b','t',4)]
-print maxflow(capgraph, 's', 't')
+print(maxflow(capgraph, 's', 't'))

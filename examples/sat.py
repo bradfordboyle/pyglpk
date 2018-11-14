@@ -27,7 +27,7 @@ def generate_cnf(numvars, numclauses, perclause=3, rgen=random):
     number of literals per clause."""
     if (numvars < 3): raise ValueError("need more than 3 variables")
     return [tuple(rgen.choice((-v,v)) for v in rgen.sample(
-        xrange(1,numvars+1),3)) for c in xrange(numclauses)]
+        range(1,numvars+1),3)) for c in range(numclauses)]
 
 def solve_sat(expression):
     """Attempts to satisfy a formula of conjunction of disjunctions.
@@ -47,7 +47,7 @@ def solve_sat(expression):
 
     # The output GLPK produces is rather annoying.
     glpk.env.term_on = False
-    
+
     # We want twice as many columns (LP variables) as there are
     # logical variables in the expression: one column for each
     # positive literal, and one column for each negative literal.  A
@@ -74,7 +74,7 @@ def solve_sat(expression):
     # constraint matrix indicating that a literal and its complement
     # must sum to exactly 1 since exactly one of the two literals must
     # be true.
-    for i in xrange(1, numvars+1):
+    for i in range(1, numvars+1):
         lp.cols[lit2col( i)].name =  'x_%d'%i
         lp.cols[lit2col(-i)].name = '!x_%d'%i
         lp.rows.add(1)
@@ -145,7 +145,7 @@ if __name__=='__main__':
     assignment = solve_sat(expression)
 
     if assignment:
-        print 'Assignment found.  It is',
-        print 'valid.' if verify(expression, assignment) else 'invalid.'
+        print('Assignment found.  It is')
+        print('valid.' if verify(expression, assignment) else 'invalid.')
     else:
-        print 'No assignment found.'
+        print('No assignment found.')

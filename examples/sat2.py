@@ -10,7 +10,7 @@ def solve_sat(expression):
         col.bounds = 0.0, 1.0
     def lit2col(lit):                # Function to compute column index.
         return [2*(-lit)-1,2*lit-2][lit>0]
-    for i in xrange(1, numvars+1):   # Ensure "oppositeness" of literals.
+    for i in range(1, numvars+1):   # Ensure "oppositeness" of literals.
         lp.rows.add(1)
         lp.rows[-1].matrix = [(lit2col(i), 1.0), (lit2col(-i), 1.0)]
         lp.rows[-1].bounds = 1.0     # Must sum to exactly 1.
@@ -30,4 +30,4 @@ def solve_sat(expression):
     return [col.value > 0.99 for col in lp.cols[::2]]
 
 exp = [(-1, -3, -4), (2, 3, -4), (1, -2, 4), (1, 3, 4), (-1, 2, -3)]
-print solve_sat(exp)
+print(solve_sat(exp))

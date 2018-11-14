@@ -18,13 +18,13 @@ def solve_problem(tid, num):
     sys.stdout.flush()
 
 def thread_callable(tid):
-    for i in xrange(50):
+    for i in range(50):
         solve_problem(tid, i)
     sys.stdout.write('F(%d)' % tid)
     sys.stdout.flush()
 
 threads = []
-for tid in xrange(num_threads):
+for tid in range(num_threads):
     thread = threading.Thread(target=thread_callable, args=(tid,))
     threads.append(thread)
     thread.start()

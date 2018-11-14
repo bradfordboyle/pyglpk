@@ -37,7 +37,7 @@ def hamiltonian(edges):
 #         4
 
 g1 = [(1,2), (2,3), (3,4), (4,2), (3,5)]
-print hamiltonian(g1)
+print(hamiltonian(g1))
 
 #  4    5    6
 #  |    |    |
@@ -45,7 +45,7 @@ print hamiltonian(g1)
 #  1----2----3
 
 g2 = [(1,2), (2,3), (1,4), (2,5), (3,6)]
-print hamiltonian(g2)
+print(hamiltonian(g2))
 
 #  4    5----6
 #  |    |    |
@@ -53,7 +53,7 @@ print hamiltonian(g2)
 #  1----2----3
 
 g3 = g2 + [(5,6)]
-print hamiltonian(g3)
+print(hamiltonian(g3))
 
 
 def tsp(edges):
