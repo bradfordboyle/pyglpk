@@ -359,35 +359,16 @@ PyDoc_STRVAR(params_doc,
 );
 
 PyTypeObject ParamsType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.Params",			/* tp_name */
-  sizeof(ParamsObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)Params_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  0,					/* tp_repr*/
-  0,					/* tp_as_number*/
-  0,					/* tp_as_sequence*/
-  0,					/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  0,					/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  params_doc,
-	/* tp_doc */
-  (traverseproc)Params_traverse,	/* tp_traverse */
-  (inquiry)Params_clear,		/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(ParamsObject, weakreflist),	/* tp_weaklistoffset */
-  0,					/* tp_iter */
-  0,					/* tp_iternext */
-  Params_methods,			/* tp_methods */
-  Params_members,			/* tp_members */
-  Params_getset,			/* tp_getset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.Params",
+    .tp_basicsize      = sizeof(ParamsObject),
+    .tp_dealloc        = (destructor) Params_dealloc,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc            = params_doc,
+    .tp_traverse       = (traverseproc) Params_traverse,
+    .tp_clear          = (inquiry) Params_clear,
+    .tp_weaklistoffset = offsetof(ParamsObject, weakreflist),
+    .tp_methods        = Params_methods,
+    .tp_members        = Params_members,
+    .tp_getset         = Params_getset,
 };

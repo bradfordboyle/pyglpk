@@ -201,36 +201,19 @@ PyDoc_STRVAR(tree_node_doc,
 );
 
 PyTypeObject TreeNodeType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.TreeNode",				/* tp_name */
-  sizeof(TreeNodeObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)TreeNode_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  (reprfunc)TreeNode_Str,		/* tp_repr*/
-  0,					/* tp_as_number*/
-  0,					/* tp_as_sequence*/
-  0,					/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  (reprfunc)TreeNode_Str,		/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  tree_node_doc,	/* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  (richcmpfunc)TreeNode_richcompare,	/* tp_richcompare */
-  offsetof(TreeNodeObject, weakreflist),/* tp_weaklistoffset */
-  0,					/* tp_iter */
-  0,					/* tp_iternext */
-  TreeNode_methods,			/* tp_methods */
-  TreeNode_members,			/* tp_members */
-  TreeNode_getset,			/* tp_getset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.TreeNode",
+    .tp_basicsize      = sizeof(TreeNodeObject),
+    .tp_dealloc        = (destructor) TreeNode_dealloc,
+    .tp_repr           = (reprfunc) TreeNode_Str,
+    .tp_str            = (reprfunc) TreeNode_Str,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc            = tree_node_doc,
+    .tp_richcompare    = (richcmpfunc) TreeNode_richcompare,
+    .tp_weaklistoffset = offsetof(TreeNodeObject, weakreflist),
+    .tp_methods        = TreeNode_methods,
+    .tp_members        = TreeNode_members,
+    .tp_getset         = TreeNode_getset,
 };
 
 /************************ TREE ITER IMPLEMENTATION ************************/
@@ -280,41 +263,16 @@ PyDoc_STRVAR(tree_iter_doc,
 );
 
 PyTypeObject TreeIterType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.TreeIter",			/* tp_name */
-  sizeof(TreeIterObject),		/* tp_basicsize */
-  0,					/* tp_itemsize */
-  (destructor)TreeIter_dealloc,		/* tp_dealloc */
-  0,					/* tp_print */
-  0,					/* tp_getattr */
-  0,					/* tp_setattr */
-  0,					/* tp_compare */
-  0,					/* tp_repr */
-  0,					/* tp_as_number */
-  0,					/* tp_as_sequence */
-  0,					/* tp_as_mapping */
-  0,					/* tp_hash */
-  0,					/* tp_call */
-  0,					/* tp_str */
-  PyObject_GenericGetAttr,		/* tp_getattro */
-  0,					/* tp_setattro */
-  0,					/* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT,			/* tp_flags */
-  tree_iter_doc,	/* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(TreeIterObject, weakreflist),/* tp_weaklistoffset */
-  PyObject_SelfIter,			/* tp_iter */
-  (iternextfunc)TreeIter_next,		/* tp_iternext */
-  0,					/* tp_methods */
-  0,					/* tp_members */
-  0,					/* tp_getset */
-  0,					/* tp_base */
-  0,					/* tp_dict */
-  0,					/* tp_descr_get */
-  0,					/* tp_descr_set */
-  0,					/* tp_dictoffset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.TreeIter",
+    .tp_basicsize      = sizeof(TreeIterObject),
+    .tp_dealloc        = (destructor)TreeIter_dealloc,
+    .tp_getattro       = PyObject_GenericGetAttr,
+    .tp_flags          = Py_TPFLAGS_DEFAULT,
+    .tp_doc            = tree_iter_doc,
+    .tp_weaklistoffset = offsetof(TreeIterObject, weakreflist),
+    .tp_iter           = PyObject_SelfIter,
+    .tp_iternext       = (iternextfunc) TreeIter_next,
 };
 
 /************************ TREE OBJECT IMPLEMENTATION ************************/
@@ -706,35 +664,15 @@ PyDoc_STRVAR(tree_doc,
 );
 
 PyTypeObject TreeType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.Tree",				/* tp_name */
-  sizeof(TreeObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)Tree_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  0,					/* tp_repr*/
-  0,					/* tp_as_number*/
-  0,					/* tp_as_sequence*/
-  0,					/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  0,					/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  tree_doc,		/* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(TreeObject, weakreflist),	/* tp_weaklistoffset */
-  Tree_Iter,				/* tp_iter */
-  0,					/* tp_iternext */
-  Tree_methods,				/* tp_methods */
-  Tree_members,				/* tp_members */
-  Tree_getset,				/* tp_getset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.Tree",
+    .tp_basicsize      = sizeof(TreeObject),
+    .tp_dealloc        = (destructor) Tree_dealloc,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc            = tree_doc,
+    .tp_weaklistoffset = offsetof(TreeObject, weakreflist),
+    .tp_iter           = Tree_Iter,
+    .tp_methods        = Tree_methods,
+    .tp_members        = Tree_members,
+    .tp_getset         = Tree_getset,
 };
-

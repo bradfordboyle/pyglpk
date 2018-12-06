@@ -273,35 +273,14 @@ PyDoc_STRVAR(kkt_doc,
 );
 
 PyTypeObject KKTType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.KKT",				/* tp_name */
-  sizeof(KKTObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)KKT_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  0,					/* tp_repr*/
-  0,					/* tp_as_number*/
-  0,					/* tp_as_sequence*/
-  0,					/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  0,					/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
-  kkt_doc,
-	/* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(KKTObject, weakreflist),	/* tp_weaklistoffset */
-  0,					/* tp_iter */
-  0,					/* tp_iternext */
-  KKT_methods,				/* tp_methods */
-  KKT_members,				/* tp_members */
-  KKT_getset,				/* tp_getset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.KKT",
+    .tp_basicsize      = sizeof(KKTObject),
+    .tp_dealloc        = (destructor) KKT_dealloc,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc            = kkt_doc,
+    .tp_weaklistoffset = offsetof(KKTObject, weakreflist),
+    .tp_methods        = KKT_methods,
+    .tp_members        = KKT_members,
+    .tp_getset         = KKT_getset,
 };

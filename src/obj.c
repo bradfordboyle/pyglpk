@@ -71,48 +71,26 @@ static PyObject *ObjIter_next(ObjIterObject *it) {
 }
 
 static PySequenceMethods objiter_as_sequence = {
-  (lenfunc)ObjIter_len, /* sq_length */
-  0, /* sq_concat */
+    .sq_length = (lenfunc) ObjIter_len,
 };
 
+PyDoc_STRVAR(obj_iter_doc,
+"Objective function iterator objects, used to cycle over the coefficients of\n"
+"the objective function."
+);
+
 PyTypeObject ObjIterType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.ObjectiveIter",			/* tp_name */
-  sizeof(ObjIterObject),		/* tp_basicsize */
-  0,					/* tp_itemsize */
-  (destructor)ObjIter_dealloc,		/* tp_dealloc */
-  0,					/* tp_print */
-  0,					/* tp_getattr */
-  0,					/* tp_setattr */
-  0,					/* tp_compare */
-  0,					/* tp_repr */
-  0,					/* tp_as_number */
-  &objiter_as_sequence,			/* tp_as_sequence */
-  0,					/* tp_as_mapping */
-  0,					/* tp_hash */
-  0,					/* tp_call */
-  0,					/* tp_str */
-  PyObject_GenericGetAttr,		/* tp_getattro */
-  0,					/* tp_setattro */
-  0,					/* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT,			/* tp_flags */
-  "Objective function iterator objects, used to cycle over the\n"
-  "coefficients of the objective function.",	
-  /* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(ObjIterObject, weakreflist),	/* tp_weaklistoffset */
-  PyObject_SelfIter,			/* tp_iter */
-  (iternextfunc)ObjIter_next,		/* tp_iternext */
-  0,					/* tp_methods */
-  0,					/* tp_members */
-  0,					/* tp_getset */
-  0,					/* tp_base */
-  0,					/* tp_dict */
-  0,					/* tp_descr_get */
-  0,					/* tp_descr_set */
-  0,					/* tp_dictoffset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.ObjectiveIter",
+    .tp_basicsize      = sizeof(ObjIterObject),
+    .tp_dealloc        = (destructor)ObjIter_dealloc,
+    .tp_as_sequence    = &objiter_as_sequence,
+    .tp_getattro       = PyObject_GenericGetAttr,
+    .tp_flags          = Py_TPFLAGS_DEFAULT,
+    .tp_doc            = obj_iter_doc,
+    .tp_weaklistoffset = offsetof(ObjIterObject, weakreflist),
+    .tp_iter           = PyObject_SelfIter,
+    .tp_iternext       = (iternextfunc) ObjIter_next,
 };
 
 /************* OBJECTIVE FUNCTION OBJECT IMPLEMENTATION **********/
@@ -453,20 +431,13 @@ int Obj_InitType(PyObject *module) {
 }
 
 static PySequenceMethods Obj_as_sequence = {
-  (lenfunc)Obj_Size,			/* sq_length */
-  0,					/* sq_concat */
-  0,					/* sq_repeat */
-  0,					/* sq_item */
-  0, //(intintargfunc)svector_slice,	/* sq_slice */
-  0,					/* sq_ass_item */
-  0,					/* sq_ass_slice */
-  0, //(objobjproc)svcontains,		/* sq_contains */
+    .sq_length = (lenfunc) Obj_Size,
 };
 
 static PyMappingMethods Obj_as_mapping = {
-  (lenfunc)Obj_Size,			/* mp_length */
-  (binaryfunc)Obj_subscript,		/* mp_subscript */
-  (objobjargproc)Obj_ass_subscript	/* mp_ass_subscript */
+    .mp_length        = (lenfunc) Obj_Size,
+    .mp_subscript     = (binaryfunc) Obj_subscript,
+    .mp_ass_subscript = (objobjargproc) Obj_ass_subscript
 };
 
 static PyMemberDef Obj_members[] = {
@@ -541,43 +512,19 @@ PyDoc_STRVAR(obj_doc,
 );
 
 PyTypeObject ObjType = {
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.Objective",			/* tp_name */
-  sizeof(ObjObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)Obj_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  0,					/* tp_repr*/
-  0,					/* tp_as_number*/
-  &Obj_as_sequence,			/* tp_as_sequence*/
-  &Obj_as_mapping,			/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  0,					/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  obj_doc,
-  /* tp_doc */
-  (traverseproc)Obj_traverse,		/* tp_traverse */
-  (inquiry)Obj_clear,			/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(ObjObject, weakreflist),	/* tp_weaklistoffset */
-  Obj_Iter,				/* tp_iter */
-  0,					/* tp_iternext */
-  Obj_methods,				/* tp_methods */
-  Obj_members,				/* tp_members */
-  Obj_getset,				/* tp_getset */
-  //0,					/* tp_base */
-  //0,					/* tp_dict */
-  //0,					/* tp_descr_get */
-  //0,					/* tp_descr_set */
-  //0,					/* tp_dictoffset */
-  //(initproc)Obj_init,			/* tp_init */
-  //0,					/* tp_alloc */
-  //Obj_new,				/* tp_new */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.Objective",
+    .tp_basicsize      = sizeof(ObjObject),
+    .tp_dealloc        = (destructor) Obj_dealloc,
+    .tp_as_sequence    = &Obj_as_sequence,
+    .tp_as_mapping     = &Obj_as_mapping,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc            = obj_doc,
+    .tp_traverse       = (traverseproc) Obj_traverse,
+    .tp_clear          = (inquiry) Obj_clear,
+    .tp_weaklistoffset = offsetof(ObjObject, weakreflist),
+    .tp_iter           = Obj_Iter,
+    .tp_methods        = Obj_methods,
+    .tp_members        = Obj_members,
+    .tp_getset         = Obj_getset,
 };
