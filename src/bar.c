@@ -662,45 +662,22 @@ PyDoc_STRVAR(bar_doc,
 
 PyTypeObject BarType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.Bar",				/* tp_name */
-  sizeof(BarObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)Bar_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  (reprfunc)Bar_Str,			/* tp_repr*/
-  0,					/* tp_as_number*/
-  0, //&Bar_as_sequence,		/* tp_as_sequence*/
-  0, //&Bar_as_mapping,			/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  (reprfunc)Bar_Str,			/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
+  .tp_name           = "glpk.Bar",
+  .tp_basicsize      = sizeof(BarObject),
+  .tp_dealloc        = (destructor) Bar_dealloc,
+  .tp_repr           = (reprfunc) Bar_Str,
+  .tp_str            = (reprfunc)Bar_Str,
 #ifdef USE_BAR_GC
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
+  .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 #else
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+  .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 #endif
-  bar_doc,			/* tp_doc */
-  (traverseproc)Bar_traverse,		/* tp_traverse */
-  (inquiry)Bar_clear,			/* tp_clear */
-  (richcmpfunc)Bar_richcompare,		/* tp_richcompare */
-  offsetof(BarObject, weakreflist),	/* tp_weaklistoffset */
-  0,					/* tp_iter */
-  0,					/* tp_iternext */
-  Bar_methods,				/* tp_methods */
-  Bar_members,				/* tp_members */
-  Bar_getset,				/* tp_getset */
-  //0,					/* tp_base */
-  //0,					/* tp_dict */
-  //0,					/* tp_descr_get */
-  //0,					/* tp_descr_set */
-  //0,					/* tp_dictoffset */
-  //(initproc)Bar_init,			/* tp_init */
-  //0,					/* tp_alloc */
-  //Bar_new,				/* tp_new */
+  .tp_doc            = bar_doc,
+  .tp_traverse       = (traverseproc) Bar_traverse,
+  .tp_clear          = (inquiry) Bar_clear,
+  .tp_richcompare    = (richcmpfunc) Bar_richcompare,
+  .tp_weaklistoffset = offsetof(BarObject, weakreflist),
+  .tp_methods        = Bar_methods,
+  .tp_members        = Bar_members,
+  .tp_getset         = Bar_getset,
 };

@@ -300,34 +300,16 @@ ENVIRONMENT_INSTANCE_NAME " in the\n"
 );
 
 PyTypeObject EnvironmentType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	"glpk.Environment",			/* tp_name */
-	sizeof(EnvironmentObject),		/* tp_basicsize*/
-	0,					/* tp_itemsize*/
-	(destructor)Environment_dealloc,	/* tp_dealloc*/
-	0,					/* tp_print*/
-	0,					/* tp_getattr*/
-	0,					/* tp_setattr*/
-	0,					/* tp_compare*/
-	0,					/* tp_repr*/
-	0,					/* tp_as_number*/
-	0,					/* tp_as_sequence*/
-	0,					/* tp_as_mapping*/
-	0,					/* tp_hash */
-	0,					/* tp_call*/
-	0,					/* tp_str*/
-	0,					/* tp_getattro*/
-	0,					/* tp_setattro*/
-	0,					/* tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-	env_doc,			/* tp_doc */
-	(traverseproc)Environment_traverse,	/* tp_traverse */
-	(inquiry)Environment_clear,		/* tp_clear */
-	0,					/* tp_richcompare */
-	offsetof(EnvironmentObject, weakreflist),	/* tp_weaklistoffset */
-	0,					/* tp_iter */
-	0,					/* tp_iternext */
-	Environment_methods,			/* tp_methods */
-	Environment_members,			/* tp_members */
-	Environment_getset,			/* tp_getset */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name           = "glpk.Environment",
+    .tp_basicsize      = sizeof(EnvironmentObject),
+    .tp_dealloc        = (destructor) Environment_dealloc,
+    .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc            = env_doc,
+    .tp_traverse       = (traverseproc) Environment_traverse,
+    .tp_clear          = (inquiry) Environment_clear,
+    .tp_weaklistoffset = offsetof(EnvironmentObject, weakreflist),
+    .tp_methods        = Environment_methods,
+    .tp_members        = Environment_members,
+    .tp_getset         = Environment_getset,
 };

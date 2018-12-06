@@ -85,40 +85,16 @@ PyDoc_STRVAR(barcoliter_doc,
 
 PyTypeObject BarColIterType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.BarCollectionIter",		/* tp_name */
-  sizeof(BarColIterObject),		/* tp_basicsize */
-  0,					/* tp_itemsize */
-  (destructor)BarColIter_dealloc,	/* tp_dealloc */
-  0,					/* tp_print */
-  0,					/* tp_getattr */
-  0,					/* tp_setattr */
-  0,					/* tp_compare */
-  0,					/* tp_repr */
-  0,					/* tp_as_number */
-  &bciter_as_sequence,			/* tp_as_sequence */
-  0,					/* tp_as_mapping */
-  0,					/* tp_hash */
-  0,					/* tp_call */
-  0,					/* tp_str */
-  PyObject_GenericGetAttr,		/* tp_getattro */
-  0,					/* tp_setattro */
-  0,					/* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT,			/* tp_flags */
-  barcoliter_doc,	/* tp_doc */
-  0,					/* tp_traverse */
-  0,					/* tp_clear */
-  0,					/* tp_richcompare */
-  offsetof(BarColIterObject, weakreflist),	/* tp_weaklistoffset */
-  PyObject_SelfIter,			/* tp_iter */
-  (iternextfunc)BarColIter_next,	/* tp_iternext */
-  0,					/* tp_methods */
-  0,					/* tp_members */
-  0,					/* tp_getset */
-  0,					/* tp_base */
-  0,					/* tp_dict */
-  0,					/* tp_descr_get */
-  0,					/* tp_descr_set */
-  0,					/* tp_dictoffset */
+  .tp_name           = "glpk.BarCollectionIter",
+  .tp_basicsize      = sizeof(BarColIterObject),
+  .tp_dealloc        = (destructor) BarColIter_dealloc,
+  .tp_as_sequence    = &bciter_as_sequence,
+  .tp_getattro       = PyObject_GenericGetAttr,
+  .tp_flags          = Py_TPFLAGS_DEFAULT,
+  .tp_doc            = barcoliter_doc,
+  .tp_weaklistoffset = offsetof(BarColIterObject, weakreflist),
+  .tp_iter           = PyObject_SelfIter,
+  .tp_iternext       = (iternextfunc)BarColIter_next,
 };
 
 /** BAR COLLECTION OBJECT IMPLEMENTATION **/
@@ -519,45 +495,22 @@ static PyMethodDef BarCol_methods[] = {
 
 PyTypeObject BarColType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  "glpk.BarCollection",			/* tp_name */
-  sizeof(BarColObject),			/* tp_basicsize*/
-  0,					/* tp_itemsize*/
-  (destructor)BarCol_dealloc,		/* tp_dealloc*/
-  0,					/* tp_print*/
-  0,					/* tp_getattr*/
-  0,					/* tp_setattr*/
-  0,					/* tp_compare*/
-  0,					/* tp_repr*/
-  0,					/* tp_as_number*/
-  &BarCol_as_sequence,			/* tp_as_sequence*/
-  &BarCol_as_mapping,			/* tp_as_mapping*/
-  0,					/* tp_hash */
-  0,					/* tp_call*/
-  (reprfunc)BarCol_Str,			/* tp_str*/
-  0,					/* tp_getattro*/
-  0,					/* tp_setattro*/
-  0,					/* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,/* tp_flags*/
-  barcol_doc,	/* tp_doc */
-  (traverseproc)BarCol_traverse,	/* tp_traverse */
-  (inquiry)BarCol_clear,		/* tp_clear */
+  .tp_name           = "glpk.BarCollection",
+  .tp_basicsize      = sizeof(BarColObject),
+  .tp_dealloc        = (destructor) BarCol_dealloc,
+  .tp_as_sequence    = &BarCol_as_sequence,
+  .tp_as_mapping     = &BarCol_as_mapping,
+  .tp_str            = (reprfunc) BarCol_Str,
+  .tp_flags          = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+  .tp_doc            = barcol_doc,
+  .tp_traverse       = (traverseproc) BarCol_traverse,
+  .tp_clear          = (inquiry) BarCol_clear,
 #if PY_MAJOR_VERSION >= 3
-  (richcmpfunc)BarCol_richcompare, /* tp_richcompare */
-#else
-  0, /* tp_richcompare */
+  .tp_richcompare    = (richcmpfunc) BarCol_richcompare,
 #endif
-  offsetof(BarColObject, weakreflist),	/* tp_weaklistoffset */
-  BarCol_Iter,				/* tp_iter */
-  0,					/* tp_iternext */
-  BarCol_methods,			/* tp_methods */
-  BarCol_members,			/* tp_members */
-  BarCol_getset,			/* tp_getset */
-  //0,					/* tp_base */
-  //0,					/* tp_dict */
-  //0,					/* tp_descr_get */
-  //0,					/* tp_descr_set */
-  //0,					/* tp_dictoffset */
-  //(initproc)BarCol_init,		/* tp_init */
-  //0,					/* tp_alloc */
-  //BarCol_new,				/* tp_new */
+  .tp_weaklistoffset = offsetof(BarColObject, weakreflist),
+  .tp_iter           = BarCol_Iter,
+  .tp_methods        = BarCol_methods,
+  .tp_members        = BarCol_members,
+  .tp_getset         = BarCol_getset,
 };
