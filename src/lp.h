@@ -39,7 +39,7 @@ typedef struct {
   // The last type of solver that was used.  -1 for none, 0 for
   // simplex or exact, 1 for interior point, and 2 for integer or
   // intopt.
-  int last_solver:4;
+  unsigned int last_solver:4;
   PyObject *weakreflist; // Weak reference list.
 } LPXObject;
 
