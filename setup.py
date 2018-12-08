@@ -1,7 +1,7 @@
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
+from setuptools_scm import get_version
 import os
 import sys
-import versioneer
 
 useparams = False
 
@@ -40,7 +40,7 @@ for pkgdir in pkgdirs:
     incdirs.append(os.path.join(pkgdir, "include"))
     libdirs.append(os.path.join(pkgdir, "lib"))
 
-defs.append(('VERSION_NUMBER', '"{}"'.format(versioneer.get_version())))
+defs.append(('VERSION_NUMBER', '"{}"'.format(get_version())))
 if useparams:
     defs.append(('USEPARAMS', None))
 
@@ -57,8 +57,8 @@ of the GNU Linear Programming Kit.
 
 setup(
     name='glpk',
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
     description='PyGLPK, a Python module encapsulating GLPK.',
     long_description=ld,
     author='Thomas Finley',

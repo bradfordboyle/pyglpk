@@ -30,6 +30,7 @@ RUN mkdir -p /usr/local/src \
 
 RUN pip install \
     pytest \
+    setuptools_scm \
     sphinx \
     sphinx-autobuild \
     tox
