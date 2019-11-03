@@ -13,5 +13,5 @@ popd
 ## Running
 
 ```sh
-docker run --rm -it --mount type=bind,source="${PWD}",destination=/pyglpk pyglpk-dev tox -e py27,py36
+docker run --rm -it --mount type=bind,source="${PWD}",destination=/pyglpk pyglpk-dev tox -e py27,py37
 ```

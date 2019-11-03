@@ -4,9 +4,7 @@ python:
   - "3.6"
 
 env:
-  - GLPK_VERSION=4.57 # ubuntu 16.04
-  - GLPK_VERSION=4.61 # debian stable, fedora 28
-  - GLPK_VERSION=4.65 # ubuntu 18.04, macOS (homebrew)
+  - GLPK_VERSION=4.65
 
 branches:
   only:

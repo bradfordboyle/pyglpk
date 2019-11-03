@@ -1,5 +1,5 @@
 FROM alpine:edge
-ENV GLPK_VERSION 4.63
+ENV GLPK_VERSION 4.65
 
 WORKDIR /pyglpk
 
