@@ -51,32 +51,7 @@ pyglpk_ext = Extension(
     library_dirs=libdirs, define_macros=defs,
     runtime_library_dirs=libdirs)
 
-ld = """The PyGLPK module gives one access to the functionality
-of the GNU Linear Programming Kit.
-"""
-
 setup(
-    name='glpk',
     use_scm_version=True,
-    setup_requires=['setuptools_scm'],
-    description='PyGLPK, a Python module encapsulating GLPK.',
-    long_description=ld,
-    author='Thomas Finley',
-    author_email='tfinley@gmail.com',
-    url='http://tfinley.net/software/pyglpk/',
-    maintainer='Bradford D. Boyle',
-    maintainer_email='bradford.d.boyle@gmail.com',
-    license='GPL',
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
-        'Programming Language :: C',
-        'Programming Language :: Python',
-        'Operating System :: POSIX',
-        'Operating System :: MacOS :: MacOS X',
-        'Topic :: Scientific/Engineering :: Mathematics',
-        'Topic :: Software Development :: Libraries :: Python Modules'
-    ],
     ext_modules=[pyglpk_ext]
 )
