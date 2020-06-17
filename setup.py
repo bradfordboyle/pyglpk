@@ -15,7 +15,7 @@ if useparams:
 # importantly, something which actually contains the version number.
 
 pkgdirs = [] # incdirs and libdirs get these
-libs = ["glpk", "gmp"]
+libs = ["glpk"]
 defs = []
 incdirs = []
 libdirs = []
