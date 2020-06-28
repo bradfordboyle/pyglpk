@@ -1440,11 +1440,10 @@ PyDoc_STRVAR(integer_doc,
 "  LPX.PP_ALL\n"
 "    perform preprocessing on all levels (default)\n"
 "\n"
-#if GLP_MAJOR_VERSION >= 4 && GLP_MINOR_VERSION >= 57
 "sr_heur\n"
 "  Simple rounding heuristic (default True)\n"
+"  (requires glpk >= 4.57.0)\n"
 "\n"
-#endif
 "fp_heur\n"
 "  Feasibility pump heurisic (default False)\n"
 "\n"
@@ -1693,9 +1692,6 @@ PyDoc_STRVAR(lpx_doc,
 "obj -> represents the objective function\n"
 "rows -> a collection over which one can access rows\n"
 "cols -> same, but for columns\n"
-#ifdef USEPARAMS
-"params -> holds control parameters and statistics\n"
-#endif
 );
 
 PyTypeObject LPXType = {

@@ -40,16 +40,21 @@ for pkgdir in pkgdirs:
     incdirs.append(os.path.join(pkgdir, "include"))
     libdirs.append(os.path.join(pkgdir, "lib"))
 
-defs.append(('VERSION_NUMBER', '"{}"'.format(get_version())))
+is_windows = sys.platform.startswith("win")
+version_fmt_str = '"{}"' if not is_windows else '"\\"{}\\""'
+defs.append(('VERSION_NUMBER', version_fmt_str.format(get_version())))
+
 if useparams:
     defs.append(('USEPARAMS', None))
+
+runtime_library_dirs = libdirs if not is_windows else []
 
 # Now, finally, define that module!
 pyglpk_ext = Extension(
     'glpk', [os.path.join('src', r+'.c') for r in source_roots],
     libraries=libs, include_dirs=incdirs,
     library_dirs=libdirs, define_macros=defs,
-    runtime_library_dirs=libdirs)
+    runtime_library_dirs=runtime_library_dirs)
 
 setup(
     use_scm_version=True,
