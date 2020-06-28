@@ -1,0 +1,38 @@
+name: Windows CI
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+jobs:
+  tests:
+    name: "Python ${{ matrix.python-version }}"
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+    - uses: "actions/checkout@v2"
+      with:
+        fetch-depth: 0
+    - uses: "actions/setup-python@v1"
+      with:
+        python-version: "${{ matrix.python-version }}"
+    - name: Setup conda
+      run: |
+        & "$Env:CONDA\condabin\conda.bat" init powershell
+
+    - name: "Build against python ${{ matrix.python-version }}"
+      run: |
+        & "$Env:CONDA\condabin\conda.bat" activate base
+        & "$Env:CONDA\condabin\conda.bat" install -v -c conda-forge glpk
+        $Env:GLPK = "$Env:CONDA_PREFIX\Library"
+        Get-ChildItem "$Env:GLPK\include"
+        python -VV
+        python -m site
+        python -m pip install --upgrade setuptools_scm
+        python setup.py bdist
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: windows-bdist
+        path: dist/
