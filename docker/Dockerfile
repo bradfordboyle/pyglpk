@@ -1,34 +1,25 @@
-FROM alpine:edge
-ENV GLPK_VERSION 4.65
+FROM debian:stable
 
 WORKDIR /pyglpk
 
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-    && apk update \
-    && apk add \
+RUN set -e; \
+    apt-get update -q=1; \
+    apt-get install -q=1 -y \
         curl \
         lcov \
+        libglpk-dev \
         gcc \
         git \
-        gmp \
-        gmp-dev \
         make \
-        musl-dev \
-        py2-pip \
-        python \
+        python2 \
+        python2-dev \
         python3 \
-        python-dev \
         python3-dev \
-        rsync
+        python3-pip \
+        rsync; \
+        rm -rf /var/lib/apt/lists/*;
 
-RUN mkdir -p /usr/local/src \
-    && curl -SL http://ftp.gnu.org/gnu/glpk/glpk-${GLPK_VERSION}.tar.gz \
-    | tar xzC /usr/local/src \
-    && cd /usr/local/src/glpk-${GLPK_VERSION} \
-    && ./configure --prefix=/usr/local --with-gmp\
-    && make install
-
-RUN pip install \
+RUN python3 -m pip install \
     pytest \
     setuptools_scm \
     sphinx \
