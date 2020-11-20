@@ -19,6 +19,7 @@ along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 
 #include "2to3.h"
 
+#include "lp.h"
 #include "bar.h"
 #include "structmember.h"
 #include "util.h"
@@ -499,6 +500,68 @@ static PyObject* Bar_getspecvarvalm(BarObject *self,
   return PyFloat_FromDouble(valfunc(LP, Bar_Index(self)+1));
 }
 
+static PyObject* Bar_eval_tab_row(BarObject *self) {
+  int k, len, m, n;
+  PyObject *retval;
+
+  int bind = (Bar_Row(self) ? glp_get_row_bind : glp_get_col_bind)(LP, Bar_Index(self) + 1);
+  if (bind == 0) {
+    PyErr_SetString(PyExc_ValueError, "variable is non-basic");
+    return NULL;
+  }
+
+  m = glp_get_num_rows(LP);
+  n = glp_get_num_cols(LP);
+  k = Bar_Index(self) + 1 + (Bar_Row(self) ? 0 : m);
+
+  if (!(1 <= k && k <= m+n)) {
+    PyErr_SetString(PyExc_RuntimeError, "variable index outside expected range");
+    return NULL;
+  }
+
+  int *ind = (int*)calloc(n + 1, sizeof(int));
+  double *val = (double*)calloc(n + 1, sizeof(double));
+
+  len = glp_eval_tab_row(LP, k, ind, val);
+  retval = convert_and_zip(self->py_bc->py_lp, len, ind, val);
+
+  free(val);
+  free(ind);
+
+  return retval;
+}
+
+static PyObject* Bar_eval_tab_col(BarObject *self) {
+  int k, len, m, n;
+  PyObject *retval;
+
+  int bind = (Bar_Row(self) ? glp_get_row_bind : glp_get_col_bind)(LP, Bar_Index(self) + 1);
+  if (bind != 0) {
+    PyErr_SetString(PyExc_ValueError, "variable is basic");
+    return NULL;
+  }
+
+  m = glp_get_num_rows(LP);
+  n = glp_get_num_cols(LP);
+  k = Bar_Index(self) + 1 + (Bar_Row(self) ? 0 : m);
+
+  if (!(1 <= k && k <= m+n)) {
+    PyErr_SetString(PyExc_RuntimeError, "variable index outside expected range");
+    return NULL;
+  }
+
+  int *ind = (int*)calloc(m + 1, sizeof(int));
+  double *val = (double*)calloc(m + 1, sizeof(double));
+
+  len = glp_eval_tab_col(LP, k, ind, val);
+  retval = convert_and_zip(self->py_bc->py_lp, len, ind, val);
+
+  free(val);
+  free(ind);
+
+  return retval;
+}
+
 /****************** OBJECT DEFINITION *********/
 
 //static PySequenceMethods Bar_as_sequence = {
@@ -647,10 +710,31 @@ static PyGetSetDef Bar_getset[] = {
   {NULL}
 };
 
+PyDoc_STRVAR(eval_tab_row__doc__,
+"Bar.eval_tab_row() -> [(Bar, float), ...]\n\n"
+"Returns the row of the current simplex tableau for this variable.\n"
+"The row is returned as a list of tuples containing a reference to a\n"
+"non-basic variable and the corresponding coefficient from the simplex\n"
+"tableau.\n"
+"\n"
+"If this variable is non-basic, this method throws a ValueError."
+);
+
+PyDoc_STRVAR(eval_tab_col__doc__,
+"Bar.eval_tab_col() -> [(Bar, float), ...]\n\n"
+"Returns the column of the current simplex tableau for this variable.\n"
+"The column is returned as a list of tuples containing a reference to a\n"
+"basic variable and the corresponding coefficient from the simplex tableau\n"
+"\n"
+"If this variable is basic, this method throws a ValueError."
+);
+
 static PyMethodDef Bar_methods[] = {
   /*{"add", (PyCFunction)Bar_add, METH_VARARGS, "add(n)\n\n"
    "Add n more rows (constraints) or columns (struct variables).\n"
    "Returns the index of the first added entry."},*/
+  {"eval_tab_row", (PyCFunction)Bar_eval_tab_row, METH_NOARGS, eval_tab_row__doc__},
+  {"eval_tab_col", (PyCFunction)Bar_eval_tab_col, METH_NOARGS, eval_tab_col__doc__},
   {NULL}
 };
 

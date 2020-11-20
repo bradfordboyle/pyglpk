@@ -50,4 +50,6 @@ LPXObject* LPX_FromLP(glp_prob*lp);
 /* Init the type and related types it contains. 0 on success. */
 int LPX_InitType(PyObject *module);
 
+PyObject* convert_and_zip(LPXObject*, const int, const int[], const double[]);
+
 #endif // _LP_H

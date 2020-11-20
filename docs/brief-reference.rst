@@ -281,22 +281,47 @@ Check solution's Karush-Kuhn-Tucker conditions
 Manual simplex tableau operations
 ---------------------------------
 
-I may be wrong, but I do not anticipate much desire for people to roll their
-own simplex solvers within the Python module. Please write me if my guess is
-incorrect. It might be nice to have though in the future, for the sake of
-completeness.
+Warm-up LP basis
 
-.. code-block:: c
+.. code-block:: python
 
-    /*
-     * lpx_warm_up
-     * lpx_eval_tab_row
-     * lpx_eval_tab_col
-     * lpx_transform_row
-     * lpx_transform_col
-     * lpx_prim_ratio_test
-     * lpx_dual_ratio_test
-     */
+    lp.warm_up()  # glp_warm_up
+
+Compute a row of the simplex tableau
+
+.. code-block:: python
+
+    lp.rows[ri].eval_tab_row()  # glp_eval_tab_row
+
+Compute a column of the simplex tableau
+
+.. code-block:: python
+
+    lp.cols[ci].eval_tab_col()  # glp_eval_tab_col
+
+Transform explicitly specified row
+
+.. code-block:: python
+
+    lp.transform_row()  # glp_transform_row
+
+Transform explicitly specified column
+
+.. code-block:: python
+
+    lp.transform_column()  # glp_transform_col
+
+Perform primal ratio test
+
+.. code-block:: python
+
+    lp.prime_ratio_test()  # glp_prim_ratio_test
+
+Perform dual ratio test
+
+.. code-block:: python
+
+    lp.dual_ratio_test()  # glp_dual_ratio_test
 
 ---------------------
 Interior-point solver

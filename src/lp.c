@@ -22,6 +22,7 @@ along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 #include "2to3.h"
 #include "lp.h"
 #include "structmember.h"
+#include "bar.h"
 #include "barcol.h"
 #include "obj.h"
 #include "kkt.h"
@@ -783,6 +784,208 @@ static KKTObject* LPX_kktint(LPXObject *self) {
 		return NULL;
 	pyglpk_int_check(LP, &(kkt->kkt));
 	return kkt;
+}
+
+static  PyObject* LPX_warm_up(LPXObject *self) {
+	int retval;
+	retval = glp_warm_up(LP);
+	return glpsolver_retval_to_message(retval);
+}
+
+PyObject* convert_and_zip(LPXObject *self, const int len, const int ind[], const double val[]) {
+	PyObject *retval;
+	int m, n;
+
+	if ((retval = PyList_New(len)) == NULL) {
+		return NULL;
+	}
+
+	m = glp_get_num_rows(LP);
+	n = glp_get_num_cols(LP);
+	for (int i = 1; i <= len; i++) {
+		BarObject *bar;
+		if (1 <= ind[i] && ind[i] <= m) {
+			bar = Bar_New((BarColObject *) self->rows, ind[i] - 1);
+		} else if (m+1 <= ind[i] && ind[i] <= m+n) {
+			bar = Bar_New((BarColObject *) self->cols, ind[i] - m - 1);
+		}
+		// TODO what if ind[i] outside bounds?
+		PyList_SET_ITEM(retval, i - 1, Py_BuildValue("(Od)", bar, val[i]));
+	}
+
+	return retval;
+}
+
+static PyObject* LPX_transform_row(LPXObject *self, PyObject *arg) {
+	int k, len, m, n;
+	PyObject *iterator, *retval;
+
+	if ((iterator = PyObject_GetIter(arg)) == NULL) {
+		return NULL;
+	}
+
+	m = glp_get_num_rows(LP);
+	n = glp_get_num_cols(LP);
+
+	BarObject **vars = (BarObject**)calloc(n + 1, sizeof(BarObject*));
+	int *ind = (int*)calloc(n + 1, sizeof(int));
+	double *val = (double*)calloc(n + 1, sizeof(double));
+	len = unzip(iterator, n+1, vars, val);
+	Py_DECREF(iterator);
+	if (PyErr_Occurred()) {
+		retval = NULL;
+		goto exit;
+	}
+	for (int i = 1; i <= len; i++) {
+		// check that variable is part of this LP instance
+		if (vars[i]->py_bc->py_lp != self) {
+			PyErr_SetString(PyExc_ValueError, "variable not associated with this LPX");
+			retval = NULL;
+			goto exit;
+		}
+		// check that variable is structural
+		if (Bar_Row(vars[i])) {
+			PyErr_SetString(PyExc_ValueError, "input variables must be structural");
+			retval = NULL;
+			goto exit;
+		}
+		ind[i] = Bar_Index(vars[i]) + 1;
+	}
+
+	len = glp_transform_row(LP, len, ind, val);
+
+	retval = convert_and_zip(self, len, ind, val);
+
+	exit: free(val);
+	free(ind);
+
+	return retval;
+}
+
+static PyObject* LPX_transform_col(LPXObject *self, PyObject *arg) {
+	int k, len, i, m, n;
+	PyObject *iterator, *retval;
+
+	if ((iterator = PyObject_GetIter(arg)) == NULL) {
+		return NULL;
+	}
+
+	m = glp_get_num_rows(LP);
+	n = glp_get_num_cols(LP);
+
+	BarObject **vars = (BarObject**)calloc(m + 1, sizeof(BarObject*));
+	int *ind = (int*)calloc(m + 1, sizeof(int));
+	double *val = (double*)calloc(m + 1, sizeof(double));
+
+	len = unzip(iterator, m + 1, vars, val);
+	Py_DECREF(iterator);
+	if (PyErr_Occurred()) {
+		retval = NULL;
+		goto exit;
+	}
+	for (int i = 1; i <= len; i++) {
+		if (vars[i]->py_bc->py_lp != self) {
+			PyErr_SetString(PyExc_ValueError, "variable not associated with this LPX");
+			retval = NULL;
+			goto exit;
+		}
+		// check that variable is auxiliary
+		if (!Bar_Row(vars[i])) {
+			PyErr_SetString(PyExc_ValueError, "input variables must be auxiliary");
+			retval = NULL;
+			goto exit;
+		}
+		ind[i] = Bar_Index(vars[i]) + 1;
+	}
+
+	len = glp_transform_col(LP, len, ind, val);
+	retval = convert_and_zip(self, len, ind, val);
+
+	exit: free(val);
+	free(ind);
+
+	return retval;
+}
+
+static PyObject* LPX_prim_rtest(LPXObject *self, PyObject *args) {
+	int dir, *ind, len, m, piv;
+	double eps, *val;
+	PyObject *iterator, *lo;
+
+	if (!PyArg_ParseTuple(args, "O!id", &PyList_Type, &lo, &dir, &eps)) {
+		return NULL;
+	}
+
+	if (dir != 1 && dir != -1) {
+		PyErr_SetString(PyExc_ValueError, "direction must be either +1 (increasing) or -1 (decreasing)");
+		return NULL;
+	}
+
+	if ((iterator = PyObject_GetIter(lo)) == NULL) {
+		return NULL;
+	}
+
+	m = glp_get_num_rows(LP);
+
+	BarObject **vars = (BarObject**)calloc(m + 1, sizeof(BarObject*));
+	ind = (int *)calloc(m + 1, sizeof(int));
+	val = (double *)calloc(m + 1, sizeof(double));
+	len = unzip(iterator, m + 1, vars, val);
+	Py_DECREF(iterator);
+	if (PyErr_Occurred()) {
+		return NULL;
+	}
+
+	for (int i = 1; i <= len; i++) {
+		ind[i] = Bar_Index(vars[i]) + 1 + (Bar_Row(vars[i]) ? 0 : m);
+	}
+
+	piv = glp_prim_rtest(LP, len, ind, val, dir, eps);
+	free(val);
+	free(ind);
+
+	return PyInt_FromLong((long) piv-1);
+}
+
+static PyObject* LPX_dual_rtest(LPXObject *self, PyObject *args) {
+	int dir, *ind, len, m, n, piv;
+	double eps, *val;
+	PyObject *iterator, *lo;
+
+	if (!PyArg_ParseTuple(args, "O!id", &PyList_Type, &lo, &dir, &eps)) {
+		return NULL;
+	}
+
+	if (dir != 1 && dir != -1) {
+		PyErr_SetString(PyExc_ValueError, "direction must be either +1 (increasing) or -1 (decreasing)");
+		return NULL;
+	}
+
+	if ((iterator = PyObject_GetIter(lo)) == NULL) {
+		return NULL;
+	}
+
+	m = glp_get_num_rows(LP);
+	n = glp_get_num_cols(LP);
+
+	BarObject **vars = (BarObject**)calloc(n + 1, sizeof(BarObject*));
+	ind = (int *)calloc(n + 1, sizeof(int));
+	val = (double *)calloc(n + 1, sizeof(double));
+	len = unzip(iterator, n + 1, vars, val);
+	Py_DECREF(iterator);
+	if (PyErr_Occurred()) {
+		return NULL;
+	}
+
+	for (int i = 1; i <= len; i++) {
+		ind[i] = Bar_Index(vars[i]) + 1 + (Bar_Row(vars[i]) ? 0 : m);
+	}
+
+	piv = glp_dual_rtest(LP, len, ind, val, dir, eps);
+	free(val);
+	free(ind);
+
+	return PyInt_FromLong((long) piv-1);
 }
 
 static PyObject* LPX_write(LPXObject *self, PyObject *args, PyObject *keywds)
@@ -1643,6 +1846,84 @@ PyDoc_STRVAR(write_doc,
 "  MIP solution in printable format."
 );
 
+PyDoc_STRVAR(warm_up__doc__,
+"LPX.warm_up() -> string\n\n"
+"Warms up the LP basis.\n"
+"\n"
+"Returns None if successful, otherwise one of the following error strings:\n"
+"\n"
+"badb\n"
+"  the basis matrix is invalid\n"
+"sing\n"
+"  the basis matrix is singular\n"
+"cond\n"
+"  the basis matrix is ill-conditioned\n"
+);
+
+PyDoc_STRVAR(transform_row__doc__,
+"LPX.transform_row([(glpk.Bar, float), ...]) -> [(glpk.Bar, float), ...]\n"
+"\n"
+"Transforms the explicitly specified row\n"
+"\n"
+"The row to be transformed is given as a list of tuples, with each tuple\n"
+"containing a variable (i.e., an instance of glpk.Bar) and a coefficient.\n"
+"The input variables should be structural variables (i.e., elements of\n"
+"LPX.cols).\n"
+"\n"
+"The row is returned as a list of tuples containing a reference to a\n"
+"non-basic variable and the corresponding coefficient from the simplex\n"
+"tableau."
+);
+
+PyDoc_STRVAR(transform_col__doc__,
+"LPX.transform_col([(glpk.Bar, float), ...]) -> [(glpk.Bar, float), ...]\n"
+"\n"
+"Transforms the explicitly specified column\n"
+"\n"
+"The column to be transformed is given as a list of tuples, with each tuple\n"
+"containing a variable (i.e., an instance of glpk.Bar) and a coefficient.\n"
+"The input variables should be auxiliary variables (i.e., elements of\n"
+"LPX.rows).\n"
+"\n"
+"The column is returned as a list of tuples containing a reference to a\n"
+"basic variable and the corresponding coefficient from the simplex\n"
+"tableau."
+);
+
+PyDoc_STRVAR(prime_ratio_test__doc__,
+"LPX.prime_ratio_test([(glpk.Bar, float), int, float]) -> int\n"
+"\n"
+"Perform primal ratio test using an explicitly specified column of the\n"
+"simplex tableau.\n"
+"\n"
+"The column of the simplex tableau is given as a list of tuples, with each\n"
+"tuple containing a basic variable and a coefficient.\n"
+"The second argument is an integer specifying the direction in which the\n"
+"variable changes when entering the basis: +1 means increasing, -1 means\n"
+"decreasing.\n"
+"The third argument is an absolute tolerance used by the routine to skip\n"
+"small coefficients.\n"
+"\n"
+"Returns the index of the input column corresponding to the pivot element."
+);
+
+PyDoc_STRVAR(dual_ratio_test__doc__,
+"LPX.dual_ratio_test([(glpk.Bar, float), int, float]) -> int\n"
+"\n"
+"Perform dual ratio test using an explicitly specified row of the simplex\n"
+"tableau.\n"
+"\n"
+"The row of the simplex tableau is given as a list of tuples, with each\n"
+"tuple containing a basic variable and a coefficient.\n"
+"The second argument is an integer specifying the direction in which the\n"
+"variable changes when entering the basis: +1 means increasing, -1 means\n"
+"decreasing.\n"
+"The third argument is an absolute tolerance used by the routine to skip\n"
+"small coefficients.\n"
+"\n"
+"Returns the index of the input row corresponding to the pivot element."
+);
+
 static PyMethodDef LPX_methods[] = {
 	{"erase", (PyCFunction)LPX_Erase, METH_NOARGS, erase_doc},
 	{"scale", (PyCFunction)LPX_Scale, METH_VARARGS, scale_doc},
@@ -1663,6 +1944,11 @@ static PyMethodDef LPX_methods[] = {
 	{"kktint", (PyCFunction)LPX_kktint, METH_NOARGS, kktint_doc},
 	// Data writing
 	{"write", (PyCFunction)LPX_write, METH_VARARGS | METH_KEYWORDS, write_doc},
+	{"warm_up", (PyCFunction)LPX_warm_up, METH_NOARGS, warm_up__doc__},
+	{"transform_row", (PyCFunction)LPX_transform_row, METH_O, transform_row__doc__},
+	{"transform_col", (PyCFunction)LPX_transform_col, METH_O, transform_col__doc__},
+	{"prime_ratio_test", (PyCFunction)LPX_prim_rtest, METH_VARARGS, prime_ratio_test__doc__},
+	{"dual_ratio_test", (PyCFunction)LPX_dual_rtest, METH_VARARGS, dual_ratio_test__doc__},
 	{NULL}
 };
 

@@ -19,6 +19,7 @@ along with PyGLPK.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "2to3.h"
 
+#include "bar.h"
 #include "util.h"
 #include "barcol.h"
 #include "lp.h"
@@ -287,4 +288,42 @@ int PyDict_SetIntString(PyObject *p, const char *key, int val) {
   retval = PyDict_SetItemString(p, key, i);
   Py_DECREF(i);
   return retval;
+}
+
+int unzip(PyObject *iterator, const int len, BarObject *bars[], double val[]) {
+  if (!PyIter_Check(iterator)) {
+    PyErr_SetString(PyExc_TypeError, "object not iterable");
+    return -1;
+  }
+
+  PyObject *item;
+  int index = 0;
+  while ((item = PyIter_Next(iterator)) && (index < len)) {
+    if (!PyTuple_Check(item) || PyTuple_Size(item) != 2) {
+      PyErr_SetString(PyExc_TypeError, "item must be two element tuple");
+      Py_DECREF(item);
+      return -1;
+    }
+
+    PyObject *bo, *vo;
+    if ((bo = PyTuple_GetItem(item, 0)) == NULL || (vo = PyTuple_GetItem(item, 1)) == NULL) {
+      PyErr_SetString(PyExc_RuntimeError, "unable to unpack tuple");
+      Py_DECREF(item);
+      return -1;
+    }
+
+    if (!PyObject_TypeCheck(bo, &BarType) || !PyFloat_Check(vo)) {
+      PyErr_SetString(PyExc_TypeError, "tuple must contain glpk.Bar and double");
+      Py_DECREF(item);
+      return -1;
+    }
+
+    index += 1;
+    bars[index] = (BarObject *) bo;
+    val[index] = PyFloat_AsDouble(vo);
+
+    Py_DECREF(item);
+  }
+
+  return index;
 }
