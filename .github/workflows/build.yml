@@ -1,0 +1,34 @@
+name: build
+on:
+  push:
+  pull_request:
+  schedule:
+  - cron: '0 0 * * 0' # weekly
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.6]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -q=1 -y libglpk-dev
+        python -m pip install --upgrade pip
+        pip install cpp-coveralls setuptools_scm tox-travis
+    - name: Test
+      run: |
+        tox -v
+        pip install .
+        python examples/correlation.py
+        python examples/hamiltonian.py
+        python examples/maxflow.py
+        python examples/sat.py
+        python examples/sat2.py
