@@ -25,7 +25,7 @@ jobs:
         pip install cpp-coveralls setuptools_scm tox-travis
     - name: Test
       run: |
-        tox -v
+        tox -v -e py
         pip install .
         python examples/correlation.py
         python examples/hamiltonian.py
