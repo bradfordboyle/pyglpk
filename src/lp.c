@@ -303,7 +303,8 @@ static PyObject* LPX_Erase(LPXObject *self)
 static PyObject* LPX_Copy(LPXObject *self, PyObject *args)
 {
 	int names = GLP_OFF;
-	PyArg_ParseTuple(args, "|p", &names);
+	if (!PyArg_ParseTuple(args, "|i", &names))
+		return NULL;
 	glp_prob *dest = glp_create_prob();
 	glp_copy_prob(dest, LP, names);
 
