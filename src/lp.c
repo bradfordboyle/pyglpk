@@ -300,6 +300,16 @@ static PyObject* LPX_Erase(LPXObject *self)
 	Py_RETURN_NONE;
 }
 
+static PyObject* LPX_Copy(LPXObject *self, PyObject *args)
+{
+	int names = GLP_OFF;
+	PyArg_ParseTuple(args, "|p", &names);
+	glp_prob *dest = glp_create_prob();
+	glp_copy_prob(dest, LP, names);
+
+	return LPX_FromLP(dest);
+}
+
 static PyObject* LPX_Scale(LPXObject *self, PyObject*args)
 {
 	int flags = GLP_SF_AUTO;
@@ -1392,6 +1402,11 @@ PyDoc_STRVAR(erase_doc,
 "Erase the content of this problem, restoring it to the state it was in when\n"
 "it was first created.");
 
+PyDoc_STRVAR(copy_doc,
+"copy()\n"
+"\n"
+"Copies the content of this problem into a new problem and returns it.");
+
 PyDoc_STRVAR(scale_doc,
 "scale([flags=LPX.SF_AUTO])\n"
 "\n"
@@ -1926,6 +1941,7 @@ PyDoc_STRVAR(dual_ratio_test__doc__,
 
 static PyMethodDef LPX_methods[] = {
 	{"erase", (PyCFunction)LPX_Erase, METH_NOARGS, erase_doc},
+	{"copy", (PyCFunction)LPX_Copy, METH_VARARGS, copy_doc},
 	{"scale", (PyCFunction)LPX_Scale, METH_VARARGS, scale_doc},
 	{"unscale", (PyCFunction)LPX_Unscale, METH_NOARGS, unscale_doc},
 	// Basis construction techniques for simplex solvers.

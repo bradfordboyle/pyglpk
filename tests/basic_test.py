@@ -265,6 +265,27 @@ class LpxTests(unittest.TestCase):
         self.assertEqual(len(lp.cols), 0)
         self.assertEqual(len(lp.rows), 0)
 
+    def testLpxCopy(self):
+        lp = LPX()
+        lp.cols.add(1)
+        lp.cols[0].name = 'orginal'
+
+        c1 = lp.copy(True)
+        self.assertEqual('orginal', c1.cols[0].name)
+        self.assertNotEqual(id(lp), id(c1))
+
+        c2 = lp.copy(False)
+        self.assertIsNone(c2.cols[0].name)
+        self.assertNotEqual(id(lp), id(c2))
+
+        c3 = lp.copy(False)
+        self.assertIsNone(c3.cols[0].name)
+        self.assertNotEqual(id(lp), id(c3))
+
+        shallow_copy = lp
+        self.assertEqual(id(lp), id(shallow_copy))
+
+
     def testLpxSetMatrix(self):
         lp = LPX()
         with self.assertRaises(ValueError) as cm:
