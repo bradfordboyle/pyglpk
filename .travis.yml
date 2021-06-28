@@ -5,6 +5,7 @@ python:
 
 env:
   - GLPK_VERSION=4.65
+  - GLPK_VERSION=5.0
 
 branches:
   only:
