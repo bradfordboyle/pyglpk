@@ -1,0 +1,61 @@
+name: Linux CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+        glpk: ['4.65', '5.0']
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: set up python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: instal glpk ${{ matrix.glpk }}
+      run: |
+        curl -LO http://ftp.gnu.org/gnu/glpk/glpk-${{ matrix.glpk }}.tar.gz
+        tar -xzf glpk-${{ matrix.glpk }}.tar.gz
+        pushd glpk-${{ matrix.glpk }}
+        ./configure
+        make -j $(nproc)
+        sudo make install
+        sudo ldconfig
+        popd
+    - name: install dependencies
+      run: |
+        pip install setuptools_scm tox
+        sudo apt-get update -q=1 -y
+        sudo apt-get install -q=1 -y lcov
+    - name: run tox
+      run: |
+        tox -e py
+        mkdir coverage
+        lcov --capture --directory . --output-file ./coverage/lcov.info
+    - name: upload coverage to coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        flag-name: run_${{ matrix.os }}_${{ matrix.glpk }}_${{matrix.python-version }}
+        parallel: true
+
+  finish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: coveralls finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel-finished: true
