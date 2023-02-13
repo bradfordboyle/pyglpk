@@ -830,10 +830,12 @@ class MIPCallbackTest(unittest.TestCase):
 
                 with testobj.assertRaises(TypeError) as cm:
                     tree.branch_upon({})
-                testobj.assertIn(
-                    "an integer is required",
-                    str(cm.exception)
-                )
+
+                if sys.version_info >= (3, 10):
+                    expected_msg = "'dict' object cannot be interpreted as an integer"
+                else:
+                    expected_msg = "an integer is required"
+                testobj.assertIn(expected_msg, str(cm.exception))
 
                 with testobj.assertRaises(TypeError) as cm:
                     tree.branch_upon(1, {})
