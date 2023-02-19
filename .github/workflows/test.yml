@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
+        os: [macos-12, ubuntu-22.04, ubuntu-20.04]
         glpk: ['4.65', '5.0']
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
@@ -29,15 +29,28 @@ jobs:
         ./configure
         make -j $(nproc)
         sudo make install
-        sudo ldconfig
+        [[ $(uname) == Darwin ]] || sudo ldconfig
         popd
-    - name: install dependencies
+    - name: install lcov
       run: |
-        pip install setuptools_scm tox
-        sudo apt-get update -q=1 -y
-        sudo apt-get install -q=1 -y lcov
+        platform="$(uname)"
+        case "${platform}" in
+        Darwin)
+            brew update -q
+            HOMEBREW_NO_INSTALL_CLEANUP=true brew install -q lcov
+            ;;
+        Linux)
+            sudo apt-get update -q=1 -y
+            sudo apt-get install -q=1 -y lcov
+            ;;
+        *)
+            echo >&2 "Unknown platform '${platform}'; supported platforms are 'Darwin' and 'Linux'"
+            exit 1
+            ;;
+        esac
     - name: run tox
       run: |
+        pip install setuptools_scm tox
         tox -e py
         mkdir coverage
         lcov --capture --directory . --output-file ./coverage/lcov.info

@@ -36,6 +36,7 @@ along with PyGLPK. If not, see <http://www.gnu.org/licenses/>.
 #define LP (self->lp)
 
 static PyObject* glpstatus2string(int);
+static int unzip(PyObject *, const int, BarObject *[], double []);
 
 static int LPX_traverse(LPXObject *self, visitproc visit, void *arg)
 {
@@ -1213,6 +1214,45 @@ static PyObject* LPX_getnumint(LPXObject *self, void *closure)
 static PyObject* LPX_getnumbin(LPXObject *self, void *closure)
 {
 	return PyInt_FromLong(glp_get_num_bin(LP));
+}
+
+static int unzip(PyObject *iterator, const int len, BarObject *bars[], double val[]) {
+	if (!PyIter_Check(iterator)) {
+		PyErr_SetString(PyExc_TypeError, "object not iterable");
+		return -1;
+	}
+
+	PyObject *item;
+	int index = 0;
+	while ((item = PyIter_Next(iterator)) && (index < len)) {
+		if (!PyTuple_Check(item) || PyTuple_Size(item) != 2) {
+			PyErr_SetString(PyExc_TypeError, "item must be two element tuple");
+			Py_DECREF(item);
+			return -1;
+		}
+
+		PyObject *bo, *vo;
+		if ((bo = PyTuple_GetItem(item, 0)) == NULL || (vo = PyTuple_GetItem(item, 1)) == NULL) {
+			PyErr_SetString(PyExc_RuntimeError, "unable to unpack tuple");
+			Py_DECREF(item);
+			return -1;
+		}
+
+		if (!PyObject_TypeCheck(bo, &BarType) || !PyFloat_Check(vo)) {
+			PyErr_SetString(PyExc_TypeError, "tuple must contain glpk.Bar and double");
+			Py_DECREF(item);
+			return -1;
+		}
+
+		index += 1;
+
+		bars[index] = (BarObject *) bo;
+		val[index] = PyFloat_AsDouble(vo);
+
+		Py_DECREF(item);
+	}
+
+	return index;
 }
 
 /****************** OBJECT DEFINITION *********/
