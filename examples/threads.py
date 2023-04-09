@@ -1,7 +1,7 @@
 import sat
 import sys
 import threading
-
+import gc
 # At present, GLPK itself, and consequently PyGLPK, are not thread
 # safe.  As a result, this "multithreaded" example at present does not
 # run the threads in parallel during solving.  I am, however,
@@ -13,6 +13,7 @@ num_threads = 8
 def solve_problem(tid, num):
     exp = sat.generate_cnf(vars, clauses)
     assignment = sat.solve_sat(exp)
+    gc.collect()
     if assignment: assert sat.verify(exp, assignment)
     sys.stdout.write((('+' if assignment else '-')+'(%d,%2d)')%(tid,num))
     sys.stdout.flush()
