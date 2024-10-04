@@ -8,7 +8,7 @@ pyglpk
     :target: http://pyglpk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-Updated fork of T. Finley's PyGLPK module
+Fork of T. Finley's PyGLPK module, available through `pip install glpk`
 
 Overview
 --------
@@ -31,7 +31,7 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 Availability
 ------------
 
-To get the lastest version, see: http://tfinley.net/software/pyglpk/.
+To get the lastest version, see: https://github.com/bradfordboyle/pyglpk/.
 
 Documentation
 -------------
