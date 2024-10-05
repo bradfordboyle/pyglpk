@@ -21,7 +21,7 @@ class GarbageCollectionTestCase(unittest.TestCase):
     reference list are currently invalid."""
     def __init__(self, name=''):
         unittest.TestCase.__init__(self, name)
-        oldfunc = getattr(self, name)
+        oldfunc = getattr(self, name, "default")
 
         class tuplesubclass(list):
             pass

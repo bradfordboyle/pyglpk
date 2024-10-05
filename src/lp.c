@@ -309,7 +309,7 @@ static PyObject* LPX_Copy(LPXObject *self, PyObject *args)
 	glp_prob *dest = glp_create_prob();
 	glp_copy_prob(dest, LP, names);
 
-	return LPX_FromLP(dest);
+	return (PyObject *) LPX_FromLP(dest);
 }
 
 static PyObject* LPX_Scale(LPXObject *self, PyObject*args)
