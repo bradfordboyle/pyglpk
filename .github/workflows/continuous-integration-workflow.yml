@@ -4,27 +4,22 @@ on: [push]
 
 jobs:
   tests:
-    name: "Python ${{ matrix.python-version }}"
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        python-version: ["3.7"]
+    name: "Build and Test"
+    runs-on: windows-2022
 
     steps:
-    - uses: "actions/checkout@v3"
+    - uses: "actions/checkout@v4"
       with:
         fetch-depth: 0
-    - uses: "actions/setup-python@v4"
-      with:
-        python-version: "${{ matrix.python-version }}"
     - name: Setup conda
       run: |
         & "$Env:CONDA\condabin\conda.bat" init powershell
 
-    - name: "Build against python ${{ matrix.python-version }}"
+    - name: "Build with miniconda"
       run: |
+        Set-PSDebug -Trace 1
         & "$Env:CONDA\condabin\conda.bat" activate base
-        & "$Env:CONDA\condabin\conda.bat" install -v -c conda-forge glpk
+        & "$Env:CONDA\condabin\conda.bat" install --yes --verbose conda-forge::glpk
         $Env:GLPK = "$Env:CONDA_PREFIX\Library"
         Get-ChildItem "$Env:GLPK\include"
         python -VV
@@ -32,7 +27,7 @@ jobs:
         python -m pip install --upgrade setuptools_scm
         python setup.py bdist
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: windows-bdist
         path: dist/
