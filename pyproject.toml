@@ -1,4 +1,43 @@
 [build-system]
 requires = ["setuptools>=30.3.0", "wheel", "setuptools_scm"]
 
+[project]
+name = "glpk"
+description = "PyGLPK, a Python module encapsulating GLPK"
+dynamic = ["version"]
+
+authors = [{ name = "Thomas Finley", email = "tfinley@gmail.com"}]
+
+maintainers = [
+  {name = "Bradford D. Boyle", email = "bradford.d.boyle@gmail.com"}
+]
+license = {text = "GPL-3.0"}
+readme = "README.rst"
+keywords = ["glpk", "optimization"]
+
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: C",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    
+]
+requires-python = ">=3"
+
+[project.urls]
+Homepage = "https://github.com/bradfordboyle/pyglpk"
+Repository = "https://github.com/bradfordboyle/pyglpk"
+Documentation = "https://pyglpk.readthedocs.io/"
+Issues = "https://github.com/bradfordboyle/pyglpk/issues"
+
+
 [tool.setuptools_scm]

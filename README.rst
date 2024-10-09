@@ -8,7 +8,9 @@ pyglpk
     :target: http://pyglpk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-Fork of T. Finley's PyGLPK module, available through `pip install glpk`
+Fork of T. Finley's PyGLPK module, available through ``pip install glpk``.
+
+You can find the documentation on https://pyglpk.readthedocs.io/
 
 Overview
 --------
