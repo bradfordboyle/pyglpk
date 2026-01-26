@@ -370,7 +370,7 @@ static PyObject* Obj_getname(ObjObject *self, void *closure) {
   return PyString_FromString(name);
 }
 static int Obj_setname(ObjObject *self, PyObject *value, void *closure) {
-  char *name;
+  const char *name;
   if (value==NULL || value==Py_None) {
     glp_set_obj_name(LP, NULL);
     return 0;

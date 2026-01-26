@@ -11,7 +11,7 @@ authors = [{ name = "Thomas Finley", email = "tfinley@gmail.com"}]
 maintainers = [
   {name = "Bradford D. Boyle", email = "bradford.d.boyle@gmail.com"}
 ]
-license = {text = "GPL-3.0"}
+license = "GPL-3.0"
 readme = "README.rst"
 keywords = ["glpk", "optimization"]
 

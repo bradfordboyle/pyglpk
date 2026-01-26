@@ -209,7 +209,7 @@ int BarCol_Index(BarColObject *self, PyObject *obj, int *index, int except){
     return 0;
   } else if (PyString_Check(obj)) {
     glp_create_index(LP); // No effect if already present.
-    char *name = PyString_AsString(obj);
+    const char *name = PyString_AsString(obj);
     if (name==NULL) return -1;
     int i = (BarCol_Rows(self) ? glp_find_row : glp_find_col)(LP,name);
     if (i==0) {
