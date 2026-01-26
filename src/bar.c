@@ -203,7 +203,7 @@ static PyObject* Bar_getname(BarObject *self, void *closure) {
   return PyString_FromString(name);
 }
 static int Bar_setname(BarObject *self, PyObject *value, void *closure) {
-  char *name;
+  const char *name;
   if (!Bar_Valid(self, 1)) return -1;
   if (value==NULL || value==Py_None) {
     (Bar_Row(self) ? glp_set_row_name : glp_set_col_name)
@@ -378,7 +378,7 @@ static int Bar_setstatus(BarObject *self, PyObject *value, void *closure) {
     PyErr_SetString(PyExc_AttributeError, "cannot delete status");
     return -1;
   }
-  char *sstr = PyString_AsString(value);
+  const char *sstr = PyString_AsString(value);
   if (sstr == NULL) return -1;
   if (sstr[0]==0 || sstr[1]==0 || sstr[2]!=0) {
     PyErr_SetString(PyExc_ValueError, "status strings must be length 2");

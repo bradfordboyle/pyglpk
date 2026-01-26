@@ -115,7 +115,7 @@ static PyObject * LPX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int LPX_init(LPXObject *self, PyObject *args, PyObject *kwds)
 {
 	char *mps_n=NULL, *freemps_n=NULL, *cpxlp_n=NULL, *glp_n=NULL;
-	char *model[] = {NULL,NULL,NULL};
+	const char *model[] = {NULL,NULL,NULL};
 	PyObject *model_obj = NULL, *so = NULL;
 	static char *kwlist[] = {"gmp","mps","freemps","cpxlp", "glp", NULL};
 	Py_ssize_t numargs = 0, model_size = 0;
@@ -815,7 +815,7 @@ PyObject* convert_and_zip(LPXObject *self, const int len, const int ind[], const
 	m = glp_get_num_rows(LP);
 	n = glp_get_num_cols(LP);
 	for (int i = 1; i <= len; i++) {
-		BarObject *bar;
+		BarObject *bar = NULL;
 		if (1 <= ind[i] && ind[i] <= m) {
 			bar = Bar_New((BarColObject *) self->rows, ind[i] - 1);
 		} else if (m+1 <= ind[i] && ind[i] <= m+n) {
@@ -829,14 +829,13 @@ PyObject* convert_and_zip(LPXObject *self, const int len, const int ind[], const
 }
 
 static PyObject* LPX_transform_row(LPXObject *self, PyObject *arg) {
-	int k, len, m, n;
+	int len, n;
 	PyObject *iterator, *retval;
 
 	if ((iterator = PyObject_GetIter(arg)) == NULL) {
 		return NULL;
 	}
 
-	m = glp_get_num_rows(LP);
 	n = glp_get_num_cols(LP);
 
 	BarObject **vars = (BarObject**)calloc(n + 1, sizeof(BarObject*));
@@ -875,7 +874,7 @@ static PyObject* LPX_transform_row(LPXObject *self, PyObject *arg) {
 }
 
 static PyObject* LPX_transform_col(LPXObject *self, PyObject *arg) {
-	int k, len, i, m, n;
+	int len, m;
 	PyObject *iterator, *retval;
 
 	if ((iterator = PyObject_GetIter(arg)) == NULL) {
@@ -883,7 +882,6 @@ static PyObject* LPX_transform_col(LPXObject *self, PyObject *arg) {
 	}
 
 	m = glp_get_num_rows(LP);
-	n = glp_get_num_cols(LP);
 
 	BarObject **vars = (BarObject**)calloc(m + 1, sizeof(BarObject*));
 	int *ind = (int*)calloc(m + 1, sizeof(int));
@@ -1103,7 +1101,7 @@ static PyObject* LPX_getname(LPXObject *self, void *closure)
 
 static int LPX_setname(LPXObject *self, PyObject *value, void *closure)
 {
-	char *name;
+	const char *name;
 	if (value == NULL || value == Py_None) {
 		glp_set_prob_name(LP, NULL);
 		return 0;
@@ -1326,9 +1324,11 @@ PyDoc_STRVAR(cols_doc,
 "Column collection. See the help on class BarCollection."
 );
 
+#ifdef USEPARAMS
 PyDoc_STRVAR(params_doc,
 "Control parameter collection. See the help on class Params."
 );
+#endif
 
 static PyMemberDef LPX_members[] = {
 	{"rows", T_OBJECT_EX, offsetof(LPXObject, rows), READONLY, rows_doc},
